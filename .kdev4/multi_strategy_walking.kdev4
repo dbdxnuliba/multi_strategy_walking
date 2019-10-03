@@ -10,4 +10,6 @@ Path=gcc
 Type=GCC
 
 [Project]
+Manager=KDevCMakeManager
+Name=multi_strategy_walking
 VersionControlSupport=kdevgit
