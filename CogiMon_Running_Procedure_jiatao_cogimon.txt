@@ -1,0 +1,114 @@
+--------- Login to the pilot PC ----------
+username: lucamuratore
+password: lucamuratore
+
+
+
+turn on the power:
+(1) press the two green button for battery.
+(2) wait the green light on : (the below one may need press):
+(3) turn the rotation button :pointing to 1
+(4) push the back button 
+waiting the robot compute on
+ 
+
+
+
+--------- Login to the real time PC -------
+ssh_cogimon
+Password: cogimon
+
+--------- For internet connection (real time PC) ------- // when the robot is powered up for the first time
+(1)sudo dhclient
+(2)--------- To start Xenomai ----------
+sudo ./ec_xeno3.sh start
+
+
+
+several tips:
+
+(1)--------- To revoke the RT-PC if it freezes ------------
+->ssh -X cogimon@cogimon-rt-exp.local
+If asked for yes/no
+-> yes
+
+(2)--------- For the webgui ----------
+Type the following id in the browser
+->10.24.5.100:8081
+
+(3)--------- To set config file to Xbot ----------
+->set_xbot_config "xxxxxx.yaml"
+
+
+
+------------- Procedure to start the robot ----------------
+Step1. Open a multi-terminal window (atleast 4)
+Step2. Login to the cogimon-rt-pc in 2 terminals
+Step3. Set the config file which contains your plugin to run. Usually the config files are in /home/devel-superbuild/configs/ADVR_shared/user_example 
+for me : set_xbot_config /home/devel-superbuild/configs/ADVR_shared/user_example/cogimon_walk.yaml
+
+Step4. Check if the robot is ON: hearing the noise
+
+Step5. Start roscore in one of the cogimon-rt-pc terminals.
+-> ssh_cogimon
+-> roscore
+
+Step6. Xenomai needs to be started if the robot is being powered up for the first time. !!!!!!!!!!!!!!!!!!!!!(should be first step)
+
+step6.1: test code (on the cogimon robot-pc): open another terminal:
+                                           ssh_cogimon
+                                           kdevelop 
+                                           debugging my project
+
+
+
+step6.2:  ...../chengxu_walking
+           right click on the kdevelop project: install,
+
+
+
+
+
+Step7. Switch on the emergency button: (Release the emergency button if it is OFF.)
+
+
+Step8. Start the XBotCore: 
+(open a new terminal)
+-> ssh_cogimon
+-> XBotCore -D
+
+
+Step9.  open a new terminal (can also be the same terminal for the .yaml file setup  )
+-> ssh_cogimon
+-> rosservice call /chengxu_walking_switch 1
+
+
+
+
+Step10.  back to the chengxu_walking terminal:
+-> cd src/walking/xddp_console/
+-> ./xddp_console 
+
+
+
+
+
+quit:
+(1) switch off the emergency button,
+(2) ctrl+c all the terminal (log in the real-time pc)
+
+
+step 11:
+log out the cogimon robot: exit 
+
+When finishing the experiment:
+(1)
+(2)
+
+
+
+
+
+
+
+

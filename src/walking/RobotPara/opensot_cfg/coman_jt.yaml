@@ -1,0 +1,32 @@
+XBotCore:
+  config_path: "configs/ComanConfig/configs/coman.yaml"
+
+XBotInterface:
+  urdf_path: "configs/ComanConfig/urdf/coman.urdf"
+  srdf_path: "configs/ComanConfig/srdf/coman.srdf"
+  joint_map_path: "configs/ComanConfig/joint_map/coman_joint_map.yaml"
+
+RobotInterface:
+  framework_name: "ROS"
+
+ModelInterface:
+  model_type: "RBDL"
+  is_model_floating_base: "false"
+  
+MasterCommunicationInterface:
+  framework_name: "ROS"
+
+XBotRTPlugins:
+  plugins: ["HomingExample","chengxu_walking"]
+  io_plugins: []
+  
+NRTPlugins:
+  plugins: []
+  
+WebServer:
+  enable: "true"
+  address: "127.0.0.1"
+  port: "8081"
+
+SimulationOptions:
+  verbose_mode: "false"

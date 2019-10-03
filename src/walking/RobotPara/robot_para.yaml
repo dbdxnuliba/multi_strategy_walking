@@ -1,0 +1,16 @@
+# robot_para_file: coman_para.yaml
+# robot_para_file: walkman_para.yaml
+# robot_para_file: bigman_para.yaml
+robot_para_file: cogimon_para.yaml
+
+gravity: 9.80665
+
+# TRUE_SIM_FALSE_REALROBOT: true
+
+for_simulation:
+ dt_ode: 0.005
+ dt_gaz: 0.005
+
+
+for_realrobot:
+ dt    : 0.005

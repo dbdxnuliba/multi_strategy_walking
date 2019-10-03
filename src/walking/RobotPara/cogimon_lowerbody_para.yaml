@@ -1,0 +1,282 @@
+name: cogimon
+
+urdf_path: urdf/cogimon_lowerbody_floating_base.urdf
+opensot_cfg_path: opensot_cfg/cogimon/configs/cogimon_example.yaml
+
+robot_link:
+ PELVIS                 : Waist
+ RIGHT_THIGH_DUMMY1     : RHipMot
+ RIGHT_THIGH_DUMMY2     : RThighUpLeg
+ RIGHT_THIGH            : RThighLowLeg
+ RIGHT_CALF             : RLowLeg
+ RIGHT_FOOT_DUMMY       : RFootmot
+ RIGHT_FOOT             : RFoot
+ LEFT_THIGH_DUMMY1      : LHipMot
+ LEFT_THIGH_DUMMY2      : LThighUpLeg
+ LEFT_THIGH             : LThighLowLeg
+ LEFT_CALF              : LLowLeg
+ LEFT_FOOT_DUMMY        : LFootmot
+ LEFT_FOOT              : LFoot
+ # WAIST_DUMMY1           : DWL
+ # WAIST_DUMMY2           : DWS
+ # TORSO                  : DWYTorso
+ # NECK                   : torso
+ # HEAD                   : gaze
+ # RIGHT_UPPER_ARM_DUMMY1 : RShp
+ # RIGHT_UPPER_ARM_DUMMY2 : RShr
+ # RIGHT_UPPER_ARM        : RShy
+ # RIGHT_ELBOW_FORE_ARM   : RElb
+ # RIGHT_FORE_ARM         : RForearm
+ # RIGHT_HAND_DUMMY1      : RWrMot2
+ # RIGHT_HAND             : RWrMot3
+ # # RIGHT_HAND_DUMMY2      : RWrMot3
+ # # RIGHT_HAND             : RSoftHand
+ # LEFT_UPPER_ARM_DUMMY1  : LShp
+ # LEFT_UPPER_ARM_DUMMY2  : LShr
+ # LEFT_UPPER_ARM         : LShy
+ # LEFT_ELBOW_FORE_ARM    : LElb
+ # LEFT_FORE_ARM          : LForearm
+ # LEFT_HAND_DUMMY1       : LWrMot2
+ # LEFT_HAND              : LWrMot3
+ # # LEFT_HAND_DUMMY2       : LWrMot3
+ # # LEFT_HAND              : LSoftHand
+
+robot_joint:
+ # WAIST_ROLL             : WaistLat
+ # WAIST_PITCH            : WaistSag
+ # WAIST_YAW              : WaistYaw
+ RIGHT_HIP_PITCH        : RHipSag
+ RIGHT_HIP_ROLL         : RHipLat
+ RIGHT_HIP_YAW          : RHipYaw
+ RIGHT_KNEE_PITCH       : RKneePitch
+ RIGHT_FOOT_ROLL        : RAnkleRoll
+ RIGHT_FOOT_PITCH       : RAnklePitch
+ LEFT_HIP_PITCH         : LHipSag
+ LEFT_HIP_ROLL          : LHipLat
+ LEFT_HIP_YAW           : LHipYaw
+ LEFT_KNEE_PITCH        : LKneePitch
+ LEFT_FOOT_ROLL         : LAnkleRoll
+ LEFT_FOOT_PITCH        : LAnklePitch
+ # RIGHT_SHOULDER_PITCH   : RShSag
+ # RIGHT_SHOULDER_ROLL    : RShLat
+ # RIGHT_SHOULDER_YAW     : RShYaw
+ # RIGHT_ELBOW_PITCH      : RElbj
+ # RIGHT_FOREARM_YAW      : RForearmPlate
+ # RIGHT_WRIST_PITCH      : RWrj1
+ # RIGHT_WRIST_ROLL       : RWrj2
+ # LEFT_SHOULDER_PITCH    : LShSag
+ # LEFT_SHOULDER_ROLL     : LShLat
+ # LEFT_SHOULDER_YAW      : LShYaw
+ # LEFT_ELBOW_PITCH       : LElbj
+ # LEFT_FOREARM_YAW       : LForearmPlate
+ # LEFT_WRIST_PITCH       : LWrj1
+ # LEFT_WRIST_ROLL        : LWrj2
+ # NECK_PITCH             : torso_joint
+ # HEAD_PITCH             : gaze_joint
+
+
+robot_para: # most of them can be extracted from urdf
+ # FOOT_LENGTH  : 0.14
+ # FOOT_WIDTH   : 0.09
+ # FOOT_LENGTH  : 0.20
+ # FOOT_WIDTH   : 0.10
+ FOOT_HEIGHT  : 0.02
+ # ANKLE_X_OFFSET: 0.03  # ankle offset with respect to the foot centre
+ # ANKLE_HEIGHT  : 0.0793
+ # THIGH_HEIGHT  : 0.2258
+ # CALF_HEIGHT   : 0.2010
+ # HALF_HIP_WIDTH: 0.0726
+ # HALF_FOOT_DIS : 0.0726
+ # HALF_FOOT_DIS : 0.15
+ HALF_FOOT_DIS_INCREMENT : -0.0
+ 
+gait_para:
+ IsFixedWalk: false
+ HasEntrySway: true
+ homing_lift_height: 0.03
+ lift_height       : 0.04
+ z_c               : 0.48
+ PreviewT          : 2.5
+ Tstep             : 0.9
+ for_simulation:
+  Ksway    : 1.0
+ for_realrobot:
+  Ksway    : 1.35
+  FT_HEIGHT: 0.03
+  HipCompL : -0.0
+  HipCompR : 0.0
+  # HipCompL : -5.0
+  # HipCompR : 6.0
+
+stabilizer:
+  # Kx: 3500
+  # Bx: 1500
+  # Ky: 2000
+  # By: 800
+  Kz: 8
+  Bz: 20
+  # Kx: 3000
+  # Bx: 1200
+  Kx: 1000
+  Bx: 600
+  #Kx: 400
+  #Bx: 300
+  Ky: 600
+  By: 300
+  #Ky: 270
+  #By: 200
+  #Kz: 1000
+  #Bz: 300
+  # Kz: 10
+  # Bz: 20
+
+hand_stabilizer:
+  Kx: 500
+  Bx: 35
+  Ky: 500
+  By: 35
+  Kz: 800
+  Bz: 50
+  K_roll: 5
+  B_roll: 1
+  K_pitch: 5
+  B_pitch: 1
+  K_yaw: 10
+  B_yaw: 2
+
+# for ode joint controller
+joint_gain:
+ kp_torque : 1
+ kd_torque : 0.1
+ kp_imp    : 100
+ kd_imp    : 0.2
+ kp_pos    : 80
+ kd_pos    : 0.1
+ kp_adm    : 100
+ kd_adm    : 50
+
+cart_ref_gains_for_IKQP:
+ k_pos_ode : 0.05 # in ODE
+ k_ori_ode : 10   # in ODE
+ k_pos_gaz : 0.003  # in Gazebo
+ k_ori_gaz : 0.1    # in Gazebo
+ k_pos_rob : 0.01  # real robot
+ k_ori_rob : 10.0  # real robot
+ kp_pos_acc_ode : 50
+ kd_pos_acc_ode : 100
+ kp_ori_acc_ode : 10
+ kd_ori_acc_ode : 50
+ kp_pos_acc_gaz : 50
+ kd_pos_acc_gaz : 500
+ kp_ori_acc_gaz : 50
+ kd_ori_acc_gaz : 10
+ kp_pos_acc_rob : 50
+ kd_pos_acc_rob : 500
+ kp_ori_acc_rob : 50
+ kd_ori_acc_rob : 10
+
+for_debug:
+  # kp_debug: 20 # for torque position gain
+  # kd_debug: 2
+  kp_debug: 50.0 # for control_params_ com gains
+  kd_debug: 5
+
+robot_offset_pos: # for real robot
+ WAIST_ROLL             : 0.0
+ WAIST_PITCH            : 0.0
+ WAIST_YAW              : -0.0
+ RIGHT_HIP_PITCH        : 0.0
+ RIGHT_HIP_ROLL         : -0.0
+ RIGHT_HIP_YAW          : 0.0
+ RIGHT_KNEE_PITCH       : 0.0
+ RIGHT_FOOT_ROLL        : 0.0
+ RIGHT_FOOT_PITCH       : 0.0
+ LEFT_HIP_PITCH         : 0.0
+ LEFT_HIP_ROLL          : 0.0
+ LEFT_HIP_YAW           : 0.0
+ LEFT_KNEE_PITCH        : -1.0
+ LEFT_FOOT_ROLL         : 0.0
+ LEFT_FOOT_PITCH        : 0.0
+ RIGHT_SHOULDER_PITCH   : 0.0
+ RIGHT_SHOULDER_ROLL    : 0.0
+ RIGHT_SHOULDER_YAW     : 0.0
+ RIGHT_ELBOW_PITCH      : -0.0
+ RIGHT_FOREARM_YAW      : 0.0
+ RIGHT_WRIST_PITCH      : 0.0
+ RIGHT_WRIST_ROLL       : 0.0
+ LEFT_SHOULDER_PITCH    : 0.0
+ LEFT_SHOULDER_ROLL     : -0.0
+ LEFT_SHOULDER_YAW      : 0.0
+ LEFT_ELBOW_PITCH       : -0.0
+ LEFT_FOREARM_YAW       : 0.0
+ LEFT_WRIST_PITCH       : 0.0
+ LEFT_WRIST_ROLL        : 0.0
+ NECK_PITCH             : 0.0
+ HEAD_PITCH             : 0.0
+
+robot_homing_pos: # for real robot
+ WAIST_ROLL             : 0.0
+ WAIST_PITCH            : 0.0
+ WAIST_YAW              : 0.0
+ RIGHT_HIP_PITCH        : -10.0
+ RIGHT_HIP_ROLL         : 0.0
+ RIGHT_HIP_YAW          : 0.0
+ RIGHT_KNEE_PITCH       : 20.0
+ RIGHT_FOOT_ROLL        : 0.0
+ RIGHT_FOOT_PITCH       : -10.0
+ LEFT_HIP_PITCH         : -10.0
+ LEFT_HIP_ROLL          : 0.0
+ LEFT_HIP_YAW           : 0.0
+ LEFT_KNEE_PITCH        : 20.0
+ LEFT_FOOT_ROLL         : 0.0
+ LEFT_FOOT_PITCH        : -10.0
+ RIGHT_SHOULDER_PITCH   : 0.0
+ RIGHT_SHOULDER_ROLL    : -0.0
+ RIGHT_SHOULDER_YAW     : 0.0
+ RIGHT_ELBOW_PITCH      : -0.0
+ RIGHT_FOREARM_YAW      : 0.0
+ RIGHT_WRIST_PITCH      : 0.0
+ RIGHT_WRIST_ROLL       : 0.0
+ LEFT_SHOULDER_PITCH    : 0.0
+ LEFT_SHOULDER_ROLL     : 0.0
+ LEFT_SHOULDER_YAW      : -0.0
+ LEFT_ELBOW_PITCH       : -0.0
+ LEFT_FOREARM_YAW       : 0.0
+ LEFT_WRIST_PITCH       : 0.0
+ LEFT_WRIST_ROLL        : 0.0
+ NECK_PITCH             : 0.0
+ HEAD_PITCH             : 0.0
+
+ode_homing_pos:
+ WAIST_ROLL             : 0.0
+ WAIST_PITCH            : 0.0
+ WAIST_YAW              : 0.0
+ RIGHT_HIP_PITCH        : -10.0
+ RIGHT_HIP_ROLL         : 0.0
+ RIGHT_HIP_YAW          : 0.0
+ RIGHT_KNEE_PITCH       : 20.0
+ RIGHT_FOOT_ROLL        : 0.0
+ RIGHT_FOOT_PITCH       : -10.0
+ LEFT_HIP_PITCH         : -10.0
+ LEFT_HIP_ROLL          : 0.0
+ LEFT_HIP_YAW           : 0.0
+ LEFT_KNEE_PITCH        : 20.0
+ LEFT_FOOT_ROLL         : 0.0
+ LEFT_FOOT_PITCH        : -10.0
+ RIGHT_SHOULDER_PITCH   : 0.0
+ RIGHT_SHOULDER_ROLL    : -0.0
+ RIGHT_SHOULDER_YAW     : 0.0
+ RIGHT_ELBOW_PITCH      : -0.0
+ RIGHT_FOREARM_YAW      : 0.0
+ RIGHT_WRIST_PITCH      : 0.0
+ RIGHT_WRIST_ROLL       : 0.0
+ LEFT_SHOULDER_PITCH    : 0.0
+ LEFT_SHOULDER_ROLL     : 0.0
+ LEFT_SHOULDER_YAW      : -0.0
+ LEFT_ELBOW_PITCH       : -0.0
+ LEFT_FOREARM_YAW       : 0.0
+ LEFT_WRIST_PITCH       : 0.0
+ LEFT_WRIST_ROLL        : 0.0
+ NECK_PITCH             : 0.0
+ HEAD_PITCH             : 0.0
+ 
