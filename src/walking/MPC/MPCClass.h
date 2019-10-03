@@ -30,7 +30,7 @@ using namespace arma;
 
 
 /// constant variable defintion
-const int _footstepsnumber = 12;       //  number of _footstepnumber
+const int _footstepsnumber = 15;       //  number of _footstepnumber
 const double _dt = 0.05;                //sampling time
 const int _nh = 30;                    /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
 const double _tstep = 0.7;              ///step period
@@ -109,7 +109,7 @@ public:
 	Vector3d XGetSolution_Foot_positionR(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3);
 	Vector3d XGetSolution_Foot_positionL(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3);	
 	Vector3d XGetSolution_body_inclination(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3);
-	Vector6d XGetSolution_Foot_position_KMP(int walktime, double dt_sample, int j_index);
+	Vector6d XGetSolution_Foot_position_KMP(int walktime, double dt_sample, int j_index, bool _stopwalking);
 	
 	
 	

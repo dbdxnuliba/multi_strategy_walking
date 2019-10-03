@@ -53,11 +53,11 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	
 	_lift_height_ref.setConstant(_lift_height);
 	_lift_height_ref(0) = 0.00;
-	_lift_height_ref(1) = 0.04;
+	_lift_height_ref(1) = 0.05;
         _lift_height_ref(_footstepsnumber-1) = 0;
-        _lift_height_ref(_footstepsnumber-2) = 0.04;	
-        _lift_height_ref(_footstepsnumber-3) = 0.04; 
-        _lift_height_ref(_footstepsnumber-4) = 0.04; 	
+        _lift_height_ref(_footstepsnumber-2) = 0.05;	
+        _lift_height_ref(_footstepsnumber-3) = 0.05; 
+        _lift_height_ref(_footstepsnumber-4) = 0.05; 	
 
 
 // ///////////******************************************************obtacle avoidance-mod
@@ -920,6 +920,29 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   _periond_i = _j_period+1;      ///coincident with Matlab
   _j_period = 0;  
   
+  
+  
+  ////================================================================
+  /// judge if stop walking enable: if (from _bjx1 step, reference step length and step height will be set to be zero)
+  if(_stopwalking)  
+  {    
+    for (int i_t = _bjx1; i_t < _footstepsnumber; i_t++) {
+      if (i_t == _bjx1)
+      {
+	_steplength(i_t) = _steplength(i_t)/2;	
+	_Lxx_ref(i_t) = _Lxx_ref(i_t)/2;	
+      }
+      else
+      {
+      _steplength(i_t) = 0;	
+      _Lxx_ref(i_t) = 0;	
+      }
+
+      _footx_ref(i_t) = _footx_ref(i_t-1) + _steplength(i_t-1); 	      
+    }	  
+  }  
+  
+  
 //   cout <<"k:"<<_periond_i<<endl;	
 
 
@@ -1743,12 +1766,7 @@ void MPCClass::Solve()
 //// each time: planer for foot_trajectory:
 void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 {
-  
-
-	    
-//   double  Footz_ref = 0.05;
      double  Footz_ref = 0.05;    //0.05m 
-//    double  Footz_ref = 0.11;    //0.07m 
     
   _footxyz_real(1,0) = -_stepwidth(0);
   
@@ -2080,7 +2098,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	  //////////////////////////////////////////////////////////
 	  Eigen::Matrix<double, 7, 1> Lfootz_plan;
 	  Lfootz_plan.setZero();			
-	  Lfootz_plan(0) = _Lfootvz(j_index-1);     Lfootz_plan(1) = _Lfootaz(j_index-1); Lfootz_plan(2) = _Lfootz(j_index-1); Lfootz_plan(3) = _Rfootz(j_index)+Footz_ref;
+	  Lfootz_plan(0) = _Lfootvz(j_index-1);     Lfootz_plan(1) = _Lfootaz(j_index-1); Lfootz_plan(2) = _Lfootz(j_index-1); Lfootz_plan(3) = _Rfootz(j_index)+_lift_height_ref(_bjx1-1);
 	  Lfootz_plan(4) = _footxyz_real(2,_bjxx);  Lfootz_plan(5) = 0;                   Lfootz_plan(6) = 0;		  
 	  
 	  
@@ -2331,7 +2349,7 @@ Vector3d MPCClass::X_CoM_position_squat(int walktime, double dt_sample)
 
 
 //////////////////////////////////////////////////////
-Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample,int j_index)
+Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample,int j_index, bool _stopwalking)
 {
   
   ///////walktime=====>ij;   int j_index====>i;  dt_sample========>dtx;   
@@ -2339,6 +2357,27 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 // 	
 // 
   double  Footz_ref = 0.05;    //0.05m 
+  
+ 
+//// judge if stop  
+  if(_stopwalking)  
+  {
+    
+    for (int i_t = _bjx1+1; i_t < _footstepsnumber; i_t++) {	
+      if (i_t == _bjx1)
+      {
+      _lift_height_ref(i_t) = _lift_height_ref(i_t)/2;	
+      }
+      else
+      {
+      _lift_height_ref(i_t) = 0;  	
+      }
+
+    }	  
+
+  }  
+ 
+ 
  
 //   
   //// three via_points: time, mean, sigma 
@@ -2416,7 +2455,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 // 	    via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
 	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
 	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+Footz_ref)-_footxyz_real(2,_bjx1-2);
+	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+_lift_height_ref(_bjx1-1))-_footxyz_real(2,_bjx1-2);
 	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
 /*	  if (_bjx1==2)
 	  {
@@ -2564,7 +2603,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 // 	  via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
 	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
 	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+Footz_ref)-_footxyz_real(2,_bjx1-2);
+	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+_lift_height_ref(_bjx1-1))-_footxyz_real(2,_bjx1-2);
 	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
 	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
 	  via_point2(6) = 0;
