@@ -426,18 +426,16 @@ void XBotRTControlClass::KeyBoardControl(char cmd)
 	{
 	case 'c':
 	{
+		DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start  Walking!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");	  
 		StartWalking();
 	}
 	break;
 
 	case 's':
 	{
-		DPRINTF("Stop Walking! mm( _ _ )mm......o\n");
-		steplength = 0;
-		stepwidth = 0;
+		DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  Stop Walking !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+
 		StopWalking();
-// 		DPRINTF("Reset Step Length to %.3f m!\n", steplength);
-// 		DPRINTF("Reset Step Width to %.3f m!\n", stepwidth);
 	}
 	break;
 
