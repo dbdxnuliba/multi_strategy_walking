@@ -29,6 +29,7 @@ MPCClass::MPCClass()                    ///declaration function
 	, _lift_height(0.0)
 	, _method_flag(0)	
 {
+  
 }
 
 
@@ -40,7 +41,7 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
         _steplength(_footstepsnumber-1) = 0;
         _steplength(_footstepsnumber-2) = 0;
         _steplength(_footstepsnumber-3) = 0;
-        _steplength(_footstepsnumber-4) = stepwidth/4;	
+        _steplength(_footstepsnumber-4) = 0;	
         _steplength(_footstepsnumber-5) = stepwidth/2;		
 	
 	
@@ -57,33 +58,9 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
         _lift_height_ref(_footstepsnumber-2) = 0.04;	
         _lift_height_ref(_footstepsnumber-3) = 0.04; 
         _lift_height_ref(_footstepsnumber-4) = 0.04; 	
-	
-///	%%%%%%%%%%%%%%%%%============
-/*	/// variant step parameters_walking:obtacle avoidance
- 	_steplength(4) = steplength/2;
-	_steplength(5) = 0;
-	_steplength(6) = 0;
-	_steplength(7) = 0;
-	_steplength(8) = 0;
-	_steplength(9) = 0;
-	_steplength(10) = 0;
-	_steplength(11) = 0;
-	_steplength(12) = 0;	
- 	_steplength(13) = 0;
 
-        _steplength(15) = 0.15;
-        _steplength(17) = 0.15;
-	
-	_stepwidth(6) = 0.28;	
-	_stepwidth(7) = 0.18;	
-	_stepwidth(8) = 0.28;	
-	_stepwidth(9) = 0.18;	
-	_stepwidth(10) = 0.28;		
-	_stepwidth(11) = 0.18;	
-	_stepwidth(12) = 0.28;	*/	
-	
 
-///////////******************************************************obtacle avoidance-mod
+// ///////////******************************************************obtacle avoidance-mod
 //  	_steplength(4) = steplength/2;
 // 	_steplength(5) = 0;
 // 	_steplength(6) = 0;
@@ -134,7 +111,7 @@ void MPCClass::Initialize()
 	_lamda_kmp  = 5, _kh_kmp = 0.75;	    	    //set kmp parameters 
 
 
-	static char fileName1[]="/home/jiatao/Dropbox/cat_multi_cogimon/src/cogimon_multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
+	static char fileName1[]="/home/jiatao/Dropbox/catkin_cogimon_simu/src/tutorial_iros2018/chengxu_walking/src/walking/KMP/referdata_swing.txt";  
 	_data_kmp.load( fileName1 );         	    // load original data
 	///modify the data sample:
 	
@@ -362,7 +339,21 @@ void MPCClass::Initialize()
 	_comax_min = -5;
 	_comay_max = 5;
 	_comay_min = -5;	  
-	//weight coefficient: for obstacle avoidance//walking on flat ground
+	//weight coefficient
+/*	_aax = 500000000;        _aay  =500000000;
+	_aaxv= 800000;           _aayv =1000000;         
+	_bbx = 500000000;        _bby  =500000000;      
+	_rr1 = 100000000;        _rr2  =100000000;        
+	_aax1 =300;              _aay1 =300;            
+	_bbx1 =1000000;          _bby1 =1000000;
+	_rr11 =1000000;          _rr21 =1000000; */		
+/*	_aax = 500000000;        _aay  =100000000;
+	_aaxv= 800000;           _aayv =1000000;         
+	_bbx = 500000000;        _bby  =500000000;      
+	_rr1 = 100000000;        _rr2  =100000000;        
+	_aax1 =300;              _aay1 =300;            
+	_bbx1 =1000000;          _bby1 =1000000;
+	_rr11 =1000000;          _rr21 =1000000; */
 	_aax = 500000000;        _aay  =700000000;
 	_aaxv= 800000;           _aayv =1000000;         
 	_bbx = 500000000;        _bby  =500000000;      
@@ -1022,6 +1013,9 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
         _comvy_endref= _Wn*_COMy_is(_periond_i-1)*_SS4*_vari_ini + _COMvy_is(_periond_i-1)*_SS3*_vari_ini;     
   }
 
+/*  cout <<_comvx_endref<<endl;
+  cout <<_comvy_endref<<endl;  */ 
+//   cout <<_COMvy_is<<endl;
  
   
 // SEQUENCE QUADARTIC PROGRAMMING-step timing &step location optimization
@@ -1196,14 +1190,21 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
     estimated_state(3,0) =  estimated_state(3,0) - _Rfoot_location_feedback(1);	  
   }  
   
+ // feedback for t=0.6s, stepwidh = HALF_HIP_WIDTH()*2
+//   double _lamda_comx = 0.75;
+//   double _lamda_comvx = 0.75;
+//   double _lamda_comy = 0.99;
+//   double _lamda_comvy = 0.99;   
+//   
+//   if (_periond_i>2)
+//   {
+//     _lamda_comx = 0.01;
+//     _lamda_comvx = 0.01;      
+//     _lamda_comy = 0.79;
+//     _lamda_comvy = 0.79;     
+//   }
 
-  
-/*  /// obstacle recovery 
-  double _lamda_comx = 1;
-  double _lamda_comvx = 1;
-  double _lamda_comy = 1;
-  double _lamda_comvy = 1;*/    
-  /// push recovery
+
   double _lamda_comx = 1;
   double _lamda_comvx = 1;
   double _lamda_comy = 1;
@@ -1211,8 +1212,8 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   
 //   if (_periond_i>2)
 //   {
-//     _lamda_comx = 0.51;
-//     _lamda_comvx = 0.51;      
+//     _lamda_comx = 0.01;
+//     _lamda_comvx = 0.01;      
 //     _lamda_comy = 0.85;
 //     _lamda_comvy = 0.85;     
 //   }
@@ -2412,35 +2413,49 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp
 	  
 	  ////// add point************ middle point***********////////
+// 	    via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
 	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
 	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+Footz_ref)-_footxyz_real(2,_bjx1-2);
-	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;    
+	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
+/*	  if (_bjx1==2)
+	  {
+	    via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*0.8;
+	  }*/	    
 	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
  	  via_point2(6) = 0;
-	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
+/*	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
 	  {
-	    via_point2(6) = -0.01;
+	    via_point2(6) = -0.1;
 	  }
 	  else
 	  {
 	    via_point2(6) = 0;
-	  }	    	    
+	  }*/	    	    
 	  kmp_leg_R.kmp_insertPoint(via_point2);  // insert point into kmp
 
 	  ////// add point************ final status************////////	  
-	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.001;
+	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.002;
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-
-	  //push recovery
-	  if (_bjx1<=_footstepsnumber-3)
+// 	  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0030;
+	  if (_bjx1<=4)
 	  {
 	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
 	  }
 	  else
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0001;
-	  }	    
+	    if (_bjx1<=10)
+	    {
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.005;
+	    }
+	    else
+	    {
+// 	      ///obstacle avoidance
+// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+// 	      ///obstacle avoidance_m
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.006;
+	    }
+	  }
 	  via_point3(4) = 0;
 	  via_point3(5) = 0;
  	  via_point3(6) = 0.025;
@@ -2483,7 +2498,11 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	
 	_query_kmp(0) = t_des_k;
 	kmp_leg_R.kmp_prediction(_query_kmp,_mean_kmp);   ////////time& predictive values
-	  
+	if (t_des_k<0.01){
+/*	cout<<"_query_kmp:"<<endl<<trans(_query_kmp)<<endl;
+	cout<<"kmp:"<<endl<<trans(_mean_kmp)<<endl;
+	cout<<"error:"<<trans(_mean_kmp)-trans(via_point1(span(1,6)))<<endl<<endl;*/	      	      
+	}	  
        
       _Rfootx_kmp(walktime) = _mean_kmp(0)+_footxyz_real(0,_bjx1-2);
       _Rfooty_kmp(walktime) = _mean_kmp(1)+(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
@@ -2542,36 +2561,45 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
  	  kmp_leg_L.kmp_insertPoint(via_point1);  // insert point into kmp
 	  
 	  ////// add point************ middle point***********////////
+// 	  via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
 	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
 	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+Footz_ref)-_footxyz_real(2,_bjx1-2);
 	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
 	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
 	  via_point2(6) = 0;
-	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
+/*	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
 	  {
-	    via_point2(6) = -0.01;	      
+	    via_point2(6) = -0.1;	      
 	  }
 	  else
 	  {
 	    via_point2(6) = 0;
-	  }	  	  	  
+	  }*/	  	  	  
  	  kmp_leg_L.kmp_insertPoint(via_point2);  // insert point into kmp
 
           ////// add point************ final status************////////	  
-	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.001;
+	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.002;
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-
-	  ////push recovery
-	  if (_bjx1<=_footstepsnumber-3)
+	  if (_bjx1<=4)
 	  {
 	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
 	  }
 	  else
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0001;
-	  }	    
+	    if (_bjx1<=10)
+	    {
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.006;
+	    }
+	    else
+	    {
+// 	      ///obstacle avoidance
+// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+// 	      ///obstacle avoidance_m
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
 
+	    }
+	  }
 	  via_point3(4) = 0;
 	  via_point3(5) = 0;
  	  via_point3(6) = 0.025;
@@ -2615,7 +2643,12 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	
 	_query_kmp(0) = t_des_k;
 	kmp_leg_L.kmp_prediction(_query_kmp,_mean_kmp);   ////////time& predictive values
-		
+	
+/*	if (t_des_k<0.01){
+	cout<<"_query_kmp:"<<endl<<trans(_query_kmp)<<endl;
+	cout<<"kmp:"<<endl<<trans(_mean_kmp)<<endl;
+	cout<<"error:"<<endl<<trans(_mean_kmp)-trans(via_point1(span(1,6)))<<endl;	
+	}*/		
 	_Lfootx_kmp(walktime) = _mean_kmp(0)+_footxyz_real(0,_bjx1-2);
 	_Lfooty_kmp(walktime) = _mean_kmp(1)+(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 	_Lfootz_kmp(walktime) = _mean_kmp(2)+_footxyz_real(2,_bjx1-2);
@@ -3197,6 +3230,10 @@ Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, E
 
 
 
+
+
+
+
 void MPCClass::File_wl_steptiming()
 {
         Eigen::MatrixXd CoM_ZMP_foot;
@@ -3286,7 +3323,5 @@ void MPCClass::File_wl_kmp()
 	
   
 }
-
-
 
 

@@ -104,13 +104,13 @@ MpcRTControlClass::MpcRTControlClass()
    
 
 //// parameters for local coordinate  
-  _ppx = 0.0001;   _pdx = 0.0001;     _pix = 0.000001;
-  _ppy = 0.0001;   _pdy = 0.0002;     _piy = 0.000005;
-  _ppz = 0.0001;   _pdz = 0.0001;     _piz = 0.000001; 
-   
-  _ppthetax= 0.0001; _pdthetax = 0.001; _pithetax =0.00001;
-  _ppthetay= 0.0001; _pdthetay = 0.001; _pithetax =0.00001; 
-  _ppthetaz= 0.0001; _pdthetaz = 0.001; _pithetaz =0.00001;     
+  _ppx = 0.01; _pdx = 0.001;     _pix = 0.0001;
+  _ppy = 0.02;  _pdy = 0.001;    _piy = 0.00001;
+  _ppz = 0.01;  _pdz = 0.001;   _piz = 0.000001; 
+  
+  _ppthetax= 0.01; _pdthetax =0; _pithetax =0.0001;
+  _ppthetay= 0.01; _pdthetay = 0;_pithetax =0.0001; 
+  _ppthetaz= 0.1; _pdthetaz = 0.001;_pithetaz =0.0001;     
   
   _error_com_position.setZero(3);
   _error_torso_angle.setZero(3);
@@ -136,6 +136,8 @@ void MpcRTControlClass::WalkingReactStepping()
 // 	cout << "walkdtime1:"<<_walkdtime1<<endl;
   
         clock_t t_start,t_finish;
+
+
 	
 	if(IsStartWalk)
 	{
@@ -399,12 +401,53 @@ void MpcRTControlClass::WalkingReactStepping()
 		    _estimated_state_global(18,_walkdtime1) = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	      
 		  }	 
 		}
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	      
+	      
 	      
 	      }
 	      else
 	      {
-		_t_walkdtime_restart_flag = walkdtime;	
+		_t_walkdtime_restart_flag = walkdtime;
+		
+/*		if (_walkdtime1 == _wal_max)
+		{
+		  _t_walkdtime_restart_flag = walkdtime;
+		//////=============////data-save==================================
+		  mpc.File_wl(); 
+		  
+		  std::string fileName2 = "C++_NMPC2018_3robut3_CoM feedback.txt" ;
+		  std::ofstream outfile2( fileName2.c_str() ) ; // file name and the operation type.        
+		  
+		  for(int i=0; i<_estimated_state_global.rows(); i++){
+		      for(int j=0; j<_estimated_state_global.cols(); j++){
+			    outfile2 << (double) _estimated_state_global(i,j) << " " ; 
+		      }
+		      outfile2 << std::endl;       // a   newline
+		  }
+		  outfile2.close();	
+		  
+		  
+		  std::string fileName1 = "C++_NMPC2018_3robut3_optimal_trajectory_interpo.txt" ;
+		  std::ofstream outfile1( fileName1.c_str() ) ; // file name and the operation type.    
+		  
+		  for(int i=0; i<_state_generate_interpo.rows(); i++){
+		      for(int j=0; j<_state_generate_interpo.cols(); j++){
+			    outfile1 << (double) _state_generate_interpo(i,j) << " " ; 
+		      }
+		      outfile1 << std::endl;       // a   newline
+		  }
+		  outfile1.close();  
+
+		DPRINTF("=========Stop walking!!!!!!!!!!!!!!!!. =============\n");
+		DPRINTF("=========Data saving!!!!!!!!!!!!!!!!. =============\n");		
+		}
+		else
+		{
+		  _t_walkdtime_restart_flag = walkdtime;
+// 		  cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;
+		}		
+	*/	
 	      }		      
 	    } 
 	    else
@@ -463,39 +506,95 @@ void MpcRTControlClass::WalkingReactStepping()
 		 Eigen::Vector3d FootR_in1, FootR_in2, FootR_in3;
 		 
 		if (_walkdtime1>=2){
-		  COM_in1 = _COM_IN.col(_walkdtime1-2);  COM_in2 = _COM_IN.col(_walkdtime1-1);  COM_in3 = _COM_IN.col(_walkdtime1);
-		  body_in1 = _body_IN.col(_walkdtime1-2);  body_in2 = _body_IN.col(_walkdtime1-1);  body_in3 = _body_IN.col(_walkdtime1);
-		  FootL_in1 = _FootL_IN.col(_walkdtime1-2); FootL_in2 = _FootL_IN.col(_walkdtime1-1);  FootL_in3 = _FootL_IN.col(_walkdtime1);			  
-		  FootR_in1 = _FootR_IN.col(_walkdtime1-2);  FootR_in2 = _FootR_IN.col(_walkdtime1-1);  FootR_in3 = _FootR_IN.col(_walkdtime1);		  		  
+		  COM_in1 = _COM_IN.col(_walkdtime1-2);
+		  COM_in2 = _COM_IN.col(_walkdtime1-1);
+		  COM_in3 = _COM_IN.col(_walkdtime1);
+
+		  body_in1 = _body_IN.col(_walkdtime1-2);
+		  body_in2 = _body_IN.col(_walkdtime1-1);
+		  body_in3 = _body_IN.col(_walkdtime1);
+
+		  FootL_in1 = _FootL_IN.col(_walkdtime1-2);
+		  FootL_in2 = _FootL_IN.col(_walkdtime1-1);
+		  FootL_in3 = _FootL_IN.col(_walkdtime1);	
+		  
+		  FootR_in1 = _FootR_IN.col(_walkdtime1-2);
+		  FootR_in2 = _FootR_IN.col(_walkdtime1-1);
+		  FootR_in3 = _FootR_IN.col(_walkdtime1);		  
+		  
 		}
 		else{
-		  COM_in1.setZero(); COM_in2.setZero();  COM_in3 = _COM_IN.col(_walkdtime1);			  
-		  body_in1.setZero();  body_in2.setZero();  body_in3 = _body_IN.col(_walkdtime1);			  
-		  FootL_in1.setZero(); FootL_in2.setZero();  FootL_in3 = _FootL_IN.col(_walkdtime1);		  
-		  FootR_in1.setZero(); FootR_in2.setZero();  FootR_in3 = _FootR_IN.col(_walkdtime1);			  
+		  COM_in1.setZero();
+		  COM_in2.setZero();
+		  COM_in3 = _COM_IN.col(_walkdtime1);	
+		  
+		  body_in1.setZero();
+		  body_in2.setZero();
+		  body_in3 = _body_IN.col(_walkdtime1);	
+		  
+		  FootL_in1.setZero();
+		  FootL_in2.setZero();
+		  FootL_in3 = _FootL_IN.col(_walkdtime1);
+		  
+		  FootR_in1.setZero();
+		  FootR_in2.setZero();
+		  FootR_in3 = _FootR_IN.col(_walkdtime1);			  
+		  
 		}
 		
-		PelvisPos = mpc.XGetSolution_CoM_position(_walkdtime1, _dtx,COM_in1,COM_in2,COM_in3);                        
+		PelvisPos = mpc.XGetSolution_CoM_position(_walkdtime1, _dtx,COM_in1,COM_in2,COM_in3);     
+                
+		
+		cout<<"PelvisPos_height:"<<PelvisPos(2)<<endl;
+		
+      
 		_torso_angle = mpc.XGetSolution_body_inclination(_walkdtime1, _dtx, body_in1,body_in2,body_in3);	  
+// 		LeftFootPos = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
+// 		RightFootPos = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
 	
 		/////*****************leg trajectory generated by KMP********************************/////
 		_kmp_leg_traje = mpc.XGetSolution_Foot_position_KMP(_walkdtime1,_dtx,_t_int);
 		
 		RightFootPos(0) = _kmp_leg_traje(0);  RightFootPos(1) = _kmp_leg_traje(1); RightFootPos(2) = _kmp_leg_traje(2);	
 		LeftFootPos(0) = _kmp_leg_traje(3);   LeftFootPos(1) = _kmp_leg_traje(4);  LeftFootPos(2) = _kmp_leg_traje(5);		
+                
+// 		cout<<LeftFootPos(1)<<endl;
+// 		cout<<RightFootPos(1)<<endl;
+		
 		// store
-		_COM_IN(0,_walkdtime1) = PelvisPos(0);_COM_IN(1,_walkdtime1) = PelvisPos(1);_COM_IN(2,_walkdtime1) = PelvisPos(2);		
-		_body_IN(0,_walkdtime1) = _torso_angle(0);_body_IN(1,_walkdtime1) = _torso_angle(1);_body_IN(2,_walkdtime1) = _torso_angle(2);	  		
-		_FootL_IN(0,_walkdtime1) = LeftFootPos(0);_FootL_IN(1,_walkdtime1) = LeftFootPos(1);_FootL_IN(2,_walkdtime1) = LeftFootPos(2);	
-		_FootR_IN(0,_walkdtime1) = RightFootPos(0);_FootR_IN(1,_walkdtime1) = RightFootPos(1);_FootR_IN(2,_walkdtime1) = RightFootPos(2);
+		_COM_IN(0,_walkdtime1) = PelvisPos(0);
+		_COM_IN(1,_walkdtime1) = PelvisPos(1);
+		_COM_IN(2,_walkdtime1) = PelvisPos(2);
+		
+      // 	  cout << "com state"<<endl;
+		
+		_body_IN(0,_walkdtime1) = _torso_angle(0);
+		_body_IN(1,_walkdtime1) = _torso_angle(1);
+		_body_IN(2,_walkdtime1) = _torso_angle(2);	  
+		
+		_FootL_IN(0,_walkdtime1) = LeftFootPos(0);
+		_FootL_IN(1,_walkdtime1) = LeftFootPos(1);
+		_FootL_IN(2,_walkdtime1) = LeftFootPos(2);	
+
+		_FootR_IN(0,_walkdtime1) = RightFootPos(0);
+		_FootR_IN(1,_walkdtime1) = RightFootPos(1);
+		_FootR_IN(2,_walkdtime1) = RightFootPos(2);
 		
 		///////////////////////////////////////////////////////////////////////
 		////// reference state storage
 		
-		_state_generate_interpo(0,_walkdtime1) = PelvisPos(0);_state_generate_interpo(1,_walkdtime1) = PelvisPos(1);_state_generate_interpo(2,_walkdtime1) = PelvisPos(2);
-		_state_generate_interpo(3,_walkdtime1) = _torso_angle(0);_state_generate_interpo(4,_walkdtime1) = _torso_angle(1);_state_generate_interpo(5,_walkdtime1) = _torso_angle(2);
-		_state_generate_interpo(6,_walkdtime1) = LeftFootPos(0);_state_generate_interpo(7,_walkdtime1) = LeftFootPos(1);_state_generate_interpo(8,_walkdtime1) = LeftFootPos(2);
-		_state_generate_interpo(9,_walkdtime1) = RightFootPos(0);_state_generate_interpo(10,_walkdtime1) = RightFootPos(1);_state_generate_interpo(11,_walkdtime1) = RightFootPos(2);	    
+		_state_generate_interpo(0,_walkdtime1) = PelvisPos(0);
+		_state_generate_interpo(1,_walkdtime1) = PelvisPos(1);
+		_state_generate_interpo(2,_walkdtime1) = PelvisPos(2);
+		_state_generate_interpo(3,_walkdtime1) = _torso_angle(0);
+		_state_generate_interpo(4,_walkdtime1) = _torso_angle(1);
+		_state_generate_interpo(5,_walkdtime1) = _torso_angle(2);
+		_state_generate_interpo(6,_walkdtime1) = LeftFootPos(0);
+		_state_generate_interpo(7,_walkdtime1) = LeftFootPos(1);
+		_state_generate_interpo(8,_walkdtime1) = LeftFootPos(2);
+		_state_generate_interpo(9,_walkdtime1) = RightFootPos(0);
+		_state_generate_interpo(10,_walkdtime1) = RightFootPos(1);
+		_state_generate_interpo(11,_walkdtime1) = RightFootPos(2);	    
 			
 		
 		////// simulator: CoM pelvis_position && velocity:
@@ -518,31 +617,45 @@ void MpcRTControlClass::WalkingReactStepping()
 		Eigen::Vector3d IMU_AngularVel = irobot.IMU_AngularVel;
 		Eigen::Vector3d IMU_AngularAcc = irobot.IMU_AngularAcc;
 
-		_estimated_state(0,0) = irobot.gcom[0];  _estimated_state(1,0) = irobot.gdcom[0];_estimated_state(2,0) = irobot.gddcom[0];	    
+		_estimated_state(0,0) = irobot.gcom[0];  
+		_estimated_state(1,0) = irobot.gdcom[0];
+		_estimated_state(2,0) = irobot.gddcom[0];	    
 		
-		_estimated_state(3,0) = irobot.gcom[1];_estimated_state(4,0) = irobot.gdcom[1];_estimated_state(5,0) = irobot.gddcom[1];	    
-		_estimated_state(6,0) = irobot.gcom[2];_estimated_state(7,0) = irobot.gdcom[2];_estimated_state(8,0) = irobot.gddcom[2];
+		_estimated_state(3,0) = irobot.gcom[1];
+		_estimated_state(4,0) = irobot.gdcom[1];
+		_estimated_state(5,0) = irobot.gddcom[1];	    
+		_estimated_state(6,0) = irobot.gcom[2];
+		_estimated_state(7,0) = irobot.gdcom[2];
+		_estimated_state(8,0) = irobot.gddcom[2];
 		
-		_estimated_state(9,0) = IMU_Euler[0];_estimated_state(10,0) = IMU_AngularVel[0];_estimated_state(11,0) = IMU_AngularAcc[0];
+		_estimated_state(9,0) = IMU_Euler[0];
+		_estimated_state(10,0) = IMU_AngularVel[0];
+		_estimated_state(11,0) = IMU_AngularAcc[0];
 		
-		_estimated_state(12,0) = IMU_Euler[1];_estimated_state(13,0) = IMU_AngularVel[1];_estimated_state(14,0) = IMU_AngularAcc[1];	    
+		_estimated_state(12,0) = IMU_Euler[1];
+		_estimated_state(13,0) = IMU_AngularVel[1];	   
+		_estimated_state(14,0) = IMU_AngularAcc[1];	    
 		
-		_estimated_state(15,0) = IMU_Euler[2];_estimated_state(16,0) = IMU_AngularVel[2];_estimated_state(17,0) = IMU_AngularAcc[2];		    
-				
+		_estimated_state(15,0) = IMU_Euler[2];
+		_estimated_state(16,0) = IMU_AngularVel[2];	   
+		_estimated_state(17,0) = IMU_AngularAcc[2];		    
+		
+		
 		/// CoM position: using the hip position  
     // 	    _estimated_state(3,0) = hip_pos[1];
     // 	    if (_walkdtime1>2)
     // 	    {
     // 	      _estimated_state(4,0) = (_estimated_state(3,0) - _estimated_state_global(3,_walkdtime1-1))/_dtx;
     // 	      _estimated_state(5,0) = (_estimated_state(4,0) - _estimated_state_global(4,_walkdtime1-1))/_dtx;
-    // 	    }	    
+    // 	    }
+    // discussion	    
 		_estimated_state(6,0) = hip_pos[2];	    	   
 		
 		
 // 	      /// PD control of the reference trajectory
 		if (_walkdtime1 >1)
 		{
-		  _error_com_position(0) += (_COM_IN(0,_walkdtime1-1)-_estimated_state(0,0));
+/*		  _error_com_position(0) += (_COM_IN(0,_walkdtime1-1)-_estimated_state(0,0));
 		  _error_com_position(1) += (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0));
 		  _error_com_position(2) += (_COM_IN(2,_walkdtime1-1)-_estimated_state(6,0));
 		  
@@ -550,25 +663,27 @@ void MpcRTControlClass::WalkingReactStepping()
 		  _error_torso_angle(1) += (_body_IN(1,_walkdtime1-1)-_estimated_state(12,0));
 		  _error_torso_angle(2) += (_body_IN(2,_walkdtime1-1)-_estimated_state(15,0));
 		  
-		  
+	*/	  
 //		  PelvisPos(0) += (_COM_IN(0,_walkdtime1-1)-_estimated_state(0,0)) * _ppx + (_COM_IN(0,_walkdtime1-1)-_estimated_state(0,0))/_dtx * _pdx + _error_com_position(0)*_pix;  
-		  PelvisPos(1) += (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0)) * _ppy + (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0))/_dtx * _pdy + _error_com_position(1)*_piy;  
+//		  PelvisPos(1) += (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0)) * _ppy + (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0))/_dtx * _pdy + _error_com_position(1)*_piy;  
 //		  PelvisPos(2) += (_COM_IN(2,_walkdtime1-1)-_estimated_state(6,0)) * _ppz + (_COM_IN(2,_walkdtime1-1)-_estimated_state(6,0))/_dtx * _pdz + _error_com_position(2)*_piz;
 		    
       /*            PelvisPos(0) += (_COM_IN(0,_walkdtime1-1)-_estimated_state(0,0)) * _ppx + (_COM_IN(0,_walkdtime1-1)-_estimated_state(0,0))/_dtx * _pdx *10 + _error_com_position(0)*_pix *10;  
 		  PelvisPos(1) += (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0)) * _ppy + (_COM_IN(1,_walkdtime1-1)-_estimated_state(3,0))/_dtx * _pdy + _error_com_position(1)*_piy;  
 		  PelvisPos(2) += (_COM_IN(2,_walkdtime1-1)-_estimated_state(6,0)) * _ppz + (_COM_IN(2,_walkdtime1-1)-_estimated_state(6,0))/_dtx * _pdz + _error_com_position(2)*_piz;*/	// hip_pos_test     
 
-		  _torso_angle(0) += (_body_IN(0,_walkdtime1-1)-_estimated_state(9,0))*_ppthetax + (_body_IN(0,_walkdtime1-1)-_estimated_state(9,0))/_dtx*_pdthetax  + _error_torso_angle(0)*_pithetax;  
+/*		  _torso_angle(0) += (_body_IN(0,_walkdtime1-1)-_estimated_state(9,0))*_ppthetax + (_body_IN(0,_walkdtime1-1)-_estimated_state(9,0))/_dtx*_pdthetax  + _error_torso_angle(0)*_pithetax;  
 		  _torso_angle(1) += (_body_IN(1,_walkdtime1-1)-_estimated_state(12,0))*_ppthetay + (_body_IN(1,_walkdtime1-1)-_estimated_state(12,0))/_dtx*_pdthetay+ _error_torso_angle(1)*_pithetay;  
 		  _torso_angle(2) += (_body_IN(2,_walkdtime1-1)-_estimated_state(15,0))*_ppthetaz + (_body_IN(2,_walkdtime1-1)-_estimated_state(15,0))/_dtx*_pdthetaz+ _error_torso_angle(2)*_pithetaz;  
 		  
-		  HipO_Turn = Rz(_torso_angle[1])*Ry(_torso_angle[1])*Rx(_torso_angle[0]);		    
+		  HipO_Turn = Rz(_torso_angle[1])*Ry(_torso_angle[1])*Rx(_torso_angle[0]);	*/	    
 		}
 // 		
 
 		
-		t_finish = clock();		
+		t_finish = clock();
+
+		
 		
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// actual state storagee
@@ -603,7 +718,10 @@ void MpcRTControlClass::WalkingReactStepping()
 		    _estimated_state_global(18,_walkdtime1) = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	      
 		  }	 
 		}
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	      
+	      
+	      
 	      }
 	      else  //walking beyond time counter
 	      {
@@ -651,6 +769,7 @@ void MpcRTControlClass::WalkingReactStepping()
 		
 		else
 		{
+
 		  int _t_walkdtime_restart_flagxxx = walkdtime;
 		  cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
 		}
