@@ -981,6 +981,8 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   //ZMP & ZMPv
   _px(0,i) = _footx_ref(_periond_i-1,0); _zmpvx(0,i) = 0; 
   _py(0,i) = _footy_ref(_periond_i-1,0); _zmpvy(0,i) = 0; 
+  _zmpx_real(0,i) = _px(0,i);
+  _zmpy_real(0,i) = _py(0,i);   
   
 //   cout<<"_py:"<<_py(0,i)<<endl;  
   
@@ -1212,7 +1214,10 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 //   the real-time calcuated next one step location: similar with the the footx_real calulated in the NMPC ( _footx_real.row(_bjxx) = _V_ini.row(5*_nh);):
   _footx_ref(_periond_i)=_footx_ref(_periond_i-1)+_SS1*_vari_ini;
   _footy_ref(_periond_i)=_footy_ref(_periond_i-1)+_SS2*_vari_ini;    
-
+  _footx_ref(_periond_i+1)=_footx_ref(_periond_i)+_SS5*_vari_ini;
+  _footy_ref(_periond_i+1)=_footy_ref(_periond_i)+_SS6*_vari_ini;   
+  
+  
   _comvx_endref= _Wn*_COMx_is(_periond_i-1)*_SS4*_vari_ini + _COMvx_is(_periond_i-1)*_SS3*_vari_ini;
   _comvy_endref= _Wn*_COMy_is(_periond_i-1)*_SS4*_vari_ini + _COMvy_is(_periond_i-1)*_SS3*_vari_ini;     
       
@@ -1304,7 +1309,25 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   
   _footxyz_real.row(0) = _footx_ref.transpose();
   _footxyz_real.row(1) = _footy_ref.transpose();  
-  _footxyz_real.row(2) = _footz_ref.transpose();    
+  _footxyz_real.row(2) = _footz_ref.transpose(); 
+  
+  ///////// real_zmpx: zmpy generation during the next double support phase: 
+  int t_d_period = 0;
+  
+  _nTdx = round(_td(_bjx1-1)/_dt)+2;  
+  for (int jxx=2; jxx <=_nTdx; jxx++)
+  {
+    Indexfind(_t_f(jxx-1),xyz1);                
+    t_d_period = _j_period+1;
+    _j_period = 0;   
+    _zmpx_real(0,i+jxx-1) = _footx_ref(t_d_period-1,0);
+    _zmpy_real(0,i+jxx-1) = _footy_ref(t_d_period-1,0); 
+   
+  }
+  
+
+  
+  
   
   
 }
@@ -3204,13 +3227,6 @@ Eigen::Matrix<double, 7, 7> MPCClass::solve_AAA_inv_x(Eigen::Vector3d t_plan)
 void MPCClass::Zmp_distributor(int walktime, double dt_sample)
 {
 // //// judge if stop  
-//   if(_stopwalking)  
-//   {  
-//     for (int i_t = _bjx1+1; i_t < _footstepsnumber; i_t++) {	  
-//       _lift_height_ref(i_t) = 0;  
-//     }	  
-// 
-//   }  
   
   int j_index = floor(walktime / (_dt / dt_sample));
   
@@ -3388,16 +3404,6 @@ void MPCClass::Zmp_distributor(int walktime, double dt_sample)
 void MPCClass::zmp_interpolation(int t_int,int walktime, double dt_sample)
 {
   //// calculate by the nonlinear model:
-//   if (t_int>=1)
-//   {
-//     _ZMPxy_realx(0) = _comxyzx(0) - (_comxyzx(2) - _Zsc(t_int-1))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(0) - _j_ini * _thetaaxyx(1)/(_mass * (_ggg(0) + _comaxyzx(2)));
-//     _ZMPxy_realx(1) = _comxyzx(1) - (_comxyzx(2) - _Zsc(t_int-1))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(1) + _j_ini * _thetaaxyx(0)/(_mass * (_ggg(0) + _comaxyzx(2)));     
-//   }
-//   else
-//   {
-//     _ZMPxy_realx(0) = _comxyzx(0) - (_comxyzx(2))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(0) - _j_ini * _thetaaxyx(1)/(_mass * (_ggg(0) + _comaxyzx(2)));
-//     _ZMPxy_realx(1) = _comxyzx(1) - (_comxyzx(2))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(1) + _j_ini * _thetaaxyx(0)/(_mass * (_ggg(0) + _comaxyzx(2)));     
-//   }
   
   //// linear interpolation of ZMP reference:  
   double t_des = walktime * dt_sample-t_int*_dt;
