@@ -1,12 +1,5 @@
 /*****************************************************************************
 XBotRTControlClass.cpp
-
-Description:    source file of XBotRTControlClass
-
-@Version:   1.0
-@Author:   
-@Release:   2014/10/31
-@Update:    Thu 11 May 2017 04:30:07 PM CEST
 *****************************************************************************/
 #include "RTControl/XBotRTControlClass.h"
 #include <sys/types.h>
@@ -953,18 +946,27 @@ void XBotRTControlClass::SolveIK()
 	HipPos += PelvisPos;
 	HipPos += deltaHip;
 	HipPos += WaistComp;
+	
+	LeftFootPos.setZero();
+	LeftFootPos += LeftFootPosx;
+	LeftFootPos(2) += det_footz_lr(0);
+	
+	RightFootPos.setZero();
+	RightFootPos += RightFootPosx;
+	RightFootPos(2) += det_footz_lr(1);			
+	
+	
 
 	// DPRINTF("deltaHip x: %.3f,\ty: %.3f,\tz: %.3f\n", deltaHip[0], deltaHip[1], deltaHip[2]);
 
-	double yaw = 0.0;
-	Eigen::Matrix3d PelvisYaw = Rz(yaw); // Pelvis Yaw orientation
 
 	Eigen::Matrix3d HipO_Left_Ref = HipO_Left_comp;
 	Eigen::Matrix3d HipO_Right_Ref = HipO_Right_comp;
 
-	HipO_Left = HipO_Turn * PelvisYaw * HipO_Left_Ref;
-	HipO_Right = HipO_Turn * PelvisYaw * HipO_Right_Ref;
-	WaistO = HipO_Turn * PelvisYaw;
+	double yaw = 0.0;
+	HipO_Left = HipO_Turn * HipO_Left_Ref;
+	HipO_Right = HipO_Turn * HipO_Right_Ref;
+	WaistO = HipO_Turn;
 
 	Eigen::Vector3d LeftAnklePos = LeftFootPos;
 	LeftAnklePos += deltaFtPos_l;
@@ -994,11 +996,6 @@ void XBotRTControlClass::SolveIK()
 
 	Eigen::Matrix3d FinalLeftFootOri = LeftFootO * deltaFtOri_left;
 	Eigen::Matrix3d FinalRightFootOri = RightFootO * deltaFtOri_right;
-	
-        
-// 	DPRINTF("HipPos: %.3f\t %.3f\t %.3f\n", HipPos[0], HipPos[1], HipPos[2]);
-// 	DPRINTF("LeftFootPos: %.3f\t %.3f\t %.3f\n", LeftFootPos[0], LeftFootPos[1], LeftFootPos[2]);
-// 	DPRINTF("RightFootPos: %.3f\t %.3f\t %.3f\n", RightFootPos[0], RightFootPos[1], RightFootPos[2]);
 
 	if (RobotPara().name == "walkman") {
 	        Eigen::Vector6d qL, qR;

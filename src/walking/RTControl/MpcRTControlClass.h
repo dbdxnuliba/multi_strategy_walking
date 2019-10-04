@@ -85,7 +85,7 @@ private:
 	virtual void EnableWalkingReact() final;
 
 	virtual void InternalLoggerLoop() final;
-	protected:
+protected:
 	int t_walkdtime_flag;
 	int dt_sample;
 	
@@ -99,7 +99,7 @@ private:
 	Vector6d _kmp_leg_traje;
 	
 	
-	
+	Vector3d _F_r_mpc, _F_l_mpc,_M_r_mpc,_M_l_mpc;	
 	
 	
 };
