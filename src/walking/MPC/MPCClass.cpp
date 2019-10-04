@@ -27,7 +27,13 @@ MPCClass::MPCClass()                    ///declaration function
 	, _robot_name("")
 	, _robot_mass(0.0)
 	, _lift_height(0.0)
-	, _method_flag(0)	
+	, _method_flag(0)
+	,_n_end_walking(1)
+	,_j_period(0)
+	,_F_R(0,0,0)
+	,_F_L(0,0,0)
+	,_M_R(0,0,0)
+	,_M_L(0,0,0)		
 {
   
 }
@@ -403,7 +409,9 @@ void MPCClass::Initialize()
 	xyz0 = -1; //flag for find function 
 	xyz1 = 0;  
 	xyz2 = 1;
+	_j_period = 0; // the number for step cycle indefind
 		
+	
 	_periond_i = 0;  /// period number falls into which cycle 
 	_ki = 0;
 	_k_yu = 0;
@@ -510,7 +518,12 @@ void MPCClass::Initialize()
 	//////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         _t_f.setZero();	
 	_bjx1 = 0;
+	_bjx2 = 0;
+        _mx = 0;	
+	
 	_bjxx = 0;
+	
+	
 	_footxyz_real.setZero();
 	
 	
@@ -900,7 +913,26 @@ void MPCClass::Initialize()
 	}
 
    
-  
+	_nTdx =0;
+	
+	//////polynomial intepolation for lower level interpolation
+	_AAA_inv.setZero();
+	
+	
+	_j_count = 0;
+	
+	
+	/////////////for ZMP distribution
+	_F_R(2) = _F_L(2) = 0.5 * _mass * RobotParaClass::G();
+	_Co_L.setZero(); _Co_R.setZero();
+	
+	_comxyzx.setZero(); _comvxyzx.setZero(); _comaxyzx.setZero(); 
+	_thetaxyx.setZero(); _thetavxyx.setZero(); _thetaaxyx.setZero();
+	_Lfootxyzx.setZero(); _Rfootxyzx.setZero();
+	_ZMPxy_realx.setZero();
+	
+	_comxyzx(2) = RobotParaClass::Z_C();		
+		
   
 }
 
@@ -1834,41 +1866,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	}
 	else
 	{
-	  Eigen::Matrix<double,7,7> AAA;
-	  AAA.setZero();
-	  Eigen::Matrix<double, 1, 7> aaaa;
-	  aaaa.setZero();
-	  
-	  aaaa(0) = 6*pow(t_plan(0), 5);   aaaa(1) =  5*pow(t_plan(0), 4);  aaaa(2) =  4*pow(t_plan(0), 3);   aaaa(3) =  3*pow(t_plan(0), 2);
-	  aaaa(4) = 2*pow(t_plan(0), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-	  AAA.row(0) = aaaa;
-	  
-	  aaaa(0) = 30*pow(t_plan(0), 4);  aaaa(1) =  20*pow(t_plan(0), 3);  aaaa(2) =  12*pow(t_plan(0), 2);   aaaa(3) =  6*pow(t_plan(0), 1);
-	  aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-	  AAA.row(1) = aaaa;
-	  
-	  aaaa(0) = pow(t_plan(0), 6);     aaaa(1) =  pow(t_plan(0), 5);     aaaa(2) =  pow(t_plan(0), 4);   aaaa(3) =  pow(t_plan(0), 3);
-	  aaaa(4) = pow(t_plan(0), 2);     aaaa(5) = pow(t_plan(0), 1);      aaaa(6) =  1;	  
-	  AAA.row(2) = aaaa;
-	  
-	  aaaa(0) = pow(t_plan(1), 6);     aaaa(1) =  pow(t_plan(1), 5);     aaaa(2) =  pow(t_plan(1), 4);   aaaa(3) =  pow(t_plan(1), 3);
-	  aaaa(4) = pow(t_plan(1), 2);     aaaa(5) = pow(t_plan(1), 1);      aaaa(6) =  1;
-	  AAA.row(3) = aaaa;
-	  
-	  aaaa(0) = pow(t_plan(2), 6);     aaaa(1) =  pow(t_plan(2), 5);     aaaa(2) =  pow(t_plan(2), 4);   aaaa(3) =  pow(t_plan(2), 3);
-	  aaaa(4) = pow(t_plan(2), 2);     aaaa(5) = pow(t_plan(2), 1);      aaaa(6) =  1;
-	  AAA.row(4) = aaaa;	  
-	  
-	  aaaa(0) = 6*pow(t_plan(2), 5);   aaaa(1) =  5*pow(t_plan(2), 4);  aaaa(2) =  4*pow(t_plan(2), 3);   aaaa(3) =  3*pow(t_plan(2), 2);
-	  aaaa(4) = 2*pow(t_plan(2), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-	  AAA.row(5) = aaaa;
-	  
-	  aaaa(0) = 30*pow(t_plan(2), 4);  aaaa(1) =  20*pow(t_plan(2), 3);  aaaa(2) =  12*pow(t_plan(2), 2);   aaaa(3) =  6*pow(t_plan(2), 1);
-	  aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-	  AAA.row(6) = aaaa;
-	  
-	  Eigen::Matrix<double,7,7> AAA_inv;
-	  AAA_inv = AAA.inverse();	  
+	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);	  
 	  
 	  
           
@@ -2000,42 +1998,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	}
 	else
 	{
-	  Eigen::Matrix<double, 7, 7> AAA;
-	  AAA.setZero();
-	  Eigen::Matrix<double, 1, 7> aaaa;
-	  aaaa.setZero();
-	  
-	  aaaa(0) = 6*pow(t_plan(0), 5);   aaaa(1) =  5*pow(t_plan(0), 4);  aaaa(2) =  4*pow(t_plan(0), 3);   aaaa(3) =  3*pow(t_plan(0), 2);
-	  aaaa(4) = 2*pow(t_plan(0), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-	  AAA.row(0) = aaaa;
-	  
-	  aaaa(0) = 30*pow(t_plan(0), 4);  aaaa(1) =  20*pow(t_plan(0), 3);  aaaa(2) =  12*pow(t_plan(0), 2);   aaaa(3) =  6*pow(t_plan(0), 1);
-	  aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-	  AAA.row(1) = aaaa;
-	  
-	  aaaa(0) = pow(t_plan(0), 6);     aaaa(1) =  pow(t_plan(0), 5);     aaaa(2) =  pow(t_plan(0), 4);   aaaa(3) =  pow(t_plan(0), 3);
-	  aaaa(4) = pow(t_plan(0), 2);     aaaa(5) = pow(t_plan(0), 1);      aaaa(6) =  1;	  
-	  AAA.row(2) = aaaa;
-	  
-	  aaaa(0) = pow(t_plan(1), 6);     aaaa(1) =  pow(t_plan(1), 5);     aaaa(2) =  pow(t_plan(1), 4);   aaaa(3) =  pow(t_plan(1), 3);
-	  aaaa(4) = pow(t_plan(1), 2);     aaaa(5) = pow(t_plan(1), 1);      aaaa(6) =  1;
-	  AAA.row(3) = aaaa;
-	  
-	  aaaa(0) = pow(t_plan(2), 6);     aaaa(1) =  pow(t_plan(2), 5);     aaaa(2) =  pow(t_plan(2), 4);   aaaa(3) =  pow(t_plan(2), 3);
-	  aaaa(4) = pow(t_plan(2), 2);     aaaa(5) = pow(t_plan(2), 1);      aaaa(6) =  1;
-	  AAA.row(4) = aaaa;	  
-	  
-	  aaaa(0) = 6*pow(t_plan(2), 5);   aaaa(1) =  5*pow(t_plan(2), 4);  aaaa(2) =  4*pow(t_plan(2), 3);   aaaa(3) =  3*pow(t_plan(2), 2);
-	  aaaa(4) = 2*pow(t_plan(2), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-	  AAA.row(5) = aaaa;
-	  
-	  aaaa(0) = 30*pow(t_plan(2), 4);  aaaa(1) =  20*pow(t_plan(2), 3);  aaaa(2) =  12*pow(t_plan(2), 2);   aaaa(3) =  6*pow(t_plan(2), 1);
-	  aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-	  AAA.row(6) = aaaa;
-	  
-	  Eigen::Matrix<double,7,7> AAA_inv;
-// 	  AAA_inv.setZero(); 
-	  AAA_inv = AAA.inverse();          
+	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);          
 	 	  
 	  Eigen::Matrix<double, 1, 7> t_a_plan;
 	  t_a_plan.setZero();
@@ -2158,41 +2121,7 @@ void MPCClass::CoM_height_solve(int j_index, bool _stopwalking)
       
 
       
-      Eigen::Matrix<double, 7, 7> AAA;
-      AAA.setZero();
-      Eigen::Matrix<double, 1, 7> aaaa;
-      aaaa.setZero();
-      
-      aaaa(0) = 6*pow(t_plan(0), 5);   aaaa(1) =  5*pow(t_plan(0), 4);  aaaa(2) =  4*pow(t_plan(0), 3);   aaaa(3) =  3*pow(t_plan(0), 2);
-      aaaa(4) = 2*pow(t_plan(0), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-      AAA.row(0) = aaaa;
-      
-      aaaa(0) = 30*pow(t_plan(0), 4);  aaaa(1) =  20*pow(t_plan(0), 3);  aaaa(2) =  12*pow(t_plan(0), 2);   aaaa(3) =  6*pow(t_plan(0), 1);
-      aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-      AAA.row(1) = aaaa;
-      
-      aaaa(0) = pow(t_plan(0), 6);     aaaa(1) =  pow(t_plan(0), 5);     aaaa(2) =  pow(t_plan(0), 4);   aaaa(3) =  pow(t_plan(0), 3);
-      aaaa(4) = pow(t_plan(0), 2);     aaaa(5) = pow(t_plan(0), 1);      aaaa(6) =  1;	  
-      AAA.row(2) = aaaa;
-      
-      aaaa(0) = pow(t_plan(1), 6);     aaaa(1) =  pow(t_plan(1), 5);     aaaa(2) =  pow(t_plan(1), 4);   aaaa(3) =  pow(t_plan(1), 3);
-      aaaa(4) = pow(t_plan(1), 2);     aaaa(5) = pow(t_plan(1), 1);      aaaa(6) =  1;
-      AAA.row(3) = aaaa;
-      
-      aaaa(0) = pow(t_plan(2), 6);     aaaa(1) =  pow(t_plan(2), 5);     aaaa(2) =  pow(t_plan(2), 4);   aaaa(3) =  pow(t_plan(2), 3);
-      aaaa(4) = pow(t_plan(2), 2);     aaaa(5) = pow(t_plan(2), 1);      aaaa(6) =  1;
-      AAA.row(4) = aaaa;	  
-      
-      aaaa(0) = 6*pow(t_plan(2), 5);   aaaa(1) =  5*pow(t_plan(2), 4);  aaaa(2) =  4*pow(t_plan(2), 3);   aaaa(3) =  3*pow(t_plan(2), 2);
-      aaaa(4) = 2*pow(t_plan(2), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-      AAA.row(5) = aaaa;
-      
-      aaaa(0) = 30*pow(t_plan(2), 4);  aaaa(1) =  20*pow(t_plan(2), 3);  aaaa(2) =  12*pow(t_plan(2), 2);   aaaa(3) =  6*pow(t_plan(2), 1);
-      aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-      AAA.row(6) = aaaa;
-      
-      Eigen::Matrix<double,7,7> AAA_inv;
-      AAA_inv = AAA.inverse();          
+      Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);         
 	      
       Eigen::Matrix<double, 1, 7> t_a_plan;
       t_a_plan.setZero();
@@ -2269,42 +2198,8 @@ Vector3d MPCClass::X_CoM_position_squat(int walktime, double dt_sample)
 
   if (t_des<=_height_squat_time)
   {
-    Eigen::Matrix<double,7,7> AAA;
-    AAA.setZero();
-    Eigen::Matrix<double, 1, 7> aaaa;
-    aaaa.setZero();
-
-    aaaa(0) = 6*pow(t_plan(0), 5);   aaaa(1) =  5*pow(t_plan(0), 4);  aaaa(2) =  4*pow(t_plan(0), 3);   aaaa(3) =  3*pow(t_plan(0), 2);
-    aaaa(4) = 2*pow(t_plan(0), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-    AAA.row(0) = aaaa;
-
-    aaaa(0) = 30*pow(t_plan(0), 4);  aaaa(1) =  20*pow(t_plan(0), 3);  aaaa(2) =  12*pow(t_plan(0), 2);   aaaa(3) =  6*pow(t_plan(0), 1);
-    aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-    AAA.row(1) = aaaa;
-
-    aaaa(0) = pow(t_plan(0), 6);     aaaa(1) =  pow(t_plan(0), 5);     aaaa(2) =  pow(t_plan(0), 4);   aaaa(3) =  pow(t_plan(0), 3);
-    aaaa(4) = pow(t_plan(0), 2);     aaaa(5) = pow(t_plan(0), 1);      aaaa(6) =  1;	  
-    AAA.row(2) = aaaa;
-
-    aaaa(0) = pow(t_plan(1), 6);     aaaa(1) =  pow(t_plan(1), 5);     aaaa(2) =  pow(t_plan(1), 4);   aaaa(3) =  pow(t_plan(1), 3);
-    aaaa(4) = pow(t_plan(1), 2);     aaaa(5) = pow(t_plan(1), 1);      aaaa(6) =  1;
-    AAA.row(3) = aaaa;
-
-    aaaa(0) = pow(t_plan(2), 6);     aaaa(1) =  pow(t_plan(2), 5);     aaaa(2) =  pow(t_plan(2), 4);   aaaa(3) =  pow(t_plan(2), 3);
-    aaaa(4) = pow(t_plan(2), 2);     aaaa(5) = pow(t_plan(2), 1);      aaaa(6) =  1;
-    AAA.row(4) = aaaa;	  
-
-    aaaa(0) = 6*pow(t_plan(2), 5);   aaaa(1) =  5*pow(t_plan(2), 4);  aaaa(2) =  4*pow(t_plan(2), 3);   aaaa(3) =  3*pow(t_plan(2), 2);
-    aaaa(4) = 2*pow(t_plan(2), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
-    AAA.row(5) = aaaa;
-
-    aaaa(0) = 30*pow(t_plan(2), 4);  aaaa(1) =  20*pow(t_plan(2), 3);  aaaa(2) =  12*pow(t_plan(2), 2);   aaaa(3) =  6*pow(t_plan(2), 1);
-    aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
-    AAA.row(6) = aaaa;
-
-    Eigen::Matrix<double,7,7> AAA_inv;
-    // 	  AAA_inv.setZero(); 
-    AAA_inv = AAA.inverse();
+    
+    Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);
 	    
     Eigen::Matrix<double, 1, 7> t_a_plan;
     t_a_plan.setZero();
@@ -2370,7 +2265,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
       }
       else
       {
-      _lift_height_ref(i_t) = 0;  	
+      _lift_height_ref(i_t) = 0.01;  	
       }
 
     }	  
@@ -2474,25 +2369,25 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  kmp_leg_R.kmp_insertPoint(via_point2);  // insert point into kmp
 
 	  ////// add point************ final status************////////	  
-	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.002;
+	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 // 	  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0030;
 	  if (_bjx1<=4)
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
 	  }
 	  else
 	  {
-	    if (_bjx1<=10)
+	    if (_bjx1<=15)
 	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.005;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	    }
 	    else
 	    {
 // 	      ///obstacle avoidance
 // 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
 // 	      ///obstacle avoidance_m
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.006;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
 	    }
 	  }
 	  via_point3(4) = 0;
@@ -2618,24 +2513,24 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
  	  kmp_leg_L.kmp_insertPoint(via_point2);  // insert point into kmp
 
           ////// add point************ final status************////////	  
-	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.002;
+	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 	  if (_bjx1<=4)
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
 	  }
 	  else
 	  {
-	    if (_bjx1<=10)
+	    if (_bjx1<=15)
 	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.006;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	    }
 	    else
 	    {
 // 	      ///obstacle avoidance
 // 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
 // 	      ///obstacle avoidance_m
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
 
 	    }
 	  }
@@ -2713,7 +2608,16 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
   com_inte(4) = _Lfooty_kmp(walktime);
   com_inte(5) = _Lfootz_kmp(walktime);
 
+  _Lfootxyzx(0) = com_inte(3);  
+  _Lfootxyzx(1) = com_inte(4);   
+  _Lfootxyzx(2) = com_inte(5);   
+  _Rfootxyzx(0) = com_inte(0);  
+  _Rfootxyzx(1) = com_inte(1);   
+  _Rfootxyzx(2) = com_inte(2);   
+  
   return com_inte;
+  
+
 
 }
 
@@ -2758,13 +2662,10 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 	
 	if (walktime>=2)
 	{
-	  int t_int; 
-// 	  t_int = floor(walktime / (_dt / dt_sample) );
-	  t_int = floor(walktime* dt_sample/ _dt);	  
+	  int t_int = floor(walktime* dt_sample/ _dt);	  
 //          cout <<"T_int_inter:"<<t_int<<endl;
 	  ///// chage to be relative time
-	  double t_cur;
-	  t_cur = walktime * dt_sample ;
+	  double t_cur = walktime * dt_sample ;
 	  
 
 	  Eigen::Matrix<double, 4, 1> t_plan;
@@ -2774,44 +2675,8 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
 	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
           
-
-
-	  Eigen::Matrix4d AAA_inv;
-	  
-	  double abx1, abx2, abx3, abx4;
-	  abx1 = ((t_plan(0) - t_plan(1))*pow(t_plan(0) - t_plan(2), 2));
-	  abx2 = ((t_plan(0) - t_plan(1))*pow(t_plan(1) - t_plan(2), 2));
-	  abx3 =(pow(t_plan(0) - t_plan(2), 2)*pow(t_plan(1) - t_plan(2), 2));
-	  abx4 = ((t_plan(0) - t_plan(2))*(t_plan(1) - t_plan(2)));
-	  
-
-	  AAA_inv(0,0) = 1/ abx1;
-	  AAA_inv(0,1) =  -1/ abx2;
-	  AAA_inv(0,2) = (t_plan(0) + t_plan(1) - 2*t_plan(2))/ abx3;
-	  AAA_inv(0,3) = 1/ abx4;
-	  
-	  AAA_inv(1,0) = -(t_plan(1) + 2*t_plan(2))/ abx1;
-	  AAA_inv(1,1) = (t_plan(0) + 2*t_plan(2))/ abx2;
-	  AAA_inv(1,2) = -(pow(t_plan(0), 2) + t_plan(0)*t_plan(1) + pow(t_plan(1), 2) - 3*pow(t_plan(2), 2))/ abx3;
-	  AAA_inv(1,3) = -(t_plan(0) + t_plan(1) + t_plan(2))/ abx4;
-	  
-	  AAA_inv(2,0) = (t_plan(2)*(2*t_plan(1) + t_plan(2)))/ abx1;
-	  AAA_inv(2,1) = -(t_plan(2)*(2*t_plan(0) + t_plan(2)))/ abx2;
-	  AAA_inv(2,2) = (t_plan(2)*(2*pow(t_plan(0), 2) + 2*t_plan(0)*t_plan(1) - 3*t_plan(2)*t_plan(0) + 2*pow(t_plan(1), 2) - 3*t_plan(2)*t_plan(1)))/ abx3;
-	  AAA_inv(2,3) = (t_plan(0)*t_plan(1) + t_plan(0)*t_plan(2) + t_plan(1)*t_plan(2))/ abx4;
-	  
-	  AAA_inv(3,0) = -(t_plan(1)*pow(t_plan(2), 2))/ abx1;
-	  AAA_inv(3,1) = (t_plan(0)*pow(t_plan(2), 2))/ abx2;
-	  AAA_inv(3,2) = (t_plan(0)*t_plan(1)*(t_plan(0)*t_plan(1) - 2*t_plan(0)*t_plan(2) - 2*t_plan(1)*t_plan(2) + 3*pow(t_plan(2), 2)))/ abx3;
-	  AAA_inv(3,3) = -(t_plan(0)*t_plan(1)*t_plan(2))/ abx4;
-	  	  
-	  	  
-/*	  cout << "AAA_inv:"<<endl<<AAA_inv<<endl;*/
-	  
-
-	
-	  
-	  
+	  solve_AAA_inv(t_plan);
+	   
 	  Eigen::Matrix<double, 1, 4> t_a_plan;
 	  t_a_plan.setZero();
 	  t_a_plan(0) = pow(t_cur-( t_cur - 2*dt_sample), 3);   
@@ -2820,46 +2685,62 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 	  t_a_plan(3) = pow(t_cur-( t_cur - 2*dt_sample), 0); 
 
 
+	  Eigen::Matrix<double, 1, 4> t_a_planv;
+	  t_a_planv.setZero();
+	  t_a_planv(0) = 3*pow(2*dt_sample, 2);   t_a_planv(1) = 2*pow(2*dt_sample, 1);   
+	  t_a_planv(2) = 1;   t_a_planv(3) = 0; 	  
 	  
-	  // COM&&foot trajectory interpolation
-	  
-	  Eigen::Vector3d  x10;
-	  Eigen::Vector3d  x11;
-	  Eigen::Vector3d  x12;
-// 	  Eigen::Vector3d  x13;
-
-
-/*	  x10(0) = COM_IN(0,walktime-2); x10(1) = COM_IN(1,walktime-2); x10(2) = COM_IN(2,walktime-2);
-	  x11(0) = COM_IN(0,walktime-1); x11(1) = COM_IN(1,walktime-1); x11(2) = COM_IN(2,walktime-1);	 */ 
-	  x10 = body_in1; 
-	  x11 = body_in2;  
-	  x12 = _CoM_position_optimal.col(t_int);
-// 	  x13 = _CoM_position_optimal.col(t_int+1);
-	  
-	  
+	  // COM&&foot trajectory interpolation	  	  
 	  Eigen::Matrix<double, 4, 1>  temp;
 	  temp.setZero();
-	  temp(0) = x10(0); temp(1) = x11(0); temp(2) = x12(0); temp(3) = _comvx(t_int);	  
-	  com_inte(0) = t_a_plan * (AAA_inv)*temp;
-	  temp(0) = x10(1); temp(1) = x11(1); temp(2) = x12(1); temp(3) = _comvy(t_int);	  
-	  com_inte(1) = t_a_plan * (AAA_inv)*temp;
-	  temp(0) = x10(2); temp(1) = x11(2); temp(2) = x12(2); temp(3) = _comvz(t_int);	  
-	  com_inte(2) = t_a_plan *(AAA_inv)*temp;
-
+	  temp(0) = body_in1(0); temp(1) = body_in2(0); temp(2) =  _comx(t_int); temp(3) = _comvx(t_int);	  
+	  com_inte(0) = t_a_plan * (_AAA_inv)*temp;
+	  _comxyzx(0) = com_inte(0);
+	  _comvxyzx(0) = t_a_planv * (_AAA_inv)*temp;	  
+	  
+	  
+	  temp(0) = body_in1(1); temp(1) = body_in2(1); temp(2) =  _comy(t_int); temp(3) = _comvy(t_int);	  
+	  com_inte(1) = t_a_plan * (_AAA_inv)*temp;
+	  _comxyzx(1) = com_inte(1);
+	  _comvxyzx(1) = t_a_planv * (_AAA_inv)*temp;	  
+	  
+	  
+	  temp(0) = body_in1(2); temp(1) = body_in2(2); temp(2) =  _comz(t_int); temp(3) = _comvz(t_int);	  
+	  com_inte(2) = t_a_plan *(_AAA_inv)*temp;
+	  _comxyzx(2) = com_inte(2);
+	  _comvxyzx(2) = t_a_planv * (_AAA_inv)*temp;
+	  
+	  /////be careful, the polynomial may cause overfitting
+	  double t_des = t_cur-t_int*_dt;
+	  if (t_des<=0){
+	    t_des =0.00001;
+	  }
+	    
+	  if (t_int>=1)
+	  {
+	    _comaxyzx(0) = (_comax(t_int)-_comax(t_int-1))/_dt*t_des+_comax(t_int-1);
+	    _comaxyzx(1) = (_comay(t_int)-_comay(t_int-1))/_dt*t_des+_comay(t_int-1);
+	    _comaxyzx(2) = (_comaz(t_int)-_comaz(t_int-1))/_dt*t_des+_comaz(t_int-1);
+	  }
+	  else
+	  {
+	    _comaxyzx(0) = (_comax(t_int)-0)/_dt*t_des+0;
+	    _comaxyzx(1) = (_comay(t_int)-0)/_dt*t_des+0;
+	    _comaxyzx(2) = (_comaz(t_int)-0)/_dt*t_des+0;	    
+	  } 	  
   
 	  
 	  
 	}
 	else
 	{
-	  com_inte(0) = body_in3(0);	  
-	  com_inte(1) = body_in3(1);	  	  
-	  com_inte(2) = body_in3(2);	
+	  com_inte = body_in3;	  
+	  _comxyzx = com_inte;	  
 	  
 	}
 
  	return com_inte;
-	cout<<"com_height"<< com_inte(2)<<endl;
+	//cout<<"com_height"<< com_inte(2)<<endl;
 	
 }
 
@@ -2869,120 +2750,76 @@ Vector3d MPCClass::XGetSolution_body_inclination(int walktime, double dt_sample,
         _torso_angle_optimal.row(0) = _thetax;
 	_torso_angle_optimal.row(1) = _thetay;
 	_torso_angle_optimal.row(2) = _thetaz;
-	
-	
-	Vector3d com_inte;	
-	
+		
+	Vector3d com_inte(0,0,0);		
 	if (walktime>=2)
 	{
-	  int t_int; 
-	  t_int = floor(walktime* dt_sample/ _dt  );
-
-	  
-	  double t_cur;
-	  t_cur = walktime * dt_sample;
-	  
-
-	  
-	  Eigen::Matrix<double, 4, 1> t_plan;
-	  t_plan.setZero();
-	  t_plan(0) = t_cur - 2*dt_sample-( t_cur - 2*dt_sample);
-	  t_plan(1) = t_cur - 1*dt_sample-( t_cur - 2*dt_sample);
-	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
-	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
-
-// 	  Eigen::MatrixXd AAA;	
-// 
-// 	  AAA.setZero(4,4);	
-// 	  AAA(0,0) = pow(t_plan(0), 3); AAA(0,1) = pow(t_plan(0), 2); AAA(0,2) = pow(t_plan(0), 1); AAA(0,3) = pow(t_plan(0), 0); 
-// 	  AAA(1,0) = pow(t_plan(1), 3); AAA(1,1) = pow(t_plan(1), 2); AAA(1,2) = pow(t_plan(1), 1); AAA(1,3) = pow(t_plan(0), 0); 
-// 	  AAA(2,0) = pow(t_plan(2), 3); AAA(2,1) = pow(t_plan(2), 2); AAA(2,2) = pow(t_plan(2), 1); AAA(2,3) = pow(t_plan(0), 0); 
-// 	  AAA(3,0) = 3*pow(t_plan(2), 2); AAA(3,1) = 2*pow(t_plan(2), 1); AAA(3,2) = pow(t_plan(2), 0); AAA(3,3) = 0;  
-
-
-	  Eigen::Matrix4d AAA_inv;
-	  
-	  double abx1, abx2, abx3, abx4;
-	  abx1 = ((t_plan(0) - t_plan(1))*pow(t_plan(0) - t_plan(2), 2));
-	  abx2 = ((t_plan(0) - t_plan(1))*pow(t_plan(1) - t_plan(2), 2));
-	  abx3 =(pow(t_plan(0) - t_plan(2), 2)*pow(t_plan(1) - t_plan(2), 2));
-	  abx4 = ((t_plan(0) - t_plan(2))*(t_plan(1) - t_plan(2)));
-	  
-
-	  AAA_inv(0,0) = 1/ abx1;
-	  AAA_inv(0,1) =  -1/ abx2;
-	  AAA_inv(0,2) = (t_plan(0) + t_plan(1) - 2*t_plan(2))/ abx3;
-	  AAA_inv(0,3) = 1/ abx4;
-	  
-	  AAA_inv(1,0) = -(t_plan(1) + 2*t_plan(2))/ abx1;
-	  AAA_inv(1,1) = (t_plan(0) + 2*t_plan(2))/ abx2;
-	  AAA_inv(1,2) = -(pow(t_plan(0), 2) + t_plan(0)*t_plan(1) + pow(t_plan(1), 2) - 3*pow(t_plan(2), 2))/ abx3;
-	  AAA_inv(1,3) = -(t_plan(0) + t_plan(1) + t_plan(2))/ abx4;
-	  
-	  AAA_inv(2,0) = (t_plan(2)*(2*t_plan(1) + t_plan(2)))/ abx1;
-	  AAA_inv(2,1) = -(t_plan(2)*(2*t_plan(0) + t_plan(2)))/ abx2;
-	  AAA_inv(2,2) = (t_plan(2)*(2*pow(t_plan(0), 2) + 2*t_plan(0)*t_plan(1) - 3*t_plan(2)*t_plan(0) + 2*pow(t_plan(1), 2) - 3*t_plan(2)*t_plan(1)))/ abx3;
-	  AAA_inv(2,3) = (t_plan(0)*t_plan(1) + t_plan(0)*t_plan(2) + t_plan(1)*t_plan(2))/ abx4;
-	  
-	  AAA_inv(3,0) = -(t_plan(1)*pow(t_plan(2), 2))/ abx1;
-	  AAA_inv(3,1) = (t_plan(0)*pow(t_plan(2), 2))/ abx2;
-	  AAA_inv(3,2) = (t_plan(0)*t_plan(1)*(t_plan(0)*t_plan(1) - 2*t_plan(0)*t_plan(2) - 2*t_plan(1)*t_plan(2) + 3*pow(t_plan(2), 2)))/ abx3;
-	  AAA_inv(3,3) = -(t_plan(0)*t_plan(1)*t_plan(2))/ abx4;
-	  	  
-	  
-	  
-	  
-	
-	  
+	  int t_int = floor(walktime / (_dt / dt_sample) );
+	 
 	  
 	  Eigen::Matrix<double, 1, 4> t_a_plan;
 	  t_a_plan.setZero();
-	  t_a_plan(0) = pow(t_cur-( t_cur - 2*dt_sample), 3);   t_a_plan(1) = pow(t_cur-( t_cur - 2*dt_sample), 2);   t_a_plan(2) = pow(t_cur-( t_cur - 2*dt_sample), 1);  t_a_plan(3) = pow(t_cur-( t_cur - 2*dt_sample), 0); 
-
-
+	  t_a_plan(0) = pow(2*dt_sample, 3);   t_a_plan(1) = pow(2*dt_sample, 2);   
+	  t_a_plan(2) = pow(2*dt_sample, 1);   t_a_plan(3) = pow(2*dt_sample, 0); 
 	  
-	  // COM&&foot trajectory interpolation
+	  Eigen::Matrix<double, 1, 4> t_a_planv;
+	  t_a_planv.setZero();
+	  t_a_planv(0) = 3*pow(2*dt_sample, 2);   t_a_planv(1) = 2*pow(2*dt_sample, 1);   
+	  t_a_planv(2) = 1;   t_a_planv(3) = 0; 	  
 	  
-	  Eigen::Vector3d  x10;
-	  Eigen::Vector3d  x11;
-	  Eigen::Vector3d  x12;
-// 	  Eigen::Vector3d  x13;
-
-
-/*	  x10(0) = COM_IN(0,walktime-2); x10(1) = COM_IN(1,walktime-2); x10(2) = COM_IN(2,walktime-2);
-	  x11(0) = COM_IN(0,walktime-1); x11(1) = COM_IN(1,walktime-1); x11(2) = COM_IN(2,walktime-1);	 */ 
-	  x10 = body_in1; 
-	  x11 = body_in2;  
-	  x12 = _torso_angle_optimal.col(t_int);
-// 	  x13 = _torso_angle_optimal.col(t_int+1);
+/*	  Eigen::Matrix<double, 1, 4> t_a_plana;
+	  t_a_plana.setZero();
+	  t_a_plana(0) = 6*pow(2*dt_sample, 1);   t_a_plana(1) = 2;   
+	  t_a_plana(2) = 0;   t_a_plana(3) = pow(2*dt_sample, 0); */	  
 	  
-	  
+	  //body inclination interpolation	  	  
 	  Eigen::Matrix<double, 4, 1>  temp;
 	  temp.setZero();
-	  temp(0) = x10(0); temp(1) = x11(0); temp(2) = x12(0); temp(3) = _thetavx(t_int);	  
-	  com_inte(0) = t_a_plan * (AAA_inv)*temp;
-	  temp(0) = x10(1); temp(1) = x11(1); temp(2) = x12(1); temp(3) = _thetavy(t_int);	  
-	  com_inte(1) = t_a_plan * (AAA_inv)*temp;
-	  temp(0) = x10(2); temp(1) = x11(2); temp(2) = x12(2); temp(3) = _thetavz(t_int);	  
-	  com_inte(2) = t_a_plan *(AAA_inv)*temp;
+	  temp(0) = body_in1(0); temp(1) = body_in2(0); temp(2) = _thetax(t_int); temp(3) = _thetavx(t_int);	  
+	  com_inte(0) = t_a_plan * (_AAA_inv)*temp;
+	  _thetaxyx(0) = com_inte(0);
+	  _thetavxyx(0) = t_a_planv * (_AAA_inv)*temp;
+//	  _thetaaxyx(0) = t_a_plana * (_AAA_inv)*temp;	  
+	  
+	  temp(0) = body_in1(1); temp(1) = body_in2(1); temp(2) = _thetay(t_int); temp(3) = _thetavy(t_int);	  
+	  com_inte(1) = t_a_plan * (_AAA_inv)*temp;
+	  _thetaxyx(1) = com_inte(1);
+	  _thetavxyx(1) = t_a_planv * (_AAA_inv)*temp;
+//	  _thetaaxyx(1) = t_a_plana * (_AAA_inv)*temp;		  
+	  
+// 	  temp(0) = body_in1(2); temp(1) = body_in2(2); temp(2) = _thetaz(t_int); temp(3) = _thetavz(t_int);	  
+// 	  com_inte(2) = t_a_plan *(_AAA_inv)*temp;
+// 	  _thetaxyx(2) = com_inte(2);
+// 	  _thetavxyx(2) = t_a_planv * (_AAA_inv)*temp;
+// 	  _thetaaxyx(2) = t_a_plana * (_AAA_inv)*temp;
+	  
+	  /////be careful, the polynomial may cause overfitting
+	  double t_des = walktime * dt_sample-t_int*_dt;
+	  if (t_des<=0){
+	    t_des =0.0001;
+	  }	  
 
-	  
-	  
+	  if (t_int>=1)
+	  {
+	    _thetaxyx(0) = (_thetaax(t_int)-_thetaax(t_int-1))/_dt*t_des+_thetaax(t_int-1);
+	    _thetaxyx(1) = (_thetaay(t_int)-_thetaay(t_int-1))/_dt*t_des+_thetaay(t_int-1);
+	    _thetaxyx(2) = (_thetaaz(t_int)-_thetaaz(t_int-1))/_dt*t_des+_thetaaz(t_int-1);
+	  }
+	  else
+	  {
+	    _thetaxyx(0) = (_thetaax(t_int)-0)/_dt*t_des+0;
+	    _thetaxyx(1) = (_thetaay(t_int)-0)/_dt*t_des+0;
+	    _thetaxyx(2) = (_thetaaz(t_int)-0)/_dt*t_des+0;	    
+	  } 	  
 	}
 	else
 	{
-	  com_inte(0) = body_in3(0);	  
-	  com_inte(1) = body_in3(1);	  	  
-	  com_inte(2) = body_in3(2);	
-	  
+	  com_inte = body_in3;
+	  _thetaxyx = com_inte;
 	}
-
  	return com_inte;
-	
-  
-  
-  
 }
+
 
 
 Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
@@ -3265,6 +3102,353 @@ Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, E
 	
 	cout << "Lfooty_generated:"<<com_inte(1)<<endl;
 }
+
+
+
+
+////solve the inverse matrix of 4*4 coefficient matrices
+void MPCClass::solve_AAA_inv(Eigen::Matrix<double, 4, 1> t_plan)
+{
+  
+// 	  Eigen::MatrixXd AAA1;	
+// 
+// 	  AAA1.setZero(4,4);	
+// 	  AAA1(0,0) = pow(t_plan(0), 3); AAA1(0,1) = pow(t_plan(0), 2); AAA1(0,2) = pow(t_plan(0), 1); AAA1(0,3) = pow(t_plan(0), 0); 
+// 	  AAA1(1,0) = pow(t_plan(1), 3); AAA1(1,1) = pow(t_plan(1), 2); AAA1(1,2) = pow(t_plan(1), 1); AAA1(1,3) = pow(t_plan(0), 0); 
+// 	  AAA1(2,0) = pow(t_plan(2), 3); AAA1(2,1) = pow(t_plan(2), 2); AAA1(2,2) = pow(t_plan(2), 1); AAA1(2,3) = pow(t_plan(0), 0); 
+// 	  AAA1(3,0) = 3*pow(t_plan(2), 2); AAA1(3,1) = 2*pow(t_plan(2), 1); AAA1(3,2) = pow(t_plan(2), 0); AAA1(3,3) = 0;  
+
+  
+  
+  double abx1 = ((t_plan(0) - t_plan(1))*pow(t_plan(0) - t_plan(2), 2));
+  double abx2 = ((t_plan(0) - t_plan(1))*pow(t_plan(1) - t_plan(2), 2));
+  double abx3 =(pow(t_plan(0) - t_plan(2), 2)*pow(t_plan(1) - t_plan(2), 2));
+  double abx4 = ((t_plan(0) - t_plan(2))*(t_plan(1) - t_plan(2)));
+  
+
+  _AAA_inv(0,0) = 1/ abx1;
+  _AAA_inv(0,1) =  -1/ abx2;
+  _AAA_inv(0,2) = (t_plan(0) + t_plan(1) - 2*t_plan(2))/ abx3;
+  _AAA_inv(0,3) = 1/ abx4;
+  
+  _AAA_inv(1,0) = -(t_plan(1) + 2*t_plan(2))/ abx1;
+  _AAA_inv(1,1) = (t_plan(0) + 2*t_plan(2))/ abx2;
+  _AAA_inv(1,2) = -(pow(t_plan(0), 2) + t_plan(0)*t_plan(1) + pow(t_plan(1), 2) - 3*pow(t_plan(2), 2))/ abx3;
+  _AAA_inv(1,3) = -(t_plan(0) + t_plan(1) + t_plan(2))/ abx4;
+  
+  _AAA_inv(2,0) = (t_plan(2)*(2*t_plan(1) + t_plan(2)))/ abx1;
+  _AAA_inv(2,1) = -(t_plan(2)*(2*t_plan(0) + t_plan(2)))/ abx2;
+  _AAA_inv(2,2) = (t_plan(2)*(2*pow(t_plan(0), 2) + 2*t_plan(0)*t_plan(1) - 3*t_plan(2)*t_plan(0) + 2*pow(t_plan(1), 2) - 3*t_plan(2)*t_plan(1)))/ abx3;
+  _AAA_inv(2,3) = (t_plan(0)*t_plan(1) + t_plan(0)*t_plan(2) + t_plan(1)*t_plan(2))/ abx4;
+  
+  _AAA_inv(3,0) = -(t_plan(1)*pow(t_plan(2), 2))/ abx1;
+  _AAA_inv(3,1) = (t_plan(0)*pow(t_plan(2), 2))/ abx2;
+  _AAA_inv(3,2) = (t_plan(0)*t_plan(1)*(t_plan(0)*t_plan(1) - 2*t_plan(0)*t_plan(2) - 2*t_plan(1)*t_plan(2) + 3*pow(t_plan(2), 2)))/ abx3;
+  _AAA_inv(3,3) = -(t_plan(0)*t_plan(1)*t_plan(2))/ abx4;   
+}
+
+////solve the inverse matrix of 7*7 coefficient matrices
+Eigen::Matrix<double, 7, 7> MPCClass::solve_AAA_inv_x(Eigen::Vector3d t_plan)
+{
+  Eigen::Matrix<double,7,7> AAA;
+  AAA.setZero();
+  Eigen::Matrix<double, 1, 7> aaaa;
+  aaaa.setZero();
+
+  aaaa(0) = 6*pow(t_plan(0), 5);   aaaa(1) =  5*pow(t_plan(0), 4);  aaaa(2) =  4*pow(t_plan(0), 3);   aaaa(3) =  3*pow(t_plan(0), 2);
+  aaaa(4) = 2*pow(t_plan(0), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
+  AAA.row(0) = aaaa;
+
+  aaaa(0) = 30*pow(t_plan(0), 4);  aaaa(1) =  20*pow(t_plan(0), 3);  aaaa(2) =  12*pow(t_plan(0), 2);   aaaa(3) =  6*pow(t_plan(0), 1);
+  aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
+  AAA.row(1) = aaaa;
+
+  aaaa(0) = pow(t_plan(0), 6);     aaaa(1) =  pow(t_plan(0), 5);     aaaa(2) =  pow(t_plan(0), 4);   aaaa(3) =  pow(t_plan(0), 3);
+  aaaa(4) = pow(t_plan(0), 2);     aaaa(5) = pow(t_plan(0), 1);      aaaa(6) =  1;	  
+  AAA.row(2) = aaaa;
+
+  aaaa(0) = pow(t_plan(1), 6);     aaaa(1) =  pow(t_plan(1), 5);     aaaa(2) =  pow(t_plan(1), 4);   aaaa(3) =  pow(t_plan(1), 3);
+  aaaa(4) = pow(t_plan(1), 2);     aaaa(5) = pow(t_plan(1), 1);      aaaa(6) =  1;
+  AAA.row(3) = aaaa;
+
+  aaaa(0) = pow(t_plan(2), 6);     aaaa(1) =  pow(t_plan(2), 5);     aaaa(2) =  pow(t_plan(2), 4);   aaaa(3) =  pow(t_plan(2), 3);
+  aaaa(4) = pow(t_plan(2), 2);     aaaa(5) = pow(t_plan(2), 1);      aaaa(6) =  1;
+  AAA.row(4) = aaaa;	  
+
+  aaaa(0) = 6*pow(t_plan(2), 5);   aaaa(1) =  5*pow(t_plan(2), 4);  aaaa(2) =  4*pow(t_plan(2), 3);   aaaa(3) =  3*pow(t_plan(2), 2);
+  aaaa(4) = 2*pow(t_plan(2), 1);   aaaa(5) = 1;                     aaaa(6) =  0;
+  AAA.row(5) = aaaa;
+
+  aaaa(0) = 30*pow(t_plan(2), 4);  aaaa(1) =  20*pow(t_plan(2), 3);  aaaa(2) =  12*pow(t_plan(2), 2);   aaaa(3) =  6*pow(t_plan(2), 1);
+  aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
+  AAA.row(6) = aaaa;  
+  
+  Eigen::Matrix<double,7,7> AAA_inv = AAA.inverse(); 
+  
+  return AAA_inv;
+  
+}
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////=============================ZMP optimal distribution for lower level adimittance control=================================
+////reference_force_torque_distribution========================================
+
+void MPCClass::Zmp_distributor(int walktime, double dt_sample)
+{
+// //// judge if stop  
+//   if(_stopwalking)  
+//   {  
+//     for (int i_t = _bjx1+1; i_t < _footstepsnumber; i_t++) {	  
+//       _lift_height_ref(i_t) = 0;  
+//     }	  
+// 
+//   }  
+  
+  int j_index = floor(walktime / (_dt / dt_sample));
+  
+  zmp_interpolation(j_index,walktime,dt_sample);  
+
+// reference_force_torque_distribution 
+  if (_bjx1 >= 2)
+  {
+      if (_bjx1 % 2 == 0)           //odd:left support
+      {  
+	/// right swing
+	if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1))
+	{
+	  int nTx_n = round(_tx(_bjx1-1)/_dt);
+	  int nTx_n_dsp = round((_tx(_bjx1-1)+_td(_bjx1-1))/_dt);
+	  Vector2d ZMP_init(0,0);
+	  ZMP_init(0) = _zmpx_real(0,nTx_n-2);
+	  ZMP_init(1) = _zmpy_real(0,nTx_n-2);
+	  
+	  Vector2d ZMP_end(0,0); 
+	  ZMP_end(0) = _zmpx_real(0,nTx_n_dsp-1);
+	  ZMP_end(1) = _zmpy_real(0,nTx_n_dsp-1);
+	  
+// 	  if (abs(ZMP_end(0)-ZMP_init(0))<=0.001) 
+// 	  {
+// 	      _Co_L(1,1) = abs((_ZMPxy_realx(1)-ZMP_init(1))/(ZMP_end(1)-ZMP_init(1)));
+// 	      if (_Co_L(1,1) >1)
+// 	      {
+// 		_Co_L(1,1)=1;
+// 	      }               
+// 	      _Co_L(0,0) = _Co_L(1,1);                
+// 	      _Co_L(2,2) = sqrt((pow(_Co_L(0,0),2)+pow(_Co_L(0,0),2))/2);  
+// 	  }
+// 	  else
+// 	  {
+	    _Co_L(0,0) = abs(((ZMP_end(1)-ZMP_init(1))*(_ZMPxy_realx(1)-ZMP_init(1))+(ZMP_end(0)-ZMP_init(0))*(_ZMPxy_realx(0)-ZMP_init(0)))/(pow(ZMP_end(1)-ZMP_init(1),2)+pow(ZMP_end(0)-ZMP_init(0),2)));
+	    _Co_L(1,1) = _Co_L(0,0);
+	      
+	    if (_Co_L(0,0) >1)
+	    {
+	      _Co_L(0,0)=1;
+	    }
+	    if (_Co_L(1,1) >1)
+	    {
+	      _Co_L(1,1)=1;
+	    }
+	    _Co_L(2,2) = sqrt((pow(_Co_L(0,0),2)+pow(_Co_L(0,0),2))/2); 
+/*	  }  */ 
+	  
+	  Matrix3d II;
+	  II.setIdentity(3,3);
+	  _Co_R = II-_Co_L;     
+
+	  Force_torque_calculate(_comxyzx,_comaxyzx,_thetaaxyx,_Lfootxyzx,_Rfootxyzx);	  
+	  
+	}
+	else
+	{
+	 //Swing leg with left support
+	  _Co_L.setIdentity(3,3);
+	  _Co_R.setZero();
+	  Force_torque_calculate(_comxyzx,_comaxyzx,_thetaaxyx,_Lfootxyzx,_Rfootxyzx);  	  
+	}	
+      }      
+      else                       //right support
+      {	/// left swing
+	if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1))  // j_index and _bjx1 coincident with matlab: double suppot
+	{
+	  int nTx_n = round(_tx(_bjx1-1)/_dt);
+	  int nTx_n_dsp = round((_tx(_bjx1-1)+_td(_bjx1-1))/_dt);
+	  Vector2d ZMP_init(0,0);
+	  ZMP_init(0) = _zmpx_real(0,nTx_n-2);
+	  ZMP_init(1) = _zmpy_real(0,nTx_n-2);
+	  
+	  Vector2d ZMP_end(0,0); 
+	  ZMP_end(0) = _zmpx_real(0,nTx_n_dsp-1);
+	  ZMP_end(1) = _zmpy_real(0,nTx_n_dsp-1);
+	  
+// 	  if (abs(ZMP_end(0)-ZMP_init(0))<=0.001) 
+// 	  {
+// 	      _Co_R(1,1) = abs((_ZMPxy_realx(1)-ZMP_init(1))/(ZMP_end(1)-ZMP_init(1)));
+// 	      if (_Co_R(1,1) >1)
+// 	      {
+// 		_Co_R(1,1)=1;
+// 	      }               
+// 	      _Co_R(0,0) = _Co_R(1,1);                
+// 	      _Co_R(2,2) = sqrt((pow(_Co_R(0,0),2)+pow(_Co_R(0,0),2))/2);  
+// 	  }
+// 	  else
+// 	  {
+	    _Co_R(0,0) = abs(((ZMP_end(1)-ZMP_init(1))*(_ZMPxy_realx(1)-ZMP_init(1))+(ZMP_end(0)-ZMP_init(0))*(_ZMPxy_realx(0)-ZMP_init(0)))/(pow(ZMP_end(1)-ZMP_init(1),2)+pow(ZMP_end(0)-ZMP_init(0),2)));
+	    _Co_R(1,1) = _Co_R(0,0);
+	      
+	    if (_Co_R(0,0) >1)
+	    {
+	      _Co_R(0,0)=1;
+	    }
+	    if (_Co_R(1,1) >1)
+	    {
+	      _Co_R(1,1)=1;
+	    }
+	    _Co_R(2,2) = sqrt((pow(_Co_R(0,0),2)+pow(_Co_R(0,0),2))/2); 
+/*	  }*/   
+	  
+	  Matrix3d II;
+	  II.setIdentity(3,3);
+	  _Co_L = II-_Co_R;     
+
+	  Force_torque_calculate(_comxyzx,_comaxyzx,_thetaaxyx,_Lfootxyzx,_Rfootxyzx);	  	 	  
+	}
+	else
+	{
+	 //Swing leg with right support
+	  _Co_R.setIdentity(3,3);
+	  _Co_L.setZero();
+	  Force_torque_calculate(_comxyzx,_comaxyzx,_thetaaxyx,_Lfootxyzx,_Rfootxyzx);  	  
+	}
+      }
+  }
+  else
+  {
+    if (_bjx1==0)   ///stand still:
+    {
+//       _Co_R = 0.5*Eigen::Vector3d::Zero().setIdentity(3,3);
+//       _Co_L.setZero();
+      _Co_R(0,0) = _Co_R(1,1) = _Co_R(2,2) = _Co_L(0,0) = _Co_L(1,1) = _Co_L(2,2) = 0.5;
+      Force_torque_calculate(_comxyzx,_comaxyzx,_thetaaxyx,_Lfootxyzx,_Rfootxyzx);       
+    }
+    else   ///right support: double support in the whole walking pattern: assuming that the initial and final ZMP is located at the foot locations 
+    {/// left swing
+	Vector2d ZMP_init;
+	ZMP_init(0) = _footxyz_real(0,_bjx1-1);
+	ZMP_init(1) = _footxyz_real(1,_bjx1-1);
+	
+	Vector2d ZMP_end; 
+	ZMP_end(0) = _footxyz_real(0,_bjx1);
+	ZMP_end(1) = _footxyz_real(1,_bjx1);
+	
+// 	if (abs(ZMP_end(0)-ZMP_init(0))<=0.001) 
+// 	{
+// 	    _Co_R(1,1) = abs((_ZMPxy_realx(1)-ZMP_init(1))/(ZMP_end(1)-ZMP_init(1)));
+// 	    if (_Co_R(1,1) >1)
+// 	    {
+// 	      _Co_R(1,1)=1;
+// 	    }               
+// 	    _Co_R(0,0) = _Co_R(1,1);                
+// 	    _Co_R(2,2) = sqrt((pow(_Co_R(0,0),2)+pow(_Co_R(0,0),2))/2);  
+// 	}
+// 	else
+// 	{
+	  _Co_R(0,0) = abs(((ZMP_end(1)-ZMP_init(1))*(_ZMPxy_realx(1)-ZMP_init(1))+(ZMP_end(0)-ZMP_init(0))*(_ZMPxy_realx(0)-ZMP_init(0)))/(pow(ZMP_end(1)-ZMP_init(1),2)+pow(ZMP_end(0)-ZMP_init(0),2)));
+	  _Co_R(1,1) = _Co_R(0,0);
+	    
+	  if (_Co_R(0,0) >1)
+	  {
+	    _Co_R(0,0)=1;
+	  }
+	  if (_Co_R(1,1) >1)
+	  {
+	    _Co_R(1,1)=1;
+	  }
+	  _Co_R(2,2) = sqrt((pow(_Co_R(0,0),2)+pow(_Co_R(0,0),2))/2); 
+/*	}*/   
+	
+	Matrix3d II;
+	II.setIdentity(3,3);
+	_Co_L = II-_Co_R;     
+
+	Force_torque_calculate(_comxyzx,_comaxyzx,_thetaaxyx,_Lfootxyzx,_Rfootxyzx);	  	 	       
+    }
+  }   
+}
+
+
+void MPCClass::zmp_interpolation(int t_int,int walktime, double dt_sample)
+{
+  //// calculate by the nonlinear model:
+//   if (t_int>=1)
+//   {
+//     _ZMPxy_realx(0) = _comxyzx(0) - (_comxyzx(2) - _Zsc(t_int-1))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(0) - _j_ini * _thetaaxyx(1)/(_mass * (_ggg(0) + _comaxyzx(2)));
+//     _ZMPxy_realx(1) = _comxyzx(1) - (_comxyzx(2) - _Zsc(t_int-1))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(1) + _j_ini * _thetaaxyx(0)/(_mass * (_ggg(0) + _comaxyzx(2)));     
+//   }
+//   else
+//   {
+//     _ZMPxy_realx(0) = _comxyzx(0) - (_comxyzx(2))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(0) - _j_ini * _thetaaxyx(1)/(_mass * (_ggg(0) + _comaxyzx(2)));
+//     _ZMPxy_realx(1) = _comxyzx(1) - (_comxyzx(2))/(_comaxyzx(2)+_ggg(0))*_comaxyzx(1) + _j_ini * _thetaaxyx(0)/(_mass * (_ggg(0) + _comaxyzx(2)));     
+//   }
+  
+  //// linear interpolation of ZMP reference:  
+  double t_des = walktime * dt_sample-t_int*_dt;
+  if (t_des<=0){
+    t_des =0.0001;
+  }	  
+//   cout <<"//////////////////////////////////////////"<<endl;
+//   cout <<"t_des:"<<t_des<<endl;
+//   cout <<"//////////////////////////////////////////"<<endl;
+  if (t_int>=1)
+  {
+    _ZMPxy_realx(0) = (_zmpx_real(0,t_int)-_zmpx_real(0,t_int-1))/_dt*t_des+_zmpx_real(0,t_int-1);
+    _ZMPxy_realx(1) = (_zmpy_real(0,t_int)-_zmpy_real(0,t_int-1))/_dt*t_des+_zmpy_real(0,t_int-1);
+
+  }
+  else
+  {
+    _ZMPxy_realx(0) = _zmpx_real(0,t_int)/_dt*t_des+0;
+    _ZMPxy_realx(1) = _zmpy_real(0,t_int)/_dt*t_des+0;	    
+  }  
+  
+  
+}
+
+
+void MPCClass::Force_torque_calculate(Vector3d comxyzx1,Vector3d comaxyzx1,Vector3d thetaaxyx1,Vector3d Lfootxyz1,Vector3d Rfootxyz1)
+{
+  Vector3d gra;
+  gra << 0,0, -_ggg;
+  
+  Vector3d F_total = _mass * (comaxyzx1 - gra);
+  
+  Vector3d the3a;
+  the3a << thetaaxyx1(0),thetaaxyx1(1),0;
+  Vector3d L_total = _j_ini * the3a;
+  
+  _F_R = _Co_R * F_total;
+  _F_L = _Co_L * F_total;
+  
+  Vector3d R_det_foot_com = Rfootxyz1 -  comxyzx1;
+  
+  Vector3d L_det_foot_com = Lfootxyz1 -  comxyzx1;
+  
+  Vector3d M_total = L_total - _F_R.cross(R_det_foot_com) - _F_L.cross(L_det_foot_com);
+  
+  _M_R = _Co_R*M_total;  
+  _M_L = _Co_L*M_total;
+  
+}
+
+
 
 
 

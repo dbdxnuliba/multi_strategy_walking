@@ -155,6 +155,40 @@ XBotRTControlClass::XBotRTControlClass()
 	console = new Read_XDDP_pipe(std::string("boards_console"), 1024);
 
 	DPRINTF("============== XBotRTControlClass is ready... ==========\n\n\n\n");
+	
+	///for admittance control
+        body_thetax.setZero();
+	det_hip_posotion.setZero(); det_hip_pose.setZero();
+	det_foot_rpy_lr.setZero();
+	det_footz_lr.setZero();
+	
+	ZMPxy_realx.setZero();
+	thetaxyx.setZero();
+	comxyzx.setZero();
+	Lfootxyzx.setZero();
+	Rfootxyzx.setZero();
+	M_L.setZero();
+	M_R.setZero(); 
+	F_L.setZero();
+	F_R.setZero();
+	
+	F_L(2) = F_R(2)= 9.8/2*RobotPara().totalmass;
+	
+        j_count =0;
+	bjx1 = 0;
+	tx = 0;
+	td=0;
+
+        ankle_Ori_left.setZero();
+	ankle_Ori_right.setZero();
+	det_ank_foot.setZero();
+        
+	LeftFootPosx.setZero();
+	LeftFootPosx(1) = RobotParaClass::HALF_HIP_WIDTH();
+	RightFootPosx.setZero();
+	RightFootPosx(1) = -RobotParaClass::HALF_HIP_WIDTH();		
+	
+	
 }
 
 XBotRTControlClass::~XBotRTControlClass()
@@ -398,8 +432,7 @@ void XBotRTControlClass::Run()
 
 
 	if (IsInit) {
-		ImpStabilizer();
-		StandingReactStepping();
+	  Admittance_controller();
 	}
 
 	SolveIK();
@@ -781,6 +814,11 @@ void XBotRTControlClass::savedata()
 	}
 }
 
+
+
+
+
+
 void XBotRTControlClass::UpdateWbsRef()
 {
 	Eigen::Matrix3d TurnYawO = Rz(TurnYaw);
@@ -824,23 +862,65 @@ void XBotRTControlClass::UpdateWbsRef()
 
 }
 
-void XBotRTControlClass::ImpStabilizer()
-{
-	const RobotStateClass& irobot = _WBS.getRobotState();
-	Eigen::Matrix3d TurnYawO = Rz(TurnYaw);
-	UpdateWbsRef();
-	//Sta.setFilterPara(5, 3);
-	Sta.zc(zc);
-	double VerticalScale = RobotPara().setParaForSimOrReal(0.9538, 1.005);
-	Sta.VerticalScale(VerticalScale);
-	//******* for walking **************
-	Sta.Kd(RobotPara().Kx,	RobotPara().Ky,	RobotPara().Kz);
-	Sta.Bd(RobotPara().Bx,	RobotPara().By,	RobotPara().Bz);
-	Sta.Enable(StaEnableX, StaEnableY, StaEnableZ);
-	deltaHip = Sta.StabilizerCart(irobot);
+// void XBotRTControlClass::ImpStabilizer()
+// {
+// 	const RobotStateClass& irobot = _WBS.getRobotState();
+// 	Eigen::Matrix3d TurnYawO = Rz(TurnYaw);
+// 	UpdateWbsRef();
+// 	//Sta.setFilterPara(5, 3);
+// 	Sta.zc(zc);
+// 	double VerticalScale = RobotPara().setParaForSimOrReal(0.9538, 1.005);
+// 	Sta.VerticalScale(VerticalScale);
+// 	//******* for walking **************
+// 	Sta.Kd(RobotPara().Kx,	RobotPara().Ky,	RobotPara().Kz);
+// 	Sta.Bd(RobotPara().Bx,	RobotPara().By,	RobotPara().Bz);
+// 	Sta.Enable(StaEnableX, StaEnableY, StaEnableZ);
+// 	deltaHip = Sta.StabilizerCart(irobot);
+// 
+// 	deltaHip = TurnYawO * deltaHip;
+// }
 
-	deltaHip = TurnYawO * deltaHip;
+
+
+void XBotRTControlClass::Admittance_controller()
+{
+//   const RobotStateClass& irobot = _WBS.getRobotState();
+//   UpdateWbsRef();
+//   
+//   det_hip_posotion = Sta.COMdampingCtrl(zmp_ref,irobot);
+//   det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
+//   det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot);
+//   det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot);
+//   
+//   
+//   HipO_Turn = Rz(body_thetax[2]+det_hip_pose[2])*Ry(body_thetax[1]+det_hip_pose[1])*Rx(body_thetax[0]+det_hip_pose[0]);
+//   
+//   deltaHip = det_hip_posotion;
+//   
+//   
+//   /// deltaFtOri_left, deltaFtOri_right are the matrix rotation of the local framework
+//   deltaFtOri_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
+//   
+//   deltaFtOri_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
+// //   
+// //   ankle_Ori_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
+// //   ankle_Ori_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
+//   
+// 
+//   
+// //   cout<<"det_hip_pose:"<<det_hip_pose<<endl;
+// //   cout<<"deltaHip:"<<deltaHip.transpose()<<endl;
+// //   cout<<"det_foot_rpy_lr:"<<det_foot_rpy_lr.transpose()<<endl;
+// //   cout<<"det_footz_lr:"<<det_footz_lr.transpose()<<endl;
+
+  
 }
+
+
+
+
+
+
 
 void XBotRTControlClass::SolveIK()
 {
@@ -1173,6 +1253,12 @@ void XBotRTControlClass::initLogger(int buffer_size, int interleave)
 	xbot_logger->createScalarVariable("TurnYaw", interleave, buffer_size);
 	xbot_logger->createScalarVariable("LftYaw", interleave, buffer_size);
 	xbot_logger->createScalarVariable("RftYaw", interleave, buffer_size);
+	
+	xbot_logger->createVectorVariable("det_hip_posotion", 3, interleave, buffer_size);
+	xbot_logger->createVectorVariable("det_hip_pose", 3, interleave, buffer_size);
+	xbot_logger->createVectorVariable("det_foot_rpy_lr", 6, interleave, buffer_size);
+	xbot_logger->createVectorVariable("det_footz_lr", 2, interleave, buffer_size);			
+	
 
 	Sta.initLogger(xbot_logger, logger_len);
 
@@ -1276,6 +1362,12 @@ void XBotRTControlClass::addToLog()
 	xbot_logger->add("LftYaw", LftYaw);
 	xbot_logger->add("RftYaw", RftYaw);
 
+	
+	xbot_logger->add("det_hip_posotion", det_hip_posotion);
+	xbot_logger->add("det_hip_pose", det_hip_pose);
+	xbot_logger->add("det_foot_rpy_lr", det_foot_rpy_lr);
+	xbot_logger->add("det_footz_lr", det_footz_lr);		
+	
 	Sta.addToLog(xbot_logger);
 
 	InternalLoggerLoop();

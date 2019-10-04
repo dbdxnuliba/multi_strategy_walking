@@ -211,7 +211,7 @@ protected:
 	// --------------------------------------
 
 
-	virtual void ImpStabilizer();
+//	virtual void ImpStabilizer();
 	StabilizerClass Sta;
 	IKClass IK;
 
@@ -298,6 +298,33 @@ protected:
 	bool EnableFtPos, EnableFtOri;
 	Eigen::Vector3d deltaFtPos_l, deltaFtPos_r;
 	Eigen::Matrix3d deltaFtOri_left, deltaFtOri_right;
+	
+	
+	/////for new StabilizerClass
+	Eigen::Vector3d body_thetax;
+	void Admittance_controller();
+	
+	Eigen::Vector3d det_hip_posotion, det_hip_pose;
+	Eigen::Vector6d det_foot_rpy_lr;
+	Eigen::Vector2d det_footz_lr;
+	
+	
+	
+	Eigen::Vector3d ZMPxy_realx, thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx;
+	Eigen::Vector3d M_L, M_R, F_L,F_R;
+	
+        int j_count,bjx1;
+	double tx, td;
+	
+	Eigen::Matrix3d ankle_Ori_left, ankle_Ori_right;
+	Eigen::Vector3d det_ank_foot;
+	
+	
+	Eigen::Vector3d LeftFootPosx,RightFootPosx;		
+	
+	
+	
+	
 
 };
 
