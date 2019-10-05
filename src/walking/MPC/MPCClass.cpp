@@ -117,7 +117,7 @@ void MPCClass::Initialize()
 	_lamda_kmp  = 5, _kh_kmp = 0.75;	    	    //set kmp parameters 
 
 
-	static char fileName1[]="/home/jiatao/Dropbox/catkin_cogimon_simu/src/tutorial_iros2018/chengxu_walking/src/walking/KMP/referdata_swing.txt";  
+	static char fileName1[]="/home/jiatao/Dropbox/cat_multi_cogimon/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
 	_data_kmp.load( fileName1 );         	    // load original data
 	///modify the data sample:
 	
