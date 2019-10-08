@@ -965,9 +965,11 @@ void WholeBodySensingClass::UpdateRobotState(const std::vector<double> &qall, do
 {
 	irobot.tau_all = tall;
 	UpdateRobotState(qall, dt, FTSensor);
-	//DPRINTF("=============== UpdateRobotState2222222222222222222=============\n");
+	//DPRINTF("=============== UpdateRobotState!!!!!!!!!    torque all =============\n");
 }
 
+
+////using this one for UpdataRobotState
 void WholeBodySensingClass::UpdateRobotState(const std::vector<double> &qall, double dt, const std::vector<double> &FTSensor)
 {
 	std::vector<double> qW(3, 0), qL(6, 0), qR(6, 0), qaL(4, 0), qaR(4, 0);
@@ -1057,6 +1059,8 @@ void WholeBodySensingClass::UpdateHandFT(const std::vector<double> &HandFTSensor
 	irobot.FT_hl_filter_in_hip.segment<3>(3) = LHandFrame.E * irobot.FT_hl_filter.segment<3>(3);
 }
 
+
+/////using thie one for whole-body state estimation
 template <class T1, class T2, class T3, class T4>
 void WholeBodySensingClass::UpdateRobotStateTemp(const T1 &qL, const T1 &qR, const T2 &qW, const T3 &qaL, const T3 &qaR, double dt, const T4 &FTSensor)
 {
@@ -1088,12 +1092,14 @@ void WholeBodySensingClass::UpdateRobotStateTemp(const T1 &qL, const T1 &qR, con
 	UpdateUsefulVariableAfterFK();
 	CalcCop(); // calculate COP in feet
 
+	////
 	if (irobot.IsReady) {
+	  ////////////////////////////go to this loop
 		irobot.t += dt;
 		Update2Global();	// global estimation can only be done after knowing the contact state ( CalcCop() )
 		UpdateFK2Global();
 		// UpdateKFC();
-		//DPRINTF("=============== updata.... gcom=============\n");
+		////DPRINTF("=============== updata.... gcom=============\n");
 		
 	}
 	
@@ -1104,7 +1110,7 @@ void WholeBodySensingClass::UpdateRobotStateTemp(const T1 &qL, const T1 &qR, con
                 DPRINTF("WBS is Ready!\n");
                 Eigen::Vector3d com_local = irobot._model->com_ft;
                 DPRINTF("The robot COM is now at %.3f %.3f %.3f m.\n", com_local[0], com_local[1], com_local[2]);
-                // DPRINTF("The WBS COM is now at %.3f %.3f %.3f m.\n", irobot.gcom[0], irobot.gcom[1], irobot.gcom[2]);
+                 DPRINTF("The WBS COM is now at %.3f %.3f %.3f m.\n", irobot.gcom[0], irobot.gcom[1], irobot.gcom[2]);
 		//DPRINTF("=============== no update gcom=============\n");
         }
         
@@ -1231,6 +1237,9 @@ void WholeBodySensingClass::UpdateRef(const std::vector<double> &ComRef, const s
 	}
 }
 
+
+
+////// in this case: using this one!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void WholeBodySensingClass::UpdateRef(const Eigen::Vector3d  &ComRef, const Eigen::Vector3d &LftRef, const Eigen::Vector3d &RftRef, const Eigen::Vector3d &ZmpRef, const Eigen::Vector3d &FzRef)
 {
 	for (unsigned int i = 0; i < 3; i++) {

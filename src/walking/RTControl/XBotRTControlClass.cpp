@@ -362,6 +362,7 @@ void XBotRTControlClass::UpdateWBS(const double & dT, const std::vector<double> 
 ///	DPRINTF("using updatawbs===== hand=====\n");
 }
 
+//////// using this one
 void XBotRTControlClass::UpdateWBS(const std::vector<double> &qall, const Eigen::Matrix3d &Rpelvis_abs, const Eigen::Vector3d &Acc, const Eigen::Vector3d &AngleRate, const std::vector<double> &FTSensor, const std::vector<double> &HandFTSensor)
 {
 	//************* implementation of WBS class ********************
@@ -372,9 +373,7 @@ void XBotRTControlClass::UpdateWBS(const std::vector<double> &qall, const Eigen:
 // 	_WBS.UpdateHandFT(HandFTSensor);
 	//**************************************************************
 
-    //    DPRINTF("using UpdateRobotState======no hand=====\n");
-	
-//         DPRINTF("F/T rigt: %.3f  %.3f  %.3f %.3f  %.3f  %.3f     F/T left: %.3f   %.3f  %.3f %.3f  %.3f  %.3f\n", FTSensor[0], FTSensor[1], FTSensor[2], FTSensor[3], FTSensor[4], FTSensor[5], FTSensor[6], FTSensor[7], FTSensor[8], FTSensor[9], FTSensor[10], FTSensor[11]);
+    ///DPRINTF("using UpdateRobotState======no hand=====\n");
 }
 
 void XBotRTControlClass::Run(const double &dT, std::vector<double> &pos, const std::vector<float> &OffsetAng)
@@ -384,7 +383,7 @@ void XBotRTControlClass::Run(const double &dT, std::vector<double> &pos, const s
 
 void XBotRTControlClass::Run()
 {
-  //// run: logic: firstly: noveto initial postion: upper arm put down. after 3s, keep the initial position;
+  //// run: logic: firstly: move to initial postion: upper arm put down. after 3s, keep the initial position;
   ////// then run ./xddp_console, to keyboard input the c/s to start or stop the real-time loop
 	const RobotStateClass& irobot = _WBS.getRobotState();
 
@@ -877,8 +876,8 @@ void XBotRTControlClass::UpdateWbsRef()
 
 void XBotRTControlClass::Admittance_controller()
 {
-//   const RobotStateClass& irobot = _WBS.getRobotState();
-//   UpdateWbsRef();
+   const RobotStateClass& irobot = _WBS.getRobotState();
+   UpdateWbsRef();
 //   
 //   det_hip_posotion = Sta.COMdampingCtrl(zmp_ref,irobot);
 //   det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
@@ -1198,7 +1197,11 @@ void XBotRTControlClass::initLogger(int buffer_size, int interleave)
 	xbot_logger->createVectorVariable("q_msr", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
 	xbot_logger->createVectorVariable("q_des", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
 	xbot_logger->createVectorVariable("q_ref", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
-	xbot_logger->createVectorVariable("tau_msr", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
+	xbot_logger->createVectorVariable("dq_msr", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
+	xbot_logger->createVectorVariable("dq_msrx", 34, interleave, buffer_size);
+	xbot_logger->createVectorVariable("ddq_msrx", 34, interleave, buffer_size);
+	xbot_logger->createVectorVariable("tau_msrx", 34, interleave, buffer_size);	
+	xbot_logger->createVectorVariable("tau_msr", RobotParaClass::JOINT_NUM(), interleave, buffer_size);	
 	xbot_logger->createVectorVariable("L_com", 3, interleave, buffer_size);
 	xbot_logger->createVectorVariable("LhdRef", 3, interleave, buffer_size);
 	xbot_logger->createVectorVariable("RhdRef", 3, interleave, buffer_size);
@@ -1306,6 +1309,10 @@ void XBotRTControlClass::addToLog()
 	xbot_logger->add("q_msr", irobot.q_all_mesure);
 	xbot_logger->add("q_des", irobot.SendToRobot->q);
 	xbot_logger->add("q_ref", irobot.SendToRobot->q_ref);
+	xbot_logger->add("dq_msr", irobot.qdot_all_mesure);
+	xbot_logger->add("dq_msrx", irobot._model->dq_all_floating);	
+	xbot_logger->add("ddq_msrx", irobot._model->ddq_all_floating);	
+	xbot_logger->add("tau_msrx", irobot._model->tau_all_floating);	
 	xbot_logger->add("tau_msr", irobot.tau_all);
 	xbot_logger->add("L_com", irobot._model->angular_momentum);
 	xbot_logger->add("LhdRef", irobot.LhdRef);

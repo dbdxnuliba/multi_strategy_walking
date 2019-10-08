@@ -298,7 +298,7 @@ void RBDLModelClass::UpdateRBDL(const std::vector<double>& qall_msr)
   ddq_all_floating = (dq_all_floating - dq_all_floating_old) / dt;
 
   CalcCenterOfMass(true);
-  // InverseDynamics();
+  InverseDynamics();
 
   // _CMM = centroidal_momentum_matrix();
 //   _CMM = CalcCMM();
@@ -306,6 +306,7 @@ void RBDLModelClass::UpdateRBDL(const std::vector<double>& qall_msr)
 //   _CMM_old = _CMM;
 //   Jcom = _CMM.topRows(3) / mass;
 //   dJcom = _dCMM.topRows(3) / mass;
+  //std::cout<< q_all_floating.size()<<std::endl;
 }
 
 void RBDLModelClass::UpdateRBDL(const Eigen::VectorXd& qall_msr)
@@ -318,7 +319,7 @@ void RBDLModelClass::UpdateRBDL(const Eigen::VectorXd& qall_msr)
   ddq_all_floating = (dq_all_floating - dq_all_floating_old) / dt;
 
   CalcCenterOfMass(true);
-  // InverseDynamics();
+  InverseDynamics();
 
   // _CMM = centroidal_momentum_matrix();
 //   _CMM = CalcCMM();
@@ -470,6 +471,11 @@ void RBDLModelClass::ForwardDynamicsContacts(RBDL::ConstraintSet & CS)
 //   InverseDynamics();
 //   vRBDLToJointName(tau_all_floating, torque_all, 0, torque_all.size() - 1);
 // }
+
+
+
+
+
 
 Eigen::MatrixXd RBDLModelClass::getJacobian(const int& body_id, const bool & IsFullJacobian, const bool & IsUpdateKinematics)
 {
