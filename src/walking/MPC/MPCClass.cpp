@@ -45,10 +45,10 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
         _steplength(_footstepsnumber-1) = 0;
-        _steplength(_footstepsnumber-2) = 0;
-        _steplength(_footstepsnumber-3) = 0;
+        _steplength(_footstepsnumber-2) = stepwidth/2;
+/*        _steplength(_footstepsnumber-3) = 0;
         _steplength(_footstepsnumber-4) = 0;	
-        _steplength(_footstepsnumber-5) = stepwidth/2;		
+        _steplength(_footstepsnumber-5) = stepwidth/2;*/		
 	
 	
 	
@@ -61,7 +61,7 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_lift_height_ref(0) = 0.00;
 	_lift_height_ref(1) = 0.05;
         _lift_height_ref(_footstepsnumber-1) = 0;
-        _lift_height_ref(_footstepsnumber-2) = 0.05;	
+        _lift_height_ref(_footstepsnumber-2) = 0.05/2;	
         _lift_height_ref(_footstepsnumber-3) = 0.05; 
         _lift_height_ref(_footstepsnumber-4) = 0.05; 	
 

@@ -158,7 +158,13 @@ void multi_strategy_walking::control_loop(double time, double period)
 		//// interpolation of stabilizer angle
 		if ( (time - _first_loop_time -_homing_time)  <= 1.5){
 		  _q = pow(time - _first_loop_time -_homing_time,1.5)/2.25*(_q_tmp-_qref)+_qref;
-		  
+//		  _q = _q_tmp;
+// 		  if ( (time - _first_loop_time -_homing_time)  <= 0.01)
+// 		  {
+// 		  std::cout << "_q_home from SRDF : " << _q_home.transpose() << std::endl;
+// 		  std::cout << "/////////////////////////: " << std::endl;
+// 		  std::cout << "_q_initial : " << _q_tmp.transpose() << std::endl;
+// 		  }
 		}
 		else{
 		  _q = _q_tmp;

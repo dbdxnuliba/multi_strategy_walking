@@ -36,7 +36,7 @@ public:
 	
 	
 	//// whole body admittance controller: COM position&pose control, foot position and pose control;
-	Eigen::Vector3d COMdampingCtrl(Eigen::Vector3d zmp_ref,const RobotStateClass &irobot);
+	Eigen::Vector3d COMdampingCtrl(int bjx1,Eigen::Vector3d Lfootxyzx,Eigen::Vector3d Rfootxyzx,Eigen::Vector3d zmp_ref,const RobotStateClass &irobot);
 	
 	Eigen::Vector3d COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx,Eigen::Vector3d comxyzx,Eigen::Vector3d Lfootxyzx,Eigen::Vector3d Rfootxyzx,const RobotStateClass &irobot);
 	

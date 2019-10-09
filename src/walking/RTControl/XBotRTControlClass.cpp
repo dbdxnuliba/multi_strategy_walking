@@ -878,26 +878,26 @@ void XBotRTControlClass::Admittance_controller()
 {
    const RobotStateClass& irobot = _WBS.getRobotState();
    UpdateWbsRef();
+  
+  det_hip_posotion = Sta.COMdampingCtrl(bjx1,Lfootxyzx,Rfootxyzx,zmp_ref,irobot);
+  det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
+  det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot);
+  det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot);
+  
+  
+  HipO_Turn = Rz(body_thetax[2]+det_hip_pose[2])*Ry(body_thetax[1]+det_hip_pose[1])*Rx(body_thetax[0]+det_hip_pose[0]);
+  
+  deltaHip = det_hip_posotion;
+  
+  
+  /// deltaFtOri_left, deltaFtOri_right are the matrix rotation of the local framework
+  deltaFtOri_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
+  
+  deltaFtOri_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
 //   
-//   det_hip_posotion = Sta.COMdampingCtrl(zmp_ref,irobot);
-//   det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
-//   det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot);
-//   det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot);
-//   
-//   
-//   HipO_Turn = Rz(body_thetax[2]+det_hip_pose[2])*Ry(body_thetax[1]+det_hip_pose[1])*Rx(body_thetax[0]+det_hip_pose[0]);
-//   
-//   deltaHip = det_hip_posotion;
-//   
-//   
-//   /// deltaFtOri_left, deltaFtOri_right are the matrix rotation of the local framework
-//   deltaFtOri_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
-//   
-//   deltaFtOri_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
-// //   
-// //   ankle_Ori_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
-// //   ankle_Ori_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
-//   
+//   ankle_Ori_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
+//   ankle_Ori_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
+  
 // 
 //   
 // //   cout<<"det_hip_pose:"<<det_hip_pose<<endl;
@@ -1198,6 +1198,7 @@ void XBotRTControlClass::initLogger(int buffer_size, int interleave)
 	xbot_logger->createVectorVariable("q_des", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
 	xbot_logger->createVectorVariable("q_ref", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
 	xbot_logger->createVectorVariable("dq_msr", RobotParaClass::JOINT_NUM(), interleave, buffer_size);
+	xbot_logger->createVectorVariable("q_msrx",34, interleave, buffer_size);	
 	xbot_logger->createVectorVariable("dq_msrx", 34, interleave, buffer_size);
 	xbot_logger->createVectorVariable("ddq_msrx", 34, interleave, buffer_size);
 	xbot_logger->createVectorVariable("tau_msrx", 34, interleave, buffer_size);	
@@ -1310,6 +1311,7 @@ void XBotRTControlClass::addToLog()
 	xbot_logger->add("q_des", irobot.SendToRobot->q);
 	xbot_logger->add("q_ref", irobot.SendToRobot->q_ref);
 	xbot_logger->add("dq_msr", irobot.qdot_all_mesure);
+	xbot_logger->add("q_msrx", irobot._model->q_all_floating);		
 	xbot_logger->add("dq_msrx", irobot._model->dq_all_floating);	
 	xbot_logger->add("ddq_msrx", irobot._model->ddq_all_floating);	
 	xbot_logger->add("tau_msrx", irobot._model->tau_all_floating);	

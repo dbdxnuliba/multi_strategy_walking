@@ -58,16 +58,32 @@ StabilizerClass::StabilizerClass()
 
 
 ////// CoM damping control: (admittance control) ZMP trajectory difference ===> CoM postion det
-Eigen::Vector3d StabilizerClass::COMdampingCtrl(Eigen::Vector3d zmp_ref,const RobotStateClass &irobot)
+Eigen::Vector3d StabilizerClass::COMdampingCtrl(int bjx1,Eigen::Vector3d Lfootxyzx,Eigen::Vector3d Rfootxyzx,Eigen::Vector3d zmp_ref,const RobotStateClass &irobot)
 {  
   Eigen::Matrix<double, 3,3> c_angle_singe;
   c_angle_singe.setZero();
   c_angle_singe(0,0) = 0.0000005; 
   c_angle_singe(1,1) = 0.0000005; 
   c_angle_singe(2,2) = 0.00000005;
+  
 
   
-  Eigen::Vector3d det_COM_position = c_angle_singe * (zmp_ref - irobot.gcop);
+//   Eigen::Vector3d det_COM_position = c_angle_singe * (zmp_ref - irobot.gcop);
+  
+  Eigen::Vector3d det_COM_position(0,0,0);
+
+
+  
+  if (bjx1 % 2 == 0)  //left support
+  {
+    det_COM_position= c_angle_singe * ((zmp_ref-Lfootxyzx) - (irobot.gcop-irobot.glft));  
+  }
+  else
+  {
+    det_COM_position= c_angle_singe * ((zmp_ref-Rfootxyzx) - (irobot.gcop-irobot.grft));  
+  }
+  
+  
   
   clamp(det_COM_position[0], -0.03, 0.03);   ///3 cm
   clamp(det_COM_position[1], -0.01, 0.01);   ///1 cm
@@ -84,17 +100,25 @@ Eigen::Vector3d StabilizerClass::COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx
 {  
   Eigen::Vector3d det_COM_pose(0,0,0);
   
-  det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1) - irobot.gcom(1)); 
-  
-  det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0) - irobot.gcom(0));
+//   det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1) - irobot.gcom(1)); 
+//   
+//   det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0) - irobot.gcom(0));
   
   if (bjx1 % 2 == 0)  //left support
   {
-    det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) - 0.0000005*(irobot.gcom(0) - Lfootxyzx(0));
+    
+    det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1)-Lfootxyzx(1) - (irobot.gcom(1)-irobot.glft(1))); 
+  
+    det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0)-Lfootxyzx(0) - (irobot.gcom(0)-irobot.glft(0)));  
+    
+    det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) - 0.0000005*(irobot.gcom(0) - irobot.glft(0));
   }
   else
   {
-    det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) + 0.0000005*(irobot.gcom(0) - Rfootxyzx(0));
+    det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1)-Rfootxyzx(1) - (irobot.gcom(1)-irobot.grft(1))); 
+  
+    det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0)-Rfootxyzx(0) - (irobot.gcom(0)-irobot.grft(0)));      
+    det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) + 0.0000005*(irobot.gcom(0) - irobot.grft(0));
   }
   
   
