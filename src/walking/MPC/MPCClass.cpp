@@ -45,7 +45,7 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
         _steplength(_footstepsnumber-1) = 0;
-        _steplength(_footstepsnumber-2) = stepwidth/2;
+        _steplength(_footstepsnumber-2) = stepwidth;
 /*        _steplength(_footstepsnumber-3) = 0;
         _steplength(_footstepsnumber-4) = 0;	
         _steplength(_footstepsnumber-5) = stepwidth/2;*/		

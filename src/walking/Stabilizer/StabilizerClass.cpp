@@ -62,7 +62,7 @@ Eigen::Vector3d StabilizerClass::COMdampingCtrl(int bjx1,Eigen::Vector3d Lfootxy
 {  
   Eigen::Matrix<double, 3,3> c_angle_singe;
   c_angle_singe.setZero();
-  c_angle_singe(0,0) = 0.0000005; 
+  c_angle_singe(0,0) = 0.0000002; 
   c_angle_singe(1,1) = 0.0000005; 
   c_angle_singe(2,2) = 0.00000005;
   
@@ -139,15 +139,15 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
 {
   Eigen::Matrix<double, 3,3> F_single;
   F_single.setZero();
-  F_single(0,0) = 0.000005; 
-  F_single(1,1) = 0.000005; 
-  F_single(2,2) = 0.0000005;  
+  F_single(0,0) = 0.000001; 
+  F_single(1,1) = 0.000001; 
+  F_single(2,2) = 0.0000001;  
  
   Eigen::Matrix<double, 3,3> F_double;
   F_double.setZero();
-  F_double(0,0) = 0.000001; 
-  F_double(1,1) = 0.000001; 
-  F_double(2,2) = 0.0000001;   
+  F_double(0,0) = 0.0000001; 
+  F_double(1,1) = 0.0000001; 
+  F_double(2,2) = 0.00000001;   
 
   Eigen::Vector3d det_foot_r(0,0,0), det_foot_l(0,0,0);
 
