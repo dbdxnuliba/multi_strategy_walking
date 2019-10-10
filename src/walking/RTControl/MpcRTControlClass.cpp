@@ -130,6 +130,9 @@ MpcRTControlClass::MpcRTControlClass()
   _M_r_mpc.setZero();
   _M_l_mpc.setZero();    
   
+  _F_r_mpc(2) = 9.8/2*RobotPara().totalmass;
+  _F_l_mpc(2) = 9.8/2*RobotPara().totalmass;  
+  
   
 }
 

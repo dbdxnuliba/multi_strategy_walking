@@ -78,6 +78,13 @@ protected:
 	std::string _name;
 
 private:
+        Eigen::Vector3d _det_COM_position,_det_COM_position_old;
+        Eigen::Vector3d _det_COM_pose,_det_COM_pose_old;
+        Eigen::Vector3d _det_foot_r,_det_foot_l,_det_foot_r_old,_det_foot_l_old;
+        double _det_footz_r,_det_footz_l,_det_footz_r_old,_det_footz_l_old;
+  
+  
+  
 
 };
 

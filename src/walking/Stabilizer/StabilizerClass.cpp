@@ -49,6 +49,12 @@ StabilizerClass::StabilizerClass()
 
 	deltaHip = deltaFtAng_l = deltaFtAng_r = deltaFtPos = Eigen::Vector3d::Zero();
 	Ft_force_diff_msr = Ft_force_diff_ref = Eigen::Vector3d::Zero();
+	
+        _det_COM_position.setZero(); _det_COM_position_old.setZero();
+        _det_COM_pose.setZero();  _det_COM_pose_old.setZero();
+        _det_foot_r.setZero();    _det_foot_l.setZero();     _det_foot_r_old.setZero(); _det_foot_l_old.setZero();
+        _det_footz_r=0;            _det_footz_l=0;             _det_footz_r_old=0;         _det_footz_l_old=0;	
+	
 
 };
 
@@ -62,35 +68,42 @@ Eigen::Vector3d StabilizerClass::COMdampingCtrl(int bjx1,Eigen::Vector3d Lfootxy
 {  
   Eigen::Matrix<double, 3,3> c_angle_singe;
   c_angle_singe.setZero();
-  c_angle_singe(0,0) = 0.0000002; 
-  c_angle_singe(1,1) = 0.0000005; 
-  c_angle_singe(2,2) = 0.00000005;
+// //   c_angle_singe(0,0) = 0.0000001; 
+// //   c_angle_singe(1,1) = 0.0000005; 
+// //   c_angle_singe(2,2) = 0.00000005;
   
-
+  c_angle_singe(0,0) = 1; 
+  c_angle_singe(1,1) = 1; 
+  c_angle_singe(2,2) = 0.5;
   
 //   Eigen::Vector3d det_COM_position = c_angle_singe * (zmp_ref - irobot.gcop);
   
-  Eigen::Vector3d det_COM_position(0,0,0);
+
 
 
   
   if (bjx1 % 2 == 0)  //left support
   {
-    det_COM_position= c_angle_singe * ((zmp_ref-Lfootxyzx) - (irobot.gcop-irobot.glft));  
+    _det_COM_position= -c_angle_singe * ((zmp_ref-Lfootxyzx) - (irobot.gcop-irobot.glft));  
   }
   else
   {
-    det_COM_position= c_angle_singe * ((zmp_ref-Rfootxyzx) - (irobot.gcop-irobot.grft));  
+    _det_COM_position= -c_angle_singe * ((zmp_ref-Rfootxyzx) - (irobot.gcop-irobot.grft));  
   }
+ 
   
   
   
-  clamp(det_COM_position[0], -0.03, 0.03);   ///3 cm
-  clamp(det_COM_position[1], -0.01, 0.01);   ///1 cm
-  clamp(det_COM_position[2], -0.05, 0.005);  ///
+  Eigen::Vector3d det_COM_positionx = 0.5 *(_det_COM_position+0.025*(_det_COM_position-_det_COM_position_old)/(RobotParaClass::dT()))*RobotParaClass::dT()*RobotParaClass::dT();
+  
+  _det_COM_position_old = _det_COM_position;
+  
+  clamp(det_COM_positionx[0], -0.03, 0.03);   ///3 cm
+  clamp(det_COM_positionx[1], -0.01, 0.01);   ///1 cm
+  clamp(det_COM_positionx[2], -0.05, 0.005);  ///
   
   
-  return det_COM_position;
+  return det_COM_positionx;
 
 }
 
@@ -100,27 +113,50 @@ Eigen::Vector3d StabilizerClass::COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx
 {  
   Eigen::Vector3d det_COM_pose(0,0,0);
   
-//   det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1) - irobot.gcom(1)); 
+  double theatx_p,footx_p;
+  theatx_p = 0.5;
+  footx_p = 0.5;
+  
+//   if (bjx1 % 2 == 0)  //left support
+//   {
+//     
+//     det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1)-Lfootxyzx(1) - (irobot.gcom(1)-irobot.glft(1))); 
 //   
-//   det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0) - irobot.gcom(0));
+//     det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0)-Lfootxyzx(0) - (irobot.gcom(0)-irobot.glft(0)));  
+//     
+//     det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) - 0.0000005*(irobot.gcom(0) - irobot.glft(0));
+//   }
+//   else
+//   {
+//     det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1)-Rfootxyzx(1) - (irobot.gcom(1)-irobot.grft(1))); 
+//   
+//     det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0)-Rfootxyzx(0) - (irobot.gcom(0)-irobot.grft(0)));      
+//     det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) + 0.0000005*(irobot.gcom(0) - irobot.grft(0));
+//   }
+  
   
   if (bjx1 % 2 == 0)  //left support
   {
     
-    det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1)-Lfootxyzx(1) - (irobot.gcom(1)-irobot.glft(1))); 
+    _det_COM_pose(0) = theatx_p * (thetaxyx(0) - irobot.IMU_Euler(0)) + footx_p*(comxyzx(1)-Lfootxyzx(1) - (irobot.gcom(1)-irobot.glft(1))); 
   
-    det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0)-Lfootxyzx(0) - (irobot.gcom(0)-irobot.glft(0)));  
+    _det_COM_pose(1) = theatx_p * (thetaxyx(1) - irobot.IMU_Euler(1)) + footx_p*(comxyzx(0)-Lfootxyzx(0) - (irobot.gcom(0)-irobot.glft(0)));  
     
-    det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) - 0.0000005*(irobot.gcom(0) - irobot.glft(0));
+    _det_COM_pose(2) = theatx_p * (thetaxyx(2) - irobot.IMU_Euler(2)) - footx_p*(irobot.gcom(0) - irobot.glft(0));
   }
   else
   {
-    det_COM_pose(0) = 0.0000005 * (thetaxyx(0) - irobot.IMU_Euler(0)) + 0.0000005*(comxyzx(1)-Rfootxyzx(1) - (irobot.gcom(1)-irobot.grft(1))); 
+    _det_COM_pose(0) = theatx_p * (thetaxyx(0) - irobot.IMU_Euler(0)) + footx_p*(comxyzx(1)-Rfootxyzx(1) - (irobot.gcom(1)-irobot.grft(1))); 
   
-    det_COM_pose(1) = 0.0000005 * (thetaxyx(1) - irobot.IMU_Euler(1)) + 0.0000005*(comxyzx(0)-Rfootxyzx(0) - (irobot.gcom(0)-irobot.grft(0)));      
-    det_COM_pose(2) = 0.0000005 * (thetaxyx(2) - irobot.IMU_Euler(2)) + 0.0000005*(irobot.gcom(0) - irobot.grft(0));
+    _det_COM_pose(1) = theatx_p * (thetaxyx(1) - irobot.IMU_Euler(1)) + footx_p*(comxyzx(0)-Rfootxyzx(0) - (irobot.gcom(0)-irobot.grft(0)));      
+    _det_COM_pose(2) = theatx_p * (thetaxyx(2) - irobot.IMU_Euler(2)) + footx_p*(irobot.gcom(0) - irobot.grft(0));
   }
   
+  
+ 
+  det_COM_pose = _det_COM_pose + 0.025*(_det_COM_pose-_det_COM_pose_old)/(RobotParaClass::dT());
+  
+  _det_COM_pose_old = _det_COM_pose;
   
   clamp(det_COM_pose[0], -0.052, 0.052); // =- 3 degree
   clamp(det_COM_pose[1], -0.052, 0.052); // =- 3 degree
@@ -137,7 +173,7 @@ Eigen::Vector3d StabilizerClass::COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx
 ////// Foot admittance control: ankle torque difference ===> foot RPY angle det
 Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, double tx, double td, Eigen::Vector3d M_L, Eigen::Vector3d M_R,const RobotStateClass &irobot)
 {
-  Eigen::Matrix<double, 3,3> F_single;
+/*  Eigen::Matrix<double, 3,3> F_single;
   F_single.setZero();
   F_single(0,0) = 0.000001; 
   F_single(1,1) = 0.000001; 
@@ -147,9 +183,22 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
   F_double.setZero();
   F_double(0,0) = 0.0000001; 
   F_double(1,1) = 0.0000001; 
-  F_double(2,2) = 0.00000001;   
+  F_double(2,2) = 0.00000001; */
 
-  Eigen::Vector3d det_foot_r(0,0,0), det_foot_l(0,0,0);
+
+
+  Eigen::Matrix<double, 3,3> F_single;
+  F_single.setZero();
+  F_single(0,0) = 0.0001; 
+  F_single(1,1) = 0.0001; 
+  F_single(2,2) = 0.00001;  
+ 
+  Eigen::Matrix<double, 3,3> F_double;
+  F_double.setZero();
+  F_double(0,0) = 0.0001; 
+  F_double(1,1) = 0.0001; 
+  F_double(2,2) = 0.000001; 
+
 
   
   Eigen::Vector3d torque_r(0,0,0), torque_l(0,0,0);
@@ -167,37 +216,43 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
 //    if ((mpc_ref._j_count +1 - round(mpc_ref._tx(mpc_ref._bjx1-1)/_dt))*_dt < mpc_ref._td(mpc_ref._bjx1-1))
     if ((j_count +1 - round(tx/_dt))*_dt < td)
     {
-      det_foot_l = F_double*(M_L - torque_l); 
-      det_foot_r = F_double*(M_R - torque_r);
+      _det_foot_l = F_double*(M_L - torque_l); 
+      _det_foot_r = F_double*(M_R - torque_r);
              
     }
     else
     {
-      det_foot_l = F_single*(M_L - torque_l);   
+      _det_foot_l = F_single*(M_L - torque_l);   
     }
   }
   else
   {
     if ((j_count +1 - round(tx/_dt))*_dt < td)
     {
-      det_foot_r = F_double*(M_R - torque_r);      
-      det_foot_l = F_double*(M_L - torque_l);             
+      _det_foot_r = F_double*(M_R - torque_r);      
+      _det_foot_l = F_double*(M_L - torque_l);             
     }
     else
     {
-      det_foot_r = F_single*(M_R - torque_r);  
+      _det_foot_r = F_single*(M_R - torque_r);  
 //      cout <<"asd"<<endl;
      
     }
   }
   
+
+  
   Eigen::Vector6d det_foot_rpy_lr;
-  det_foot_rpy_lr(0) = det_foot_l(0);
-  det_foot_rpy_lr(1) = det_foot_l(1);
-  det_foot_rpy_lr(2) = det_foot_l(2);
-  det_foot_rpy_lr(3) = det_foot_r(0);
-  det_foot_rpy_lr(4) = det_foot_r(1);
-  det_foot_rpy_lr(5) = det_foot_r(2);  
+  det_foot_rpy_lr(0) = _det_foot_l(0) + 0.025*(_det_foot_l(0)-_det_foot_l_old(0))/(RobotParaClass::dT());
+  det_foot_rpy_lr(1) = _det_foot_l(1) + 0.025*(_det_foot_l(1)-_det_foot_l_old(1))/(RobotParaClass::dT());
+  det_foot_rpy_lr(2) = _det_foot_l(2) + 0.025*(_det_foot_l(2)-_det_foot_l_old(2))/(RobotParaClass::dT());
+  det_foot_rpy_lr(3) = _det_foot_r(0) + 0.025*(_det_foot_r(0)-_det_foot_r_old(0))/(RobotParaClass::dT());
+  det_foot_rpy_lr(4) = _det_foot_r(1) + 0.025*(_det_foot_r(1)-_det_foot_r_old(1))/(RobotParaClass::dT());
+  det_foot_rpy_lr(5) = _det_foot_r(2) + 0.025*(_det_foot_r(2)-_det_foot_r_old(2))/(RobotParaClass::dT());  
+  
+  
+  _det_foot_r_old = _det_foot_r;
+  _det_foot_l_old = _det_foot_l;  
   
   
   clamp(det_foot_rpy_lr[0], -0.052, 0.052); // =- 3 degree
@@ -219,9 +274,7 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
 Eigen::Vector2d StabilizerClass::ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L,Eigen::Vector3d F_R,const RobotStateClass &irobot)
 {
   double foot_damp_co = 0.0000001;
-  
-  
-  double det_foot_r(0.0), det_foot_l(0.0);
+
   
   Eigen::Vector3d f_r(0,0,0), f_l(0,0,0);
   f_r(0) = irobot.FT_fr_filter(0);
@@ -234,18 +287,23 @@ Eigen::Vector2d StabilizerClass::ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L
    
   if (bjx1 % 2 == 0)  //left support
   {
-    det_foot_l = 0.5 * foot_damp_co*((F_R(2) - F_L(2))- (f_r(2) - f_l(2))); 
-    det_foot_r = -det_foot_l;
+    _det_footz_l = 0.5 * foot_damp_co*((F_R(2) - F_L(2))- (f_r(2) - f_l(2))); 
+    _det_footz_r = -_det_footz_l;
   }
   else
   {
-    det_foot_r = 0.5 * foot_damp_co*((F_L(2) - F_R(2))- (f_l(2) - f_r(2)));      
-    det_foot_l = -det_foot_r;             
+    _det_footz_r = 0.5 * foot_damp_co*((F_L(2) - F_R(2))- (f_l(2) - f_r(2)));      
+    _det_footz_l = -_det_footz_r;             
   }
   
+
+  
   Eigen::Vector2d det_footz_lr(0,0);
-  det_footz_lr(0) = det_foot_l;
-  det_footz_lr(1) = det_foot_r;
+  det_footz_lr(0) = _det_footz_l + 0.000001*(_det_footz_l-_det_footz_l_old)/(RobotParaClass::dT());
+  det_footz_lr(1) = _det_footz_r + 0.000001*(_det_footz_r-_det_footz_r_old)/(RobotParaClass::dT());
+  
+  _det_footz_l_old = _det_footz_l;
+  _det_footz_r_old = _det_footz_r;    
 
   clamp(det_footz_lr[0], -0.001, 0.001); // =- 5cm
   clamp(det_footz_lr[1], -0.001, 0.001); // =- 5 cm 

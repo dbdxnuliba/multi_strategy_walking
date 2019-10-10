@@ -156,8 +156,8 @@ void multi_strategy_walking::control_loop(double time, double period)
 // 		RTControl.JointRefToXBot(_q);
 		RTControl.JointRefToXBot(_q_tmp);
 		//// interpolation of stabilizer angle
-		if ( (time - _first_loop_time -_homing_time)  <= 1.5){
-		  _q = pow(time - _first_loop_time -_homing_time,1.5)/2.25*(_q_tmp-_qref)+_qref;
+		if ( (time - _first_loop_time -_homing_time)  <= 2){
+		  _q = pow(time - _first_loop_time -_homing_time,2)/4*(_q_tmp-_qref)+_qref;
 //		  _q = _q_tmp;
 // 		  if ( (time - _first_loop_time -_homing_time)  <= 0.01)
 // 		  {

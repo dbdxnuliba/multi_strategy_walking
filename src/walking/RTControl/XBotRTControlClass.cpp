@@ -403,28 +403,20 @@ void XBotRTControlClass::Run()
 		  DPRINTF("========= IsFixed. =============\n");
 			
 		}
-		else {
+		else {		  
 			WalkingReactStepping();
+			
 		}
 
 		COMTrajGen();
 		walkdtime++;
 		
 	}
-// 	else if (IsInit) {
-// 		ImpStabilizer();
-// 		StandingReactStepping();
-// 		DPRINTF("========= StandingReactStepping mode. =============\n");
-// 		
-// 	}
-// 	else
-// 	{
-// 	  DPRINTF("========= Isinit= False, No Init. =============\n");
-// 	}
 
 
 	if (IsInit) {
 	  Admittance_controller();
+ //	  std::cout<<"admittance controller"<<std::endl;
 	}
 
 	SolveIK();
@@ -854,24 +846,6 @@ void XBotRTControlClass::UpdateWbsRef()
 
 }
 
-// void XBotRTControlClass::ImpStabilizer()
-// {
-// 	const RobotStateClass& irobot = _WBS.getRobotState();
-// 	Eigen::Matrix3d TurnYawO = Rz(TurnYaw);
-// 	UpdateWbsRef();
-// 	//Sta.setFilterPara(5, 3);
-// 	Sta.zc(zc);
-// 	double VerticalScale = RobotPara().setParaForSimOrReal(0.9538, 1.005);
-// 	Sta.VerticalScale(VerticalScale);
-// 	//******* for walking **************
-// 	Sta.Kd(RobotPara().Kx,	RobotPara().Ky,	RobotPara().Kz);
-// 	Sta.Bd(RobotPara().Bx,	RobotPara().By,	RobotPara().Bz);
-// 	Sta.Enable(StaEnableX, StaEnableY, StaEnableZ);
-// 	deltaHip = Sta.StabilizerCart(irobot);
-// 
-// 	deltaHip = TurnYawO * deltaHip;
-// }
-
 
 
 void XBotRTControlClass::Admittance_controller()
@@ -881,7 +855,7 @@ void XBotRTControlClass::Admittance_controller()
   
   det_hip_posotion = Sta.COMdampingCtrl(bjx1,Lfootxyzx,Rfootxyzx,zmp_ref,irobot);
   det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
-  det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot);
+//  det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot);
   det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot);
   
   
