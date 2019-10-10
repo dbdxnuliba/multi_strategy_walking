@@ -72,9 +72,9 @@ Eigen::Vector3d StabilizerClass::COMdampingCtrl(int bjx1,Eigen::Vector3d Lfootxy
 // //   c_angle_singe(1,1) = 0.0000005; 
 // //   c_angle_singe(2,2) = 0.00000005;
   
-  c_angle_singe(0,0) = 1; 
-  c_angle_singe(1,1) = 1; 
-  c_angle_singe(2,2) = 0.5;
+  c_angle_singe(0,0) = 0.75; 
+  c_angle_singe(1,1) = 0.1; 
+  c_angle_singe(2,2) = 0.05;
   
 //   Eigen::Vector3d det_COM_position = c_angle_singe * (zmp_ref - irobot.gcop);
   
@@ -94,7 +94,7 @@ Eigen::Vector3d StabilizerClass::COMdampingCtrl(int bjx1,Eigen::Vector3d Lfootxy
   
   
   
-  Eigen::Vector3d det_COM_positionx = 0.5 *(_det_COM_position+0.025*(_det_COM_position-_det_COM_position_old)/(RobotParaClass::dT()))*RobotParaClass::dT()*RobotParaClass::dT();
+  Eigen::Vector3d det_COM_positionx = 0.5 *(_det_COM_position+0.05*(_det_COM_position-_det_COM_position_old)/(RobotParaClass::dT()))*RobotParaClass::dT()*RobotParaClass::dT();
   
   _det_COM_position_old = _det_COM_position;
   
@@ -114,8 +114,8 @@ Eigen::Vector3d StabilizerClass::COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx
   Eigen::Vector3d det_COM_pose(0,0,0);
   
   double theatx_p,footx_p;
-  theatx_p = 0.5;
-  footx_p = 0.5;
+  theatx_p = 0.1;
+  footx_p = 0.005;
   
 //   if (bjx1 % 2 == 0)  //left support
 //   {
@@ -154,7 +154,7 @@ Eigen::Vector3d StabilizerClass::COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx
   
   
  
-  det_COM_pose = _det_COM_pose + 0.025*(_det_COM_pose-_det_COM_pose_old)/(RobotParaClass::dT());
+  det_COM_pose = _det_COM_pose + 0.05*(_det_COM_pose-_det_COM_pose_old)/(RobotParaClass::dT());
   
   _det_COM_pose_old = _det_COM_pose;
   
@@ -171,7 +171,7 @@ Eigen::Vector3d StabilizerClass::COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx
 
 
 ////// Foot admittance control: ankle torque difference ===> foot RPY angle det
-Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, double tx, double td, Eigen::Vector3d M_L, Eigen::Vector3d M_R,const RobotStateClass &irobot)
+Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, double tx, double td, Eigen::Vector3d M_L, Eigen::Vector3d M_R,const RobotStateClass &irobot,bool StartWalk)
 {
 /*  Eigen::Matrix<double, 3,3> F_single;
   F_single.setZero();
@@ -189,13 +189,13 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
 
   Eigen::Matrix<double, 3,3> F_single;
   F_single.setZero();
-  F_single(0,0) = 0.0001; 
-  F_single(1,1) = 0.0001; 
-  F_single(2,2) = 0.00001;  
+  F_single(0,0) = 0.00001; 
+  F_single(1,1) = 0.00001; 
+  F_single(2,2) = 0.000001;  
  
   Eigen::Matrix<double, 3,3> F_double;
   F_double.setZero();
-  F_double(0,0) = 0.0001; 
+  F_double(0,0) = 0.000075; 
   F_double(1,1) = 0.0001; 
   F_double(2,2) = 0.000001; 
 
@@ -210,45 +210,57 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
   torque_l(1) = irobot.FT_fl_filter(4);
   torque_l(2) = irobot.FT_fl_filter(5);  
 
-   
-  if (bjx1 % 2 == 0)  //left support
-  {
-//    if ((mpc_ref._j_count +1 - round(mpc_ref._tx(mpc_ref._bjx1-1)/_dt))*_dt < mpc_ref._td(mpc_ref._bjx1-1))
-    if ((j_count +1 - round(tx/_dt))*_dt < td)
-    {
+  
+  if (!StartWalk) {
       _det_foot_l = F_double*(M_L - torque_l); 
       _det_foot_r = F_double*(M_R - torque_r);
-             
-    }
-    else
-    {
-      _det_foot_l = F_single*(M_L - torque_l);   
-    }
   }
   else
   {
-    if ((j_count +1 - round(tx/_dt))*_dt < td)
+    if (bjx1 % 2 == 0)  //left support
     {
-      _det_foot_r = F_double*(M_R - torque_r);      
-      _det_foot_l = F_double*(M_L - torque_l);             
+  //    if ((mpc_ref._j_count +1 - round(mpc_ref._tx(mpc_ref._bjx1-1)/_dt))*_dt < mpc_ref._td(mpc_ref._bjx1-1))
+      if ((j_count +1 - round(tx/_dt))*_dt < td)
+      {
+	_det_foot_l = F_double*(M_L - torque_l); 
+	_det_foot_r = F_double*(M_R - torque_r);
+	      
+      }
+      else
+      {
+	_det_foot_l = F_single*(M_L - torque_l);   
+      }
     }
     else
     {
-      _det_foot_r = F_single*(M_R - torque_r);  
-//      cout <<"asd"<<endl;
-     
-    }
+      if ((j_count +1 - round(tx/_dt))*_dt < td)
+      {
+	_det_foot_r = F_double*(M_R - torque_r);      
+	_det_foot_l = F_double*(M_L - torque_l);             
+      }
+      else
+      {
+	_det_foot_r = F_single*(M_R - torque_r);  
+  //      cout <<"asd"<<endl;
+      
+      }
+    }    
   }
+  
+  
+  
+  
+
   
 
   
   Eigen::Vector6d det_foot_rpy_lr;
-  det_foot_rpy_lr(0) = _det_foot_l(0) + 0.025*(_det_foot_l(0)-_det_foot_l_old(0))/(RobotParaClass::dT());
-  det_foot_rpy_lr(1) = _det_foot_l(1) + 0.025*(_det_foot_l(1)-_det_foot_l_old(1))/(RobotParaClass::dT());
-  det_foot_rpy_lr(2) = _det_foot_l(2) + 0.025*(_det_foot_l(2)-_det_foot_l_old(2))/(RobotParaClass::dT());
-  det_foot_rpy_lr(3) = _det_foot_r(0) + 0.025*(_det_foot_r(0)-_det_foot_r_old(0))/(RobotParaClass::dT());
-  det_foot_rpy_lr(4) = _det_foot_r(1) + 0.025*(_det_foot_r(1)-_det_foot_r_old(1))/(RobotParaClass::dT());
-  det_foot_rpy_lr(5) = _det_foot_r(2) + 0.025*(_det_foot_r(2)-_det_foot_r_old(2))/(RobotParaClass::dT());  
+  det_foot_rpy_lr(0) = _det_foot_l(0) + 0.05*(_det_foot_l(0)-_det_foot_l_old(0))/(RobotParaClass::dT());
+  det_foot_rpy_lr(1) = _det_foot_l(1) + 0.05*(_det_foot_l(1)-_det_foot_l_old(1))/(RobotParaClass::dT());
+  det_foot_rpy_lr(2) = _det_foot_l(2) + 0.05*(_det_foot_l(2)-_det_foot_l_old(2))/(RobotParaClass::dT());
+  det_foot_rpy_lr(3) = _det_foot_r(0) + 0.05*(_det_foot_r(0)-_det_foot_r_old(0))/(RobotParaClass::dT());
+  det_foot_rpy_lr(4) = _det_foot_r(1) + 0.05*(_det_foot_r(1)-_det_foot_r_old(1))/(RobotParaClass::dT());
+  det_foot_rpy_lr(5) = _det_foot_r(2) + 0.05*(_det_foot_r(2)-_det_foot_r_old(2))/(RobotParaClass::dT());  
   
   
   _det_foot_r_old = _det_foot_r;
@@ -262,7 +274,7 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
   clamp(det_foot_rpy_lr[4], -0.052, 0.052); // =- 3 degree
   clamp(det_foot_rpy_lr[5], -0.0587, 0.087); // =- 5 degree 
 
-  
+//  det_foot_rpy_lr *= -1 ;
   
   return det_foot_rpy_lr;
    
@@ -271,7 +283,7 @@ Eigen::Vector6d StabilizerClass::FootdampiingCtrol_LR(int bjx1, int j_count, dou
 
 
 //////foot_focre_diffence_control: (admittance control) foot reactive force different ===> foot height det
-Eigen::Vector2d StabilizerClass::ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L,Eigen::Vector3d F_R,const RobotStateClass &irobot)
+Eigen::Vector2d StabilizerClass::ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L,Eigen::Vector3d F_R,const RobotStateClass &irobot,bool StartWalk)
 {
   double foot_damp_co = 0.0000001;
 
@@ -285,16 +297,28 @@ Eigen::Vector2d StabilizerClass::ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L
   f_l(1) = irobot.FT_fl_filter(1);
   f_l(2) = irobot.FT_fl_filter(2);  
    
-  if (bjx1 % 2 == 0)  //left support
-  {
-    _det_footz_l = 0.5 * foot_damp_co*((F_R(2) - F_L(2))- (f_r(2) - f_l(2))); 
-    _det_footz_r = -_det_footz_l;
+  
+  if (!StartWalk) {
+      _det_footz_l = 0.5 * foot_damp_co*((F_R(2) - F_L(2))- (f_r(2) - f_l(2))); 
+      _det_footz_r = 0.5 * foot_damp_co*((F_L(2) - F_R(2))- (f_l(2) - f_r(2))); 
   }
   else
   {
-    _det_footz_r = 0.5 * foot_damp_co*((F_L(2) - F_R(2))- (f_l(2) - f_r(2)));      
-    _det_footz_l = -_det_footz_r;             
+    if (bjx1 % 2 == 0)  //left support
+    {
+      _det_footz_l = 0.5 * foot_damp_co*((F_R(2) - F_L(2))- (f_r(2) - f_l(2))); 
+      _det_footz_r = -_det_footz_l;
+    }
+    else
+    {
+      _det_footz_r = 0.5 * foot_damp_co*((F_L(2) - F_R(2))- (f_l(2) - f_r(2)));      
+      _det_footz_l = -_det_footz_r;             
+    }    
+    
   }
+  
+  
+
   
 
   

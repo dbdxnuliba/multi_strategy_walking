@@ -40,9 +40,9 @@ public:
 	
 	Eigen::Vector3d COMangleCtrl(int bjx1, Eigen::Vector3d thetaxyx,Eigen::Vector3d comxyzx,Eigen::Vector3d Lfootxyzx,Eigen::Vector3d Rfootxyzx,const RobotStateClass &irobot);
 	
-	Eigen::Vector6d FootdampiingCtrol_LR(int bjx1, int j_count, double tx, double td, Eigen::Vector3d M_L, Eigen::Vector3d M_R,const RobotStateClass &irobot);
+	Eigen::Vector6d FootdampiingCtrol_LR(int bjx1, int j_count, double tx, double td, Eigen::Vector3d M_L, Eigen::Vector3d M_R,const RobotStateClass &irobot,bool StartWalk);
 
- 	Eigen::Vector2d ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L,Eigen::Vector3d F_R,const RobotStateClass &irobot);
+ 	Eigen::Vector2d ForcediffCtrol_LR(int bjx1, Eigen::Vector3d F_L,Eigen::Vector3d F_R,const RobotStateClass &irobot,bool StartWalk);
 		
 
 protected:

@@ -855,8 +855,8 @@ void XBotRTControlClass::Admittance_controller()
   
   det_hip_posotion = Sta.COMdampingCtrl(bjx1,Lfootxyzx,Rfootxyzx,zmp_ref,irobot);
   det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
-//  det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot);
-  det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot);
+  det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot,IsStartWalk);
+  det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot,IsStartWalk);
   
   
   HipO_Turn = Rz(body_thetax[2]+det_hip_pose[2])*Ry(body_thetax[1]+det_hip_pose[1])*Rx(body_thetax[0]+det_hip_pose[0]);
