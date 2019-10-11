@@ -323,7 +323,8 @@ protected:
 	Eigen::Vector3d LeftFootPosx,RightFootPosx;		
 	
 	
-	
+private:
+        double t_compute;
 	
 
 };

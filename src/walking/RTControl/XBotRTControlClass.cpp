@@ -6,6 +6,8 @@ XBotRTControlClass.cpp
 #include <sys/stat.h>
 #include <unistd.h>
 #define USE_XBOT_LOGGER
+#include <time.h>
+
 
 // #include "ZMPWalk/swingfootcartclass.h"
 
@@ -179,7 +181,9 @@ XBotRTControlClass::XBotRTControlClass()
 	LeftFootPosx.setZero();
 	LeftFootPosx(1) = RobotParaClass::HALF_HIP_WIDTH();
 	RightFootPosx.setZero();
-	RightFootPosx(1) = -RobotParaClass::HALF_HIP_WIDTH();		
+	RightFootPosx(1) = -RobotParaClass::HALF_HIP_WIDTH();	
+
+        t_compute =0;	
 	
 	
 }
@@ -383,6 +387,11 @@ void XBotRTControlClass::Run(const double &dT, std::vector<double> &pos, const s
 
 void XBotRTControlClass::Run()
 {
+  
+  
+    clock_t t_start,t_finish;
+    
+	  t_start = clock();    
   //// run: logic: firstly: move to initial postion: upper arm put down. after 3s, keep the initial position;
   ////// then run ./xddp_console, to keyboard input the c/s to start or stop the real-time loop
 	const RobotStateClass& irobot = _WBS.getRobotState();
@@ -430,7 +439,9 @@ void XBotRTControlClass::Run()
 // 	std::cout<<"IsStartWalk:"<< IsStartWalk<<std::endl;
 // 	std::cout<<"IsFixed:"<< IsFixed<<std::endl;
 
-    
+	  t_finish = clock();   
+	  
+	  t_compute = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	  
     
 	
 }
@@ -1233,7 +1244,7 @@ void XBotRTControlClass::initLogger(int buffer_size, int interleave)
 	xbot_logger->createVectorVariable("det_hip_pose", 3, interleave, buffer_size);
 	xbot_logger->createVectorVariable("det_foot_rpy_lr", 6, interleave, buffer_size);
 	xbot_logger->createVectorVariable("det_footz_lr", 2, interleave, buffer_size);			
-	
+	xbot_logger->createVectorVariable("time_cost", 1, interleave, buffer_size);		
 
 	Sta.initLogger(xbot_logger, logger_len);
 
@@ -1347,7 +1358,7 @@ void XBotRTControlClass::addToLog()
 	xbot_logger->add("det_hip_pose", det_hip_pose);
 	xbot_logger->add("det_foot_rpy_lr", det_foot_rpy_lr);
 	xbot_logger->add("det_footz_lr", det_footz_lr);		
-	
+	xbot_logger->add("time_cost", t_compute);		
 	Sta.addToLog(xbot_logger);
 
 	InternalLoggerLoop();
