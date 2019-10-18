@@ -1,5 +1,5 @@
 XBotCore:
-  config_path: "configs/CogimonConfig/configs/cogimon_francesco.yaml"
+  config_path: "configs/CogimonConfig/configs/cogimon_francescox.yaml"
 
 XBotInterface:
   urdf_path: "configs/CogimonConfig/urdf/cogimon.urdf"

@@ -145,6 +145,10 @@ void MpcRTControlClass::WalkingReactStepping()
 {
   // this is the loop for normal walking
 
+  
+  cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!_dtx:"<<_dtx<<endl;
+  
+  
   _walkdtime1 = walkdtime - _t_walkdtime_restart_flag;
 // 	cout << "walkdtime1:"<<_walkdtime1<<endl;
 

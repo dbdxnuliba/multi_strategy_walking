@@ -424,7 +424,7 @@ void XBotRTControlClass::Run()
 
 
 	if (IsInit) {
-	  Admittance_controller();
+// 	  Admittance_controller();
  //	  std::cout<<"admittance controller"<<std::endl;
 	}
 
@@ -792,8 +792,36 @@ void XBotRTControlClass::COMTrajGen()
 	// PelvisPos << hip_pos_eigen[0], hip_pos_eigen[1], zh + deltaCOMz;
 
 
+        double kappx=1;
+// 	double t_xx =0;
+// 	
+// /*	if (walkdtime*dt>=6.5)
+// 	{
+// 	  t_xx = (walkdtime -(int)6.5/dt)*0.000008;
+// 	  
+// 	  kappx += t_xx;
+// 	  if (kappx>=0.99)
+// 	  {
+// 	    kappx=0.99;
+// 	  }	  
+// 	}*/	
+// 	
+// 	if (walkdtime*dt>=14)
+// 	{
+// 	  t_xx = (walkdtime -(int)14/dt)*0.0001;
+// 	  
+// 	  kappx -= t_xx;
+// 	  if (kappx<=0.96)
+// 	  {
+// 	    kappx=0.96;
+// 	  }	  
+// 	}
+
+
 // 	PelvisPos[1] *= Ksway;
   	PelvisPos[1] *= 1;
+	
+	PelvisPos[0] *= kappx;
 }
 
 void XBotRTControlClass::savedata()
@@ -865,9 +893,9 @@ void XBotRTControlClass::Admittance_controller()
    UpdateWbsRef();
   
  det_hip_posotion = Sta.COMdampingCtrl(bjx1,Lfootxyzx,Rfootxyzx,zmp_ref,irobot);
-  det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
+   det_hip_pose = Sta.COMangleCtrl(bjx1,thetaxyx,comxyzx,Lfootxyzx,Rfootxyzx,irobot);
   det_foot_rpy_lr = Sta.FootdampiingCtrol_LR(bjx1, j_count, tx, td, M_L, M_R,irobot,IsStartWalk);
-  det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot,IsStartWalk);
+ det_footz_lr = Sta.ForcediffCtrol_LR(bjx1, F_L,F_R,irobot,IsStartWalk);
   
   
   HipO_Turn = Rz(body_thetax[2]+det_hip_pose[2])*Ry(body_thetax[1]+det_hip_pose[1])*Rx(body_thetax[0]+det_hip_pose[0]);
@@ -879,16 +907,7 @@ void XBotRTControlClass::Admittance_controller()
   deltaFtOri_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
   
   deltaFtOri_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
-//   
-//   ankle_Ori_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
-//   ankle_Ori_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
   
-// 
-//   
-// //   cout<<"det_hip_pose:"<<det_hip_pose<<endl;
-// //   cout<<"deltaHip:"<<deltaHip.transpose()<<endl;
-// //   cout<<"det_foot_rpy_lr:"<<det_foot_rpy_lr.transpose()<<endl;
-// //   cout<<"det_footz_lr:"<<det_footz_lr.transpose()<<endl;
 
   
 }

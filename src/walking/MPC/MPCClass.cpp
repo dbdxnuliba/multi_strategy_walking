@@ -45,11 +45,8 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
         _steplength(_footstepsnumber-1) = 0;
-        _steplength(_footstepsnumber-2) = stepwidth;
-/*        _steplength(_footstepsnumber-3) = 0;
-        _steplength(_footstepsnumber-4) = 0;	
-        _steplength(_footstepsnumber-5) = stepwidth/2;*/		
-	
+        _steplength(_footstepsnumber-2) = 0;		
+	_steplength(_footstepsnumber-3) = steplength/2;
 	
 	
 	_stepwidth.setConstant(stepwidth);
@@ -59,48 +56,62 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	
 	_lift_height_ref.setConstant(_lift_height);
 	_lift_height_ref(0) = 0.00;
-	_lift_height_ref(1) = 0.05;
+	_lift_height_ref(1) = 0.04;
         _lift_height_ref(_footstepsnumber-1) = 0;
-        _lift_height_ref(_footstepsnumber-2) = 0.05/2;	
-        _lift_height_ref(_footstepsnumber-3) = 0.05; 
-        _lift_height_ref(_footstepsnumber-4) = 0.05; 	
+        _lift_height_ref(_footstepsnumber-2) = 0;	
+        _lift_height_ref(_footstepsnumber-3) = 0.04; 	
 
 
-// ///////////******************************************************obtacle avoidance-mod
-//  	_steplength(4) = steplength/2;
-// 	_steplength(5) = 0;
-// 	_steplength(6) = 0;
-// 	_steplength(7) = 0;
-// 	_steplength(8) = 0;
-// 	_steplength(9) = 0;
-// 	_steplength(10) = 0;
-// 	_steplength(11) = 0;
-// 	_steplength(12) = 0;
-// 	
-//  	_steplength(13) = 0.05;
-//  	_steplength(14) = 0.15;
-//         _steplength(15) = 0.15;
-//   	_steplength(16) = 0.15;	
-//          _steplength(17) = 0.15;
-//   	_steplength(18) = 0.20;	
-//          _steplength(19) = 0.20;	
-//   	_steplength(20) = 0.25;	
-//          _steplength(21) = 0.25;
+// ///////////******************************************************obtacle avoidance-mod:old : 20 period breaking
+//  	_steplength(5) = steplength/2;
+// 	_steplength(6) = 0;	
+// // 	_steplength(5) = 0.01;
+// // 	_steplength(6) = -0.01;
+// 	_steplength(7) = 0.01;
+// 	_steplength(8) = -0.01;
+// 	_steplength(9) = 0.01;
+// 	_steplength(10) = -0.01;
+// 	_steplength(11) = 0.01;
+// 	_steplength(12) = -0.01;
+// 	_steplength(13) = 0.01;	
+//  	_steplength(14) = -0.01;
+//         _steplength(15) = 0;
+//   	_steplength(16) = 0.05;	
+// /*        _steplength(15) = 0.15;
+//   	_steplength(16) = 0.15;*/	
+//          _steplength(17) = 0.05;
+//   	_steplength(18) = 0.10;	
+//          _steplength(19) = 0.15;	
+//   	_steplength(20) = 0.15;	
+//          _steplength(21) =0.2;
 //   	_steplength(22) = 0.2;	
-//          _steplength(23) = 0.2;
+//          _steplength(23) = 0.25;
+//          _steplength(24) = 0.25;	 	
+//          _steplength(25) = 0.25;
+//          _steplength(26) = 0.25;
 // 	 
-// 	_stepwidth(6) = 0.28;	
-// 	_stepwidth(7) = 0.18;	
-// 	_stepwidth(8) = 0.28;	
-// 	_stepwidth(9) = 0.18;	
-// 	_stepwidth(10) = 0.28;		
-// 	_stepwidth(11) = 0.18;	
-// 	_stepwidth(12) = 0.28;
-// 	_stepwidth(13) = 0.20;
-// 	_stepwidth(14) = 0.22;	
-// 
-// 	_stepwidth(17) = 0.18;		
-// 	_stepwidth(19) = 0.18;
+// 	_stepwidth(4) = 0.24;
+// 	_stepwidth(5) = 0.18;	
+// 	_stepwidth(6) = 0.24;	
+// 	_stepwidth(7) = 0.18;		
+// 	_stepwidth(8) = 0.24;
+// 	_stepwidth(9) = 0.18;		
+// 	_stepwidth(10) = 0.24;
+// 	_stepwidth(11) = 0.18;		
+//         _stepwidth(12) = 0.24;
+// 	_stepwidth(13) = 0.18;	
+// 	_stepwidth(14) = 0.24;		
+//  	_stepwidth(15) = 0.18;	
+//  	_stepwidth(16) = 0.24;
+//  	_stepwidth(17) = 0.18;	
+//  	_stepwidth(18) = 0.24;
+//  	_stepwidth(19) = 0.18;
+	
+
+
+
+
+
 }
 
 
@@ -2272,9 +2283,6 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
   
   ///////walktime=====>ij;   int j_index====>i;  dt_sample========>dtx;   
    Vector6d com_inte;	
-// 	
-// 
-  double  Footz_ref = 0.05;    //0.05m 
   
  
 //// judge if stop  
@@ -2319,7 +2327,20 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
   double t_des;      /////////desired time during the current step
   t_des = (walktime+4)*dt_sample - (_tx(_bjx1-1)+_td(_bjx1-1));
   
-
+  
+//   //// each cycle: the KMP would be re_initilinzed;
+//   
+//   if (2>1)
+//   {
+// 	kmp_leg_L.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp); // initialize kmp
+// 	kmp_leg_R.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp); // initialize kmp    
+//     
+//   }
+ 
+  
+  
+  
+  
   if (_bjx1 >= 2)
   {      
     
@@ -2397,20 +2418,35 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 // 	  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0030;
 	  if (_bjx1<=4)
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	  }
 	  else
 	  {
-	    if (_bjx1<=15)
+	    if (_bjx1<=6)
 	    {
 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
 	    }
 	    else
 	    {
-// 	      ///obstacle avoidance
-// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
-// 	      ///obstacle avoidance_m
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
+ 	      if (_bjx1<=12)
+	      {
+		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+	      }
+	      else
+	      {
+		
+		if (_bjx1<=16)
+		{
+		  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+		}
+		else
+		{
+		  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+		}		
+		
+// 		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.005;
+	      }
+	      
 	    }
 	  }
 	  via_point3(4) = 0;
@@ -2540,20 +2576,24 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 	  if (_bjx1<=4)
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
 	  }
 	  else
 	  {
-	    if (_bjx1<=15)
+	    if (_bjx1<=6)
 	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	    }
 	    else
 	    {
-// 	      ///obstacle avoidance
-// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
-// 	      ///obstacle avoidance_m
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
+ 	      if (_bjx1<=14)
+	      {
+		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+	      }
+	      else
+	      {
+		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+	      }
 
 	    }
 	  }
@@ -2620,6 +2660,10 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
       
     
   }
+  
+ 
+
+  
   
   
   /////Rfoot,xyz, Lfoot,XYZ
