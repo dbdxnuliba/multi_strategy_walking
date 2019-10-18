@@ -2430,14 +2430,14 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	    {
  	      if (_bjx1<=12)
 	      {
-		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	      }
 	      else
 	      {
 		
 		if (_bjx1<=16)
 		{
-		  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+		  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 		}
 		else
 		{
@@ -2588,7 +2588,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	    {
  	      if (_bjx1<=14)
 	      {
-		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
+		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	      }
 	      else
 	      {

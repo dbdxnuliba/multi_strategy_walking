@@ -99,7 +99,7 @@ int kmp::kmp_estimateMatrix()
 	//cout<<"data"<<endl<<data<<endl;
 	//cout<<"len:"<<len<<endl;
 
-	if (len<=0) {cout<<"error1:initial kmp"<<endl;return 0;}
+	if (len<=0) {std::cout<<"error1:initial kmp"<<endl;return 0;}
 
 	int i, j, k, index;
 	mat Y    (len*outDim, 1);

@@ -30,7 +30,7 @@ using namespace arma;
 
 
 /// constant variable defintion
-const int _footstepsnumber = 20;       //  number of _footstepnumber
+const int _footstepsnumber = 15;       //  number of _footstepnumber
 const double _dt = 0.05;                //sampling time
 const int _nh = 30;                    /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
 const double _tstep = 0.7;              ///step period
@@ -334,9 +334,11 @@ private:
 	/////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//// for kMP swing generation: private variable for leg status storage	
 	/////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// 	Eigen::VectorXd _flag_global;
 	
-	Eigen::Matrix<double, 1,3200> _Lfootx_kmp, _Lfooty_kmp,_Lfootz_kmp, _Lfootvx_kmp, _Lfootvy_kmp,_Lfootvz_kmp;
-	Eigen::Matrix<double, 1,3200> _Rfootx_kmp, _Rfooty_kmp,_Rfootz_kmp, _Rfootvx_kmp, _Rfootvy_kmp,_Rfootvz_kmp;
+	
+	Eigen::Matrix<double, 1,10000> _Lfootx_kmp, _Lfooty_kmp,_Lfootz_kmp, _Lfootvx_kmp, _Lfootvy_kmp,_Lfootvz_kmp;
+	Eigen::Matrix<double, 1,10000> _Rfootx_kmp, _Rfooty_kmp,_Rfootz_kmp, _Rfootvx_kmp, _Rfootvy_kmp,_Rfootvz_kmp;
 	
 	
 	

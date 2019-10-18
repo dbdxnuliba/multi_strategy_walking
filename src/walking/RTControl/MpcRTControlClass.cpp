@@ -146,11 +146,11 @@ void MpcRTControlClass::WalkingReactStepping()
   // this is the loop for normal walking
 
   
-  cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!_dtx:"<<_dtx<<endl;
+//  // cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!_dtx:"<<_dtx<<endl;
   
   
   _walkdtime1 = walkdtime - _t_walkdtime_restart_flag;
-// 	cout << "walkdtime1:"<<_walkdtime1<<endl;
+// 	// cout << "walkdtime1:"<<_walkdtime1<<endl;
 
   clock_t t_start,t_finish;
 
@@ -186,7 +186,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	td = 0;	
 	
          DPRINTF("========= robot squat =============\n");     
-	 // cout<<"PelvisPos_height:"<<PelvisPos(2)<<endl;		    
+	 // // cout<<"PelvisPos_height:"<<PelvisPos(2)<<endl;		    
       }
       else
       {
@@ -214,7 +214,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	      mpc.CoM_height_solve(_t_int, _stop_walking);
 	    }
 	  }
-// 	  cout << "generation complete!!"<<endl;
+// 	  // cout << "generation complete!!"<<endl;
 // // get the optimized footsteps: second method: use the generated reference trajectory at each 0.05s and intepolated trajectory : used in real time
 	    Eigen::Vector3d COM_in1, COM_in2, COM_in3;
 	    Eigen::Vector3d body_in1, body_in2, body_in3;
@@ -297,7 +297,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	  _COM_IN(1,_walkdtime1) = PelvisPos(1);
 	  _COM_IN(2,_walkdtime1) = PelvisPos(2);
 	  
-// 	  cout << "com state"<<endl;
+// 	  // cout << "com state"<<endl;
 	  
 	  _body_IN(0,_walkdtime1) = body_thetax(0);
 	  _body_IN(1,_walkdtime1) = body_thetax(1);
@@ -502,7 +502,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	  {
 
 	    int _t_walkdtime_restart_flagxxx = walkdtime;
-	   // cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
+	   // // cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
 	  }
 
 	  
@@ -550,13 +550,13 @@ void MpcRTControlClass::WalkingReactStepping()
 		  mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);	
     /*		    mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);	*/	
 		  mpc.Foot_trajectory_solve(_t_int, _stop_walking);	
-    // 	      cout << "walking ref generation"<<endl;	  
+    // 	      // cout << "walking ref generation"<<endl;	  
     // 		    /////////////////////  CoM height generation, when no mpc                                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		  ///////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		  mpc.CoM_height_solve(_t_int, _stop_walking);		    
 		}
 	      }
-    // 	  cout << "generation complete!!"<<endl;
+    // 	  // cout << "generation complete!!"<<endl;
     // // get the optimized footsteps: second method: use the generated reference trajectory at each 0.05s and intepolated trajectory : used in real time
 		Eigen::Vector3d COM_in1, COM_in2, COM_in3;
 		Eigen::Vector3d body_in1, body_in2, body_in3;
@@ -620,7 +620,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	      _COM_IN(1,_walkdtime1) = PelvisPos(1);
 	      _COM_IN(2,_walkdtime1) = PelvisPos(2);
 	      
-    // 	  cout << "com state"<<endl;
+    // 	  // cout << "com state"<<endl;
 	      
 	      _body_IN(0,_walkdtime1) = body_thetax(0);
 	      _body_IN(1,_walkdtime1) = body_thetax(1);
@@ -814,7 +814,7 @@ void MpcRTControlClass::WalkingReactStepping()
 		  mpc.CoM_height_solve(_t_int, _stop_walking);
 		}
 	      }
-    // 	  cout << "generation complete!!"<<endl;
+    // 	  // cout << "generation complete!!"<<endl;
     // // get the optimized footsteps: second method: use the generated reference trajectory at each 0.05s and intepolated trajectory : used in real time
 		Eigen::Vector3d COM_in1, COM_in2, COM_in3;
 		Eigen::Vector3d body_in1, body_in2, body_in3;
@@ -869,15 +869,15 @@ void MpcRTControlClass::WalkingReactStepping()
 	      RightFootPosx(0) = _kmp_leg_traje(0);  RightFootPosx(1) = _kmp_leg_traje(1); RightFootPosx(2) = _kmp_leg_traje(2);	
 	      LeftFootPosx(0) = _kmp_leg_traje(3);   LeftFootPosx(1) = _kmp_leg_traje(4);  LeftFootPosx(2) = _kmp_leg_traje(5);		
 	      
-    // 		cout<<LeftFootPosx(1)<<endl;
-    // 		cout<<RightFootPosx(1)<<endl;
+    // 		// cout<<LeftFootPosx(1)<<endl;
+    // 		// cout<<RightFootPosx(1)<<endl;
 	      
 	      // store
 	      _COM_IN(0,_walkdtime1) = PelvisPos(0);
 	      _COM_IN(1,_walkdtime1) = PelvisPos(1);
 	      _COM_IN(2,_walkdtime1) = PelvisPos(2);
 	      
-    // 	  cout << "com state"<<endl;
+    // 	  // cout << "com state"<<endl;
 	      
 	      _body_IN(0,_walkdtime1) = body_thetax(0);
 	      _body_IN(1,_walkdtime1) = body_thetax(1);
@@ -1082,7 +1082,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	      {
 
 		int _t_walkdtime_restart_flagxxx = walkdtime;
-		//cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
+		//// cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
 	      }
 
 	      
@@ -1149,7 +1149,7 @@ void MpcRTControlClass::StopWalking()
 //       _t_walkdtime_restart_flag = 0;
      IsStartWalk = false;  
 /*     
-     cout << "stop invalid"<<endl;  */
+     // cout << "stop invalid"<<endl;  */
     }
     else
     {
