@@ -15,20 +15,25 @@ waiting the robot compute on
 
 
 --------- Login to the real time PC -------
-ssh_cogimon
+ssh_embedded
 Password: cogimon
 
---------- For internet connection (real time PC) ------- // when the robot is powered up for the first time
-(1)sudo dhclient
+--------- For xenomial start (real time PC) ------- // when the robot is powered up for the first time
+(1)sudo ./ec_xeno3.sh
+password: pitagora
 (2)--------- To start Xenomai ----------
 sudo ./ec_xeno3.sh start
+
+//////////////////for the internet connnection////////////////push or pull git. repository
+./connect_internet.sh
+password:  pitagora
 
 
 
 several tips:
 
 (1)--------- To revoke the RT-PC if it freezes ------------
-->ssh -X cogimon@cogimon-rt-exp.local
+->ssh -X cogimon@cogimon-rt-exp.local/////////////////// ssh -X embedded@cogimon-rt-exp.local
 If asked for yes/no
 -> yes
 
@@ -39,30 +44,32 @@ Type the following id in the browser
 (3)--------- To set config file to Xbot ----------
 ->set_xbot_config "xxxxxx.yaml"
 
+(4) --------------check the 
+
+
 
 
 ------------- Procedure to start the robot ----------------
-Step1. Open a multi-terminal window (atleast 4)
-Step2. Login to the cogimon-rt-pc in 2 terminals
-Step3. Set the config file which contains your plugin to run. Usually the config files are in /home/devel-superbuild/configs/ADVR_shared/user_example 
-for me : set_xbot_config /home/devel-superbuild/configs/ADVR_shared/user_example/cogimon_walk.yaml
+Step1. Open a multi-terminal window (at least 4)
+Step2. Login to the embedded-rt-pc in 2 terminals
+Step3. Set the config file which contains your plugin to run. 
 
 Step4. Check if the robot is ON: hearing the noise
 
-Step5. Start roscore in one of the cogimon-rt-pc terminals.
--> ssh_cogimon
+Step5. Start roscore in one of the embedded-rt-pc terminals.
+-> ssh_embedded
 -> roscore
 
 Step6. Xenomai needs to be started if the robot is being powered up for the first time. !!!!!!!!!!!!!!!!!!!!!(should be first step)
 
 step6.1: test code (on the cogimon robot-pc): open another terminal:
-                                           ssh_cogimon
+                                           ssh_embedded
                                            kdevelop 
                                            debugging my project
 
 
 
-step6.2:  ...../chengxu_walking
+step6.2:  ...../multi_strategy_walking
            right click on the kdevelop project: install,
 
 
@@ -74,18 +81,18 @@ Step7. Switch on the emergency button: (Release the emergency button if it is OF
 
 Step8. Start the XBotCore: 
 (open a new terminal)
--> ssh_cogimon
+-> ssh_embedded
 -> XBotCore -D
 
 
 Step9.  open a new terminal (can also be the same terminal for the .yaml file setup  )
--> ssh_cogimon
--> rosservice call /chengxu_walking_switch 1
+-> ssh_embedded
+-> rosservice call /xbot/multi_strategy_walking_switch 1
 
 
 
 
-Step10.  back to the chengxu_walking terminal:
+Step10.  back to the multi_strategy_walking terminal:
 -> cd src/walking/xddp_console/
 -> ./xddp_console 
 

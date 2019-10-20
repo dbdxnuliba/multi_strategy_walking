@@ -226,7 +226,12 @@ bool multi_strategy_walking::close()
 
 void multi_strategy_walking::updateWBS()
 {
-	_robot->getJointPosition(_q_msr);
+  /// for reference calculation:
+  
+  _q_msr = _q;
+  
+  /// for hardware experiment:
+//	_robot->getJointPosition(_q_msr);
 
 	// 	_robot->getJointPosition(_q_name);
 	RTControl.SortFromXBotToJointName(_q_msr, qall);
