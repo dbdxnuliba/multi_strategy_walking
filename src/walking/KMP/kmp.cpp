@@ -97,7 +97,7 @@ int kmp::kernel_extend( vec a, vec b, mat& kext )
 int kmp::kmp_estimateMatrix()
 {
 	//cout<<"data"<<endl<<data<<endl;
-	//cout<<"len:"<<len<<endl;
+	cout<<"len:"<<len<<endl;
 
 	if (len<=0) {std::cout<<"error1:initial kmp"<<endl;return 0;}
 

@@ -2321,16 +2321,16 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
   vec via_point2 =  zeros<vec>(43);
   vec via_point3 =  zeros<vec>(43);
   
-  via_point1(7) =0.00000000001; via_point1(14)=0.00000000001; via_point1(21)=0.00000000001;	
-  via_point1(28)=0.00000000001; via_point1(35)=0.00000000001; via_point1(42)=0.00000000001;  
+  via_point1(7) =0.0000001; via_point1(14)=0.0000001; via_point1(21)=0.0000001;	
+  via_point1(28)=0.0000001; via_point1(35)=0.0000001; via_point1(42)=0.0000001;  
   
   via_point2(0) =0.65/2;
-  via_point2(7) =0.00000000001; via_point2(14)=0.00000000001; via_point2(21)=0.00000000001;	
-  via_point2(28)=0.00000000001; via_point2(35)=0.00000000001; via_point2(42)=0.00000000001;
+  via_point2(7) =0.0000001; via_point2(14)=0.0000001; via_point2(21)=0.0000001;	
+  via_point2(28)=0.0000001; via_point2(35)=0.0000001; via_point2(42)=0.0000001;
   
   via_point3(0) =0.65;
-  via_point3(7) =0.00000000001; via_point3(14)=0.00000000001; via_point3(21)=0.00000000001;	
-  via_point3(28)=0.00000000001; via_point3(35)=0.00000000001; via_point3(42)=0.00000000001;      
+  via_point3(7) =0.0000001; via_point3(14)=0.0000001; via_point3(21)=0.0000001;	
+  via_point3(28)=0.0000001; via_point3(35)=0.0000001; via_point3(42)=0.0000001;      
   
   
   
@@ -2366,6 +2366,8 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
       _Lfootvy_kmp(walktime) = 0;
       _Lfootvz_kmp(walktime) = 0;    
       
+      cout<< "t_des:"<<t_des<<endl;
+      
       if (t_des<=0)  // j_index and _bjx1 coincident with matlab: double support
       {
 
@@ -2385,6 +2387,8 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	double t_des_k;
 	t_des_k = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*t_des;
 	
+        cout<<"_bjx1:"<<_bjx1<<endl;
+        
 	/////////////first sampling time of the current walking cycle: initialize the KMP_data
 	if (t_des<=dt_sample)
 	{
@@ -2401,6 +2405,9 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  via_point1(5) = _Rfootvy_kmp(walktime-1);
 	  via_point1(6) = _Rfootvz_kmp(walktime-1);
 	  kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp
+          
+          DPRINTF("=========insert point1 into right kmp=============\n");
+          cout<< "via_point1:"<<via_point1<<endl;
 	  
 	  ////// add point************ middle point***********////////
 // 	    via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
@@ -2423,7 +2430,8 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	    via_point2(6) = 0;
 	  }*/	    	    
 	  kmp_leg_R.kmp_insertPoint(via_point2);  // insert point into kmp
-
+          cout<< "via_point2:"<<via_point2<<endl;
+          
 	  ////// add point************ final status************////////	  
 	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
@@ -2464,19 +2472,18 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  via_point3(4) = 0;
 	  via_point3(5) = 0;
  	  via_point3(6) = 0.025;
-// 	  if (via_point3(3)<0)  ////downstairs
-// 	  {
-// 	    via_point3(6) = 0.15;
-// 	  }
-// 	  else
-// 	  {
-// 	    via_point3(6) = 0.025;
-// 	  }
+
 	  
 	  
 	  kmp_leg_R.kmp_insertPoint(via_point3);  // insert point into kmp	
-	  
+          DPRINTF("=========insert point3 into right kmp=============\n");
+	  cout<< "via_point3:"<<via_point3<<endl;
+          
+          
 	  kmp_leg_R.kmp_estimateMatrix();
+          
+          DPRINTF("=========kmp_leg_R KEMP estimateMatrix()=============\n");
+          
 	}
 	else
 	{
