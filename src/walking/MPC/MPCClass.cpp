@@ -34,7 +34,8 @@ MPCClass::MPCClass()                    ///declaration function
 	,_F_L(0,0,0)
 	,_M_R(0,0,0)
 	,_M_L(0,0,0)		
-{
+{  
+    cout<<"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx MPC READY"<<endl;
   
 }
 
@@ -44,9 +45,9 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength.setConstant(steplength);
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
-        _steplength(_footstepsnumber-1) = 0;
-        _steplength(_footstepsnumber-2) = 0;		
-	_steplength(_footstepsnumber-3) = steplength/2;
+//         _steplength(_footstepsnumber-1) = 0;
+//         _steplength(_footstepsnumber-2) = 0;		
+// 	_steplength(_footstepsnumber-3) = steplength/2;
 	
 	
 	_stepwidth.setConstant(stepwidth);
@@ -55,11 +56,11 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_stepheight.setConstant(stepheight);
 	
 	_lift_height_ref.setConstant(_lift_height);
-	_lift_height_ref(0) = 0.00;
+/*	_lift_height_ref(0) = 0.00;
 	_lift_height_ref(1) = 0.04;
         _lift_height_ref(_footstepsnumber-1) = 0;
         _lift_height_ref(_footstepsnumber-2) = 0;	
-        _lift_height_ref(_footstepsnumber-3) = 0.04; 	
+        _lift_height_ref(_footstepsnumber-3) = 0.04; */	
 
 
 // ///////////******************************************************obtacle avoidance-mod:old : 20 period breaking
@@ -128,10 +129,13 @@ void MPCClass::Initialize()
 	_lamda_kmp  = 5, _kh_kmp = 0.75;	    	    //set kmp parameters 
 
 
-	static char fileName1[]="/home/jiatao/Dropbox/cat_multi_cogimon/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
+// 	static char fileName1[]="/home/jiatao/Dropbox/cat_multi_cogimon/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
+        static char fileName1[]="/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
+
 	_data_kmp.load( fileName1 );         	    // load original data
 	///modify the data sample:
-	
+//        cout<<"load mat finish"<<endl;
+        
  	 int data_kmp_m = _data_kmp.n_rows;
 	 
 	 for (int xj=0; xj<data_kmp_m; xj++)
@@ -143,6 +147,8 @@ void MPCClass::Initialize()
 	kmp_leg_L.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp); // initialize kmp
 	kmp_leg_R.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp); // initialize kmp
 
+//        cout<<"kmp initial finish"<<endl;
+        
         // ==step parameters initialize==: given by the inputs
         ////NP initialization for step timing optimization
        //// reference steplength and stepwidth for timing optimization  
@@ -174,7 +180,7 @@ void MPCClass::Initialize()
 	_footy_real_feed = _footy_ref;	
 	
 	
-// 	cout<<"_footy_ref:"<<_footy_ref<<endl;
+ 	cout<<"_footy_ref:"<<_footy_ref<<endl;
 	
 	// == step cycle setup
 	_ts.setConstant(_tstep);
@@ -213,8 +219,8 @@ void MPCClass::Initialize()
 	_Ts_ref_real.setZero();
 	
 
-	
-
+	cout<<"finish step parameters initialization:"<<endl;
+         
 	
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// %% parameters for first MPC-step timing adjustment and next one step location
@@ -523,7 +529,7 @@ void MPCClass::Initialize()
 	_CoM_lvx_upx1.setZero();
 	_det_CoM_lvx_upx1.setZero();	
 	
-	
+	cout << "finish!!!!!!!!!!! initial for NLP parameters"<<endl;
 	///////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	///%%%%%%%%%%%%% foot trajectory geneartion
 	//////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -561,7 +567,7 @@ void MPCClass::Initialize()
 	_Rfootx_kmp.setZero();  _Rfooty_kmp.setConstant(-_stepwidth(0));_Rfootz_kmp.setZero(); 
 	_Rfootvx_kmp.setZero(); _Rfootvy_kmp.setZero();                 _Rfootvz_kmp.setZero(); 
 
-	
+	cout << "finish!!!!!!!!!!! initial for nlp_KMP parameters"<<endl;
 	///////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -694,7 +700,7 @@ void MPCClass::Initialize()
 
 	
 	
-	
+	cout << "finish!!!!!!!!!!! initial for MPC parameters"<<endl;
 ///===========initiallize: preparation for MPC solution
 // 	_nstep = 2;
 // 	_Nt = 5*_nh + 3*_nstep;	
@@ -892,37 +898,40 @@ void MPCClass::Initialize()
 	  _S1.setZero(1,_nh);
 	  _S1(0,0) = 1;	  
 	  
-	// offline calulated the ZMP constraints coefficient
-	vector <Eigen::MatrixXd> x_offline1(_nh)  ;
-	  
-	  
-	ZMPx_constraints_offfline = x_offline1;
-// 	vector <Eigen::MatrixXd> ZMPy_constraints_offfline(_nh);
-	ZMPy_constraints_offfline = x_offline1;
-	
-	
-// 	vector <Eigen::MatrixXd> ZMPx_constraints_half(_nh);
-// 	vector <Eigen::MatrixXd> ZMPy_constraints_half(_nh);
-	ZMPx_constraints_half = x_offline1;
-	
-	ZMPy_constraints_half = x_offline1;
-	
-	
-	for(int jxx=1; jxx<=_nh; jxx++)
-	{
-	  _Si.setZero(1,_nh);
-	  _Si(0,jxx-1) = 1;
-	  // ZMP constraints	      
-		 
-         ZMPx_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjx).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjx).transpose() * _Si * _ppu * _Sjz;
-	 ZMPx_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
-	  
-	  
-         ZMPy_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjy).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjy).transpose() * _Si * _ppu * _Sjz;
-	 ZMPy_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
-	      
-	}
+          
+        cout << "Before initialization for ZMP constraints"<<endl;  
+// 	// offline calulated the ZMP constraints coefficient: ERROR check check check!!!!!!!!!!
+// 	vector <Eigen::MatrixXd> x_offline1(_nh)  ;
+// 	  
+// 	  
+// 	ZMPx_constraints_offfline = x_offline1;
+// // 	vector <Eigen::MatrixXd> ZMPy_constraints_offfline(_nh);
+// 	ZMPy_constraints_offfline = x_offline1;
+// 	
+// 	
+// // 	vector <Eigen::MatrixXd> ZMPx_constraints_half(_nh);
+// // 	vector <Eigen::MatrixXd> ZMPy_constraints_half(_nh);
+// 	ZMPx_constraints_half = x_offline1;
+// 	
+// 	ZMPy_constraints_half = x_offline1;
+// 	
+// 	
+// 	for(int jxx=1; jxx<=_nh; jxx++)
+// 	{
+// 	  _Si.setZero(1,_nh);
+// 	  _Si(0,jxx-1) = 1;
+// 	  // ZMP constraints	      
+// 		 
+//          ZMPx_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjx).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjx).transpose() * _Si * _ppu * _Sjz;
+// 	 ZMPx_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
+// 	  
+// 	  
+//          ZMPy_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjy).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjy).transpose() * _Si * _ppu * _Sjz;
+// 	 ZMPy_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
+// 	      
+// 	}
 
+	cout << "After initialization for ZMP constraints"<<endl; 
    
 	_nTdx =0;
 	
@@ -943,7 +952,8 @@ void MPCClass::Initialize()
 	_ZMPxy_realx.setZero();
 	
 	_comxyzx(2) = RobotParaClass::Z_C();		
-		
+	
+        cout << "Finish initialization of WHOLE MPCCLASS"<<endl; 
   
 }
 
@@ -2283,7 +2293,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
   
   ///////walktime=====>ij;   int j_index====>i;  dt_sample========>dtx;   
    Vector6d com_inte;	
-  
+  com_inte.setZero();
  
 //// judge if stop  
   if(_stopwalking)  
@@ -2346,6 +2356,8 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
     
     if (_bjx1 % 2 == 0)           //odd:left support
     {
+        
+       DPRINTF("=========KMP left support=============\n");
       _Lfootx_kmp(walktime) = _footxyz_real(0,_bjx1-1);
       _Lfooty_kmp(walktime) = _footxyz_real(1,_bjx1-1);
       _Lfootz_kmp(walktime) = _footxyz_real(2,_bjx1-1);
@@ -2510,6 +2522,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
     
     else                       //right support
     {
+        DPRINTF("=========KMP right support=============\n");
       _Rfootx_kmp(walktime) = _footxyz_real(0,_bjx1-1);
       _Rfooty_kmp(walktime) = _footxyz_real(1,_bjx1-1);
       _Rfootz_kmp(walktime) = _footxyz_real(2,_bjx1-1);
@@ -2661,10 +2674,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
     
   }
   
- 
 
-  
-  
   
   /////Rfoot,xyz, Lfoot,XYZ
   com_inte(0) = _Rfootx_kmp(walktime);

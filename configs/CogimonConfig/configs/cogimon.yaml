@@ -1,7 +1,7 @@
 RobotName: "cogimon"
 
 GazeboXBotPlugin:
-  control_rate: 0.001
+  control_rate: 0.002
   gains:
 ###chengxu para
 #    RShSag:        {p: 4000, d: 10}

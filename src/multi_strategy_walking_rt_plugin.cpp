@@ -34,7 +34,7 @@ bool multi_strategy_walking::init_control_plugin(XBot::Handle::Ptr handle)
 	_robot->getRobotState("home", _q_home);
 
 	/* Print the homing */
- 	std::cout << "_q_home from SRDF : " << _q_home.transpose() << std::endl;
+ 	std::cerr << "_q_home from SRDF : " << _q_home << std::endl;
 
 	_robot->sense();
 	_robot->getMotorPosition(_q0);
@@ -205,11 +205,9 @@ void multi_strategy_walking::control_loop(double time, double period)
 		}	
 	}*/	
 	
-	
-	// _q[_q.size()-1] = _q_home[_q.size()-1];
-// 	cout<<"_q:"<< _q.transpose()<<endl; 
-  	_robot->setPositionReference(_q);
- 	_robot->move();
+ 
+//  	_robot->setPositionReference(_q);
+// 	_robot->move();
 }
 
 bool multi_strategy_walking::close()

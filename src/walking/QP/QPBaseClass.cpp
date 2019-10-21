@@ -204,6 +204,7 @@ QPBaseClass::QPBaseClass(const std::string& qpSolverName)
 	_ineqRowIdx = 0;
 	_A.resize(MAX_ROWS, MAX_VARS);
 	_b.resize(MAX_ROWS);
+        std::cout << "Using EiQuadProg as QP solverxxxxxxx...\n";
 
 }
 
