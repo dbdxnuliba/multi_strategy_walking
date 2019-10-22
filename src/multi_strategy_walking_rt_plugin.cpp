@@ -140,14 +140,14 @@ void multi_strategy_walking::control_loop(double time, double period)
 	 * Since this function is called within the real-time loop, you should not perform
 	 * operations that are not rt-safe. */
 
-	updateWBS();
+//	updateWBS();
 
 	// Go to homing: original verision
 	if ( (time - _first_loop_time) <= _homing_time ) {
 		_q = _q0 + 0.5 * (1 - std::cos(M_PI * (time - _first_loop_time) / _homing_time)) * (_q_home - _q0);
 		_q_tmp = _q;
 		_qref = _q;
-//  		DPRINTF("=========  intial pose_control_loop. =============\n");
+  		//DPRINTF("=========  intial pose_control_loop. =============\n");
 		
 	}
 	else {
@@ -282,7 +282,7 @@ void multi_strategy_walking::updateWBS()
 	// imu_map["imu_link"]->getImuData(Rpelvis_abs, LnAcc, AgVel);
 	RTControl.UpdateWBS(qall, Rpelvis_abs, LnAcc, AgVel, FTSensor);
 
-//         DPRINTF("_q_msr[3]: %.3f,\t qall[LEFT_KNEE_PITCH]: %.3f\n",_q_msr[3], qall[LEFT_KNEE_PITCH]);
+
 }
 
 
