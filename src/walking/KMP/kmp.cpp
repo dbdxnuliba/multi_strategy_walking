@@ -135,10 +135,15 @@ int kmp::kmp_estimateMatrix()
 		Y( span( i*outDim, (i+1)*outDim - 1), 0 ) = trans( data(i, span( inDim, inDim + outDim - 1) ) );   //Y dim: (len*outDim)  1
 	}
 
+	cout<<"=========kmp_estimateMatrix estimateMatrix() before inverse=============\n"<<endl;
+        cout<<"K.n_rows<\n"<<len*outDim<<endl;
+//         cout<<"K.n_rows<\n"<<K.n_rows<<endl;
+        
+//         mat Kx    (len len);
 	invK = inv(K);            // invK=K^{-1}
 	W = invK * Y;		// W=K^{-1} * Y
 
-	//cout<<"Y"<<"\n"<<Y<<endl;
+	cout<<"Y"<<"\n"<<Y<<endl;
 	//cout<<"K"<<"\n"<<K<<endl;
 	//cout<<"invK"<<"\n"<<invK<<endl;
 	//cout<<"W"<<"\n"<<W<<endl;
