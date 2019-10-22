@@ -140,7 +140,7 @@ void multi_strategy_walking::control_loop(double time, double period)
 	 * Since this function is called within the real-time loop, you should not perform
 	 * operations that are not rt-safe. */
 
-//	updateWBS();
+	updateWBS();
 
 	// Go to homing: original verision
 	if ( (time - _first_loop_time) <= _homing_time ) {
@@ -175,39 +175,11 @@ void multi_strategy_walking::control_loop(double time, double period)
 //		_q = _q_tmp;	
 	}
 	
-	
-/*	// Go to homing: walking_no_arm
-	if ( (time - _first_loop_time) <= _homing_time ) {
-		_q = _q0;
-		_q_tmp = _q0 + 0.5 * (1 - std::cos(M_PI * (time - _first_loop_time) / _homing_time)) * (_q_home - _q0);
-		_q.head(12) = _q_tmp.head(12); //only lower body moven
-// 		_q = _q_tmp; //whole-body movement		
-		_qref = _q;
-		
- 		DPRINTF("=========  intial pose_control_loop. =============\n");
-		
-	}
-	else {
- 	        DPRINTF("=========  RUN rt_control_loop. =============\n"); 
-		RTControl.Run();
-		// RTControl.JointRefToXBot_LowerBody(_q);
-		RTControl.JointRefToXBot(_q_tmp);
-// 		_q.head(12) = _q_tmp.head(12); ///joint	angle of lower limb, other angle are upper angles	
-		//// interpolation of stabilizer angle
-		if ( (time - _first_loop_time -_homing_time)  <= 1){
-		  _q.head(12) = pow(time - _first_loop_time -_homing_time,1)/1*(_q_tmp.head(12)-_qref.head(12))+_qref.head(12);
-//		  cout<< "transition process"<<endl;
-		}
-		else{
-		  _q.head(12) = _q_tmp.head(12);
-// 		  _q.head(4) = -_q_tmp.head(4); 
-//		  cout<< "normal process"<<endl;
-		}	
-	}*/	
+
 	
  
-//  	_robot->setPositionReference(_q);
-// 	_robot->move();
+ 	_robot->setPositionReference(_q);
+	_robot->move();
 }
 
 bool multi_strategy_walking::close()

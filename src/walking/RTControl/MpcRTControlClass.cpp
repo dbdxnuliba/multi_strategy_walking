@@ -64,10 +64,10 @@ MpcRTControlClass::MpcRTControlClass()
   mpc.FootStepInputs(stepwidthinput, steplengthinput, stepheightinput);
   
   
-  cout<<"next: MPC initialization"<<endl;
+//   cout<<"next: MPC initialization"<<endl;
   // offline initialization
   mpc.Initialize();
-  cout<<"Finish: MPC initialization"<<endl;  
+//   cout<<"Finish: MPC initialization"<<endl;  
   
   _refer_t_max = mpc.Get_maximal_number_reference();
 
@@ -275,12 +275,8 @@ void MpcRTControlClass::WalkingReactStepping()
 // 	  DPRINTF("=========Finish KMP foot trajectory generation=============\n"); 
 //           
 // 	  RightFootPosx(0) = _kmp_leg_traje(0);  RightFootPosx(1) = _kmp_leg_traje(1); RightFootPosx(2) = _kmp_leg_traje(2);	
-// 	  LeftFootPosx(0) = _kmp_leg_traje(3);   LeftFootPosx(1) = _kmp_leg_traje(4);  LeftFootPosx(2) = _kmp_leg_traje(5);		
-// 	  
-          
-          cout << "PelvisPos"<<PelvisPos.transpose()<<endl;
-           cout << "RightFootPosx"<<RightFootPosx.transpose()<<endl;
-           cout << "LeftFootPosx"<<LeftFootPosx.transpose()<<endl;
+// 	  LeftFootPosx(0) = _kmp_leg_traje(3);   LeftFootPosx(1) = _kmp_leg_traje(4);  LeftFootPosx(2) = _kmp_leg_traje(5);			  
+
           
 	  HipO_Turn = Rz(body_thetax[2])*Ry(body_thetax[1])*Rx(body_thetax[0]);	
 	  

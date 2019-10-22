@@ -1842,7 +1842,6 @@ void MPCClass::Solve()
 //// each time: planer for foot_trajectory:
 void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 {
-     double  Footz_ref = 0.05;    //0.05m 
     
   _footxyz_real(1,0) = -_stepwidth(0);
   
@@ -1932,10 +1931,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	  t_a_plana(0) = 30*pow(t_des, 4);   t_a_plana(1) = 20*pow(t_des, 3);   t_a_plana(2) = 12*pow(t_des, 2);  t_a_plana(3) = 6*pow(t_des, 1);
 	  t_a_plana(4) = 2;                  t_a_plana(5) = 0;                  t_a_plana(6) = 0;
 	  
-// 	  cout <<"AAA="<<endl<<AAA<<endl;
-// 	  cout <<"AAA_inverse="<<endl<<AAA.inverse()<<endl;	  
-// 	  cout <<"t_des="<<endl<<t_des<<endl;
-// 	  cout <<"t_plan="<<endl<<t_plan<<endl;
+
 	  
 	  ////////////////////////////////////////////////////////////////////////////
 	  Eigen::Matrix<double, 7, 1> Rfootx_plan;
@@ -2747,7 +2743,6 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 	if (walktime>=2)
 	{
 	  int t_int = floor(walktime* dt_sample/ _dt);	  
-//          cout <<"T_int_inter:"<<t_int<<endl;
 	  ///// chage to be relative time
 	  double t_cur = walktime * dt_sample ;
 	  
@@ -2758,6 +2753,8 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 	  t_plan(1) = t_cur - 1*dt_sample-( t_cur - 2*dt_sample);
 	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
 	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
+	  
+	  cout<< "t_plan"<<t_plan<<endl;
           
 	  solve_AAA_inv(t_plan);
 	   
@@ -2913,74 +2910,18 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 	_R_foot_optition_optimal.row(1) = _Rfooty;
 	_R_foot_optition_optimal.row(2) = _Rfootz;
 	
+	
+	int t_int= floor(walktime* dt_sample/ _dt  );
+	
+	///////////// 4th order interpolation
 	Vector3d com_inte;	
 	
-	if (walktime>=2)
+	if (t_int>=1)
 	{
-	  int t_int; 
-	  t_int = floor(walktime* dt_sample/ _dt  );
-
 	  
-	  double t_cur;
-	  t_cur = walktime * dt_sample;
 	  
-
-	  
-	  Eigen::Matrix<double, 4, 1> t_plan;
-	  t_plan.setZero();
-	  t_plan(0) = t_cur - 2*dt_sample-( t_cur - 2*dt_sample);
-	  t_plan(1) = t_cur - 1*dt_sample-( t_cur - 2*dt_sample);
-	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
-	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
-
-// 	  cout << "t_plan2:"<<endl<<t_plan<<endl;
-// 	  Eigen::MatrixXd AAA;
-// 
-// 	  
-// 	  AAA.setZero(4,4);	
-// 	  AAA(0,0) = pow(t_plan(0), 3); AAA(0,1) = pow(t_plan(0), 2); AAA(0,2) = pow(t_plan(0), 1); AAA(0,3) = pow(t_plan(0), 0); 
-// 	  AAA(1,0) = pow(t_plan(1), 3); AAA(1,1) = pow(t_plan(1), 2); AAA(1,2) = pow(t_plan(1), 1); AAA(1,3) = pow(t_plan(0), 0); 
-// 	  AAA(2,0) = pow(t_plan(2), 3); AAA(2,1) = pow(t_plan(2), 2); AAA(2,2) = pow(t_plan(2), 1); AAA(2,3) = pow(t_plan(0), 0); 
-// 	  AAA(3,0) = 3*pow(t_plan(2), 2); AAA(3,1) = 2*pow(t_plan(2), 1); AAA(3,2) = pow(t_plan(2), 0); AAA(3,3) = 0;  
-
-
-	  
-	  Eigen::Matrix4d AAA_inv;
-	  
-	  double abx1, abx2, abx3, abx4;
-	  abx1 = ((t_plan(0) - t_plan(1))*pow(t_plan(0) - t_plan(2), 2));
-	  abx2 = ((t_plan(0) - t_plan(1))*pow(t_plan(1) - t_plan(2), 2));
-	  abx3 =(pow(t_plan(0) - t_plan(2), 2)*pow(t_plan(1) - t_plan(2), 2));
-	  abx4 = ((t_plan(0) - t_plan(2))*(t_plan(1) - t_plan(2)));
-	  
-
-	  AAA_inv(0,0) = 1/ abx1;
-	  AAA_inv(0,1) =  -1/ abx2;
-	  AAA_inv(0,2) = (t_plan(0) + t_plan(1) - 2*t_plan(2))/ abx3;
-	  AAA_inv(0,3) = 1/ abx4;
-	  
-	  AAA_inv(1,0) = -(t_plan(1) + 2*t_plan(2))/ abx1;
-	  AAA_inv(1,1) = (t_plan(0) + 2*t_plan(2))/ abx2;
-	  AAA_inv(1,2) = -(pow(t_plan(0), 2) + t_plan(0)*t_plan(1) + pow(t_plan(1), 2) - 3*pow(t_plan(2), 2))/ abx3;
-	  AAA_inv(1,3) = -(t_plan(0) + t_plan(1) + t_plan(2))/ abx4;
-	  
-	  AAA_inv(2,0) = (t_plan(2)*(2*t_plan(1) + t_plan(2)))/ abx1;
-	  AAA_inv(2,1) = -(t_plan(2)*(2*t_plan(0) + t_plan(2)))/ abx2;
-	  AAA_inv(2,2) = (t_plan(2)*(2*pow(t_plan(0), 2) + 2*t_plan(0)*t_plan(1) - 3*t_plan(2)*t_plan(0) + 2*pow(t_plan(1), 2) - 3*t_plan(2)*t_plan(1)))/ abx3;
-	  AAA_inv(2,3) = (t_plan(0)*t_plan(1) + t_plan(0)*t_plan(2) + t_plan(1)*t_plan(2))/ abx4;
-	  
-	  AAA_inv(3,0) = -(t_plan(1)*pow(t_plan(2), 2))/ abx1;
-	  AAA_inv(3,1) = (t_plan(0)*pow(t_plan(2), 2))/ abx2;
-	  AAA_inv(3,2) = (t_plan(0)*t_plan(1)*(t_plan(0)*t_plan(1) - 2*t_plan(0)*t_plan(2) - 2*t_plan(1)*t_plan(2) + 3*pow(t_plan(2), 2)))/ abx3;
-	  AAA_inv(3,3) = -(t_plan(0)*t_plan(1)*t_plan(2))/ abx4;
+	  double t_cur = walktime * dt_sample;
 	  	  
-	  
-/*	  cout << "AAA_inv:"<<endl<<AAA_inv<<endl;	*/  	  
-	  
-
-	
-	  
-	  
 	  Eigen::Matrix<double, 1, 4> t_a_plan;
 	  t_a_plan.setZero();
 	  t_a_plan(0) = pow(t_cur-( t_cur - 2*dt_sample), 3);  
@@ -2990,39 +2931,24 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 
 
 	  
-	  // COM&&foot trajectory interpolation
 	  
-	  Eigen::Vector3d  x10;
-	  Eigen::Vector3d  x11;
-	  Eigen::Vector3d  x12;
-// 	  Eigen::Vector3d  x13;
-
-
-/*	  x10(0) = COM_IN(0,walktime-2); x10(1) = COM_IN(1,walktime-2); x10(2) = COM_IN(2,walktime-2);
-	  x11(0) = COM_IN(0,walktime-1); x11(1) = COM_IN(1,walktime-1); x11(2) = COM_IN(2,walktime-1);	 */ 
-	  x10 = body_in1; 
-	  x11 = body_in2;  
-	  x12 =  _R_foot_optition_optimal.col(t_int);
-//	  x13 =  _R_foot_optition_optimal.col(t_int+1);
-	  
-	  
+	  // COM&&foot trajectory interpolation  
 	  Eigen::Matrix<double, 4, 1>  temp;
 	  temp.setZero();
-	  temp(0) = x10(0); temp(1) = x11(0); temp(2) = x12(0); temp(3) = _Rfootvx(t_int);	  
-	  com_inte(0) = t_a_plan * (AAA_inv)*temp;
-	  temp(0) = x10(1); temp(1) = x11(1); temp(2) = x12(1); temp(3) = _Rfootvy(t_int);
+	  temp(0) = body_in1(0); temp(1) = body_in2(0); temp(2) = _Rfootx(t_int); temp(3) = _Rfootvx(t_int);	  
+	  com_inte(0) = t_a_plan * (_AAA_inv)*temp;
+	  temp(0) = body_in1(1); temp(1) = body_in2(1); temp(2) = _Rfooty(t_int); temp(3) = _Rfootvy(t_int);
 
-// 	  cout << "Rfooty:"<<temp<<endl;
-	  com_inte(1) = t_a_plan * (AAA_inv)*temp;
-	  temp(0) = x10(2); temp(1) = x11(2); temp(2) = x12(2); temp(3) = _Rfootvz(t_int);	  
-	  com_inte(2) = t_a_plan *(AAA_inv)*temp;
-	  
-////=====================================================////////////////////////////////////////////////
-// 	  //////spline for Rfoot_
+	  com_inte(1) = t_a_plan * (_AAA_inv)*temp;
+	  temp(0) = body_in1(2); temp(1) = body_in2(2); temp(2) = _Rfootz(t_int); temp(3) = _Rfootvz(t_int);	  
+	  com_inte(2) = t_a_plan *(_AAA_inv)*temp;
 	  
 	  
 	  
-	  
+	  /////// linear intepolation
+	  com_inte(0) = (_Rfootx(t_int) - _Rfootx(t_int-1))*((t_cur -t_int*_dt) / _dt) +_Rfootx(t_int-1);
+	  com_inte(1) = (_Rfooty(t_int) - _Rfooty(t_int-1))*((t_cur -t_int*_dt) / _dt) +_Rfooty(t_int-1);
+	  com_inte(2) = (_Rfootz(t_int) - _Rfootz(t_int-1))*((t_cur -t_int*_dt) / _dt) +_Rfootz(t_int-1);
 	  
 	  
 	  
@@ -3031,14 +2957,14 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 	}
 	else
 	{
-	  com_inte(0) = body_in3(0);	  
+/*	  com_inte(0) = body_in3(0);	  
 	  com_inte(1) = body_in3(1);	  	  
-	  com_inte(2) = body_in3(2);
-
-// 	  com_inte = Rfoot_IN.col(walktime);	  
+	  com_inte(2) = body_in3(2);*/ 
+	  com_inte(0) = 0;	  
+	  com_inte(1) = -RobotParaClass::HALF_HIP_WIDTH();	  	  
+	  com_inte(2) = 0;  	  
 	}
 	
-// 	cout << "Rfooty_generated:"<<com_inte(1)<<endl;
 
  	return com_inte;
 	
@@ -3053,79 +2979,19 @@ Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, E
 	_L_foot_optition_optimal.row(1) = _Lfooty;
 	_L_foot_optition_optimal.row(2) = _Lfootz;
 	
-	Vector3d com_inte;	
+	Vector3d com_inte;
+
+        int t_int = floor(walktime* dt_sample/ _dt  );	
 	
-	if (walktime>=2)
+	if (t_int>=1)
 	{
-	  int t_int; 
-	  t_int = floor(walktime* dt_sample/ _dt  );
-
-	  
-	  double t_cur;
-	  t_cur = walktime * dt_sample;
 	  
 
 	  
-	  Eigen::Matrix<double, 4, 1> t_plan;
-	  t_plan.setZero();
-	  t_plan(0) = t_cur - 2*dt_sample-( t_cur - 2*dt_sample);
-	  t_plan(1) = t_cur - 1*dt_sample-( t_cur - 2*dt_sample);
-	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
-	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
-
-//           cout << "t_plan3:"<<endl<<t_plan<<endl;
-/*	  Eigen::MatrixXd  AAAaaa; /// should be Marix4d
-	  AAAaaa.setZero(4,4);
+	  double t_cur = walktime * dt_sample;
 	  
-	  AAAaaa(0,0) = pow(t_plan(0), 3); AAAaaa(0,1) = pow(t_plan(0), 2); AAAaaa(0,2) = pow(t_plan(0), 1); AAAaaa(0,3) = pow(t_plan(0), 0); 
-	  AAAaaa(1,0) = pow(t_plan(1), 3); AAAaaa(1,1) = pow(t_plan(1), 2); AAAaaa(1,2) = pow(t_plan(1), 1); AAAaaa(1,3) = pow(t_plan(1), 0); 
-	  AAAaaa(2,0) = pow(t_plan(2), 3); AAAaaa(2,1) = pow(t_plan(2), 2); AAAaaa(2,2) = pow(t_plan(2), 1); AAAaaa(2,3) = pow(t_plan(2), 0); 
-         // AAAaaa(3,0) = pow(t_plan(3), 3); AAAaaa(3,1) = pow(t_plan(3), 2); AAAaaa(3,2) = pow(t_plan(3), 1); AAAaaa(3,3) = pow(t_plan(3), 0); /// using the next to positioin would cause over-fitting	  
-	  AAAaaa(3,0) = 3*pow(t_plan(2), 2); AAAaaa(3,1) = 2*pow(t_plan(2), 1); AAAaaa(3,2) = pow(t_plan(2), 0); AAAaaa(3,3) = 0.0;  	  
- */	  
-//       MatrixXd.inverse( != Matrix4d (under Xd =4. so write the inverse of Matrix4d explicitly): for the time being)
-	  
-	  
-	  Eigen::Matrix4d AAA_inv;
-	  
-	  double abx1, abx2, abx3, abx4;
-	  abx1 = ((t_plan(0) - t_plan(1))*pow(t_plan(0) - t_plan(2), 2));
-	  abx2 = ((t_plan(0) - t_plan(1))*pow(t_plan(1) - t_plan(2), 2));
-	  abx3 =(pow(t_plan(0) - t_plan(2), 2)*pow(t_plan(1) - t_plan(2), 2));
-	  abx4 = ((t_plan(0) - t_plan(2))*(t_plan(1) - t_plan(2)));
 	  
 
-	  AAA_inv(0,0) = 1/ abx1;
-	  AAA_inv(0,1) =  -1/ abx2;
-	  AAA_inv(0,2) = (t_plan(0) + t_plan(1) - 2*t_plan(2))/ abx3;
-	  AAA_inv(0,3) = 1/ abx4;
-	  
-	  AAA_inv(1,0) = -(t_plan(1) + 2*t_plan(2))/ abx1;
-	  AAA_inv(1,1) = (t_plan(0) + 2*t_plan(2))/ abx2;
-	  AAA_inv(1,2) = -(pow(t_plan(0), 2) + t_plan(0)*t_plan(1) + pow(t_plan(1), 2) - 3*pow(t_plan(2), 2))/ abx3;
-	  AAA_inv(1,3) = -(t_plan(0) + t_plan(1) + t_plan(2))/ abx4;
-	  
-	  AAA_inv(2,0) = (t_plan(2)*(2*t_plan(1) + t_plan(2)))/ abx1;
-	  AAA_inv(2,1) = -(t_plan(2)*(2*t_plan(0) + t_plan(2)))/ abx2;
-	  AAA_inv(2,2) = (t_plan(2)*(2*pow(t_plan(0), 2) + 2*t_plan(0)*t_plan(1) - 3*t_plan(2)*t_plan(0) + 2*pow(t_plan(1), 2) - 3*t_plan(2)*t_plan(1)))/ abx3;
-	  AAA_inv(2,3) = (t_plan(0)*t_plan(1) + t_plan(0)*t_plan(2) + t_plan(1)*t_plan(2))/ abx4;
-	  
-	  AAA_inv(3,0) = -(t_plan(1)*pow(t_plan(2), 2))/ abx1;
-	  AAA_inv(3,1) = (t_plan(0)*pow(t_plan(2), 2))/ abx2;
-	  AAA_inv(3,2) = (t_plan(0)*t_plan(1)*(t_plan(0)*t_plan(1) - 2*t_plan(0)*t_plan(2) - 2*t_plan(1)*t_plan(2) + 3*pow(t_plan(2), 2)))/ abx3;
-	  AAA_inv(3,3) = -(t_plan(0)*t_plan(1)*t_plan(2))/ abx4;
-	  	  
-/*	  cout << "AAA_inv:"<<endl<<AAA_inv<<endl;	*/  
-	  
-	  
-	  
-	
-// // 	  Eigen::Matrix4d  AAAaaa1_inv=AAA_inv;
-	  
-// 	  cout<< t_plan<<endl;
-// 	  cout<< AAAaaa<<endl;
-// 	  cout<< AAA_inv - AAAaaa1_inv<<endl;
-// 	  cout<< AAA_inv - AAAaaa1.inverse()<<endl;
 	  
 	  Eigen::RowVector4d t_a_plan;
 	  t_a_plan.setZero();
@@ -3137,54 +3003,36 @@ Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, E
 
 	  
 	  // COM&&foot trajectory interpolation
-	  
-	  Eigen::Vector3d  x10;
-	  Eigen::Vector3d  x11;
-	  Eigen::Vector3d  x12;
-// 	  Eigen::Vector3d  x13;
 
-
-/*	  x10(0) = COM_IN(0,walktime-2); x10(1) = COM_IN(1,walktime-2); x10(2) = COM_IN(2,walktime-2);
-	  x11(0) = COM_IN(0,walktime-1); x11(1) = COM_IN(1,walktime-1); x11(2) = COM_IN(2,walktime-1);	 */ 
-	  x10 = body_in1; 
-	  x11 = body_in2;  
-	  x12 =  _L_foot_optition_optimal.col(t_int);
-// 	  x13 =  _L_foot_optition_optimal.col(t_int+1); /// using next two position would caused over-fitting
-	  
-	  
-	  Eigen::Vector4d  temp;
+	  Eigen::Matrix<double, 4, 1>  temp;
 	  temp.setZero();
-	  temp(0) = x10(0); temp(1) = x11(0); temp(2) = x12(0);
-	  temp(3) = _Lfootvx(t_int);
-// 	  	  temp(3) = x13(0);
-	  Eigen::Vector4d tmp111 = AAA_inv*temp;
-	  com_inte(0) = t_a_plan * tmp111;
-	  temp(0) = x10(1); temp(1) = x11(1); temp(2) = x12(1);
-	  temp(3) = _Lfootvy(t_int);	 
-/*          temp(3) = x13(1);	*/  
-	  tmp111 = AAA_inv*temp;  
-	  com_inte(1) = t_a_plan * tmp111;
-	  temp(0) = x10(2); temp(1) = x11(2); temp(2) = x12(2); 
-	  temp(3) = _Lfootvz(t_int);	
-// 	  temp(3) = x13(2);
-	  tmp111 = AAA_inv*temp;	  
-	  com_inte(2) = t_a_plan * tmp111;
+	  temp(0) = body_in1(0); temp(1) = body_in2(0); temp(2) = _Lfootx(t_int); temp(3) = _Lfootvx(t_int);	  
+	  com_inte(0) = t_a_plan * (_AAA_inv)*temp;
+	  temp(0) = body_in1(1); temp(1) = body_in2(1); temp(2) = _Lfooty(t_int); temp(3) = _Lfootvy(t_int);
 
-////================================================not use spline.h=====////////////////////////////////////////////////
-
-
+	  com_inte(1) = t_a_plan * (_AAA_inv)*temp;
+	  temp(0) = body_in1(2); temp(1) = body_in2(2); temp(2) = _Lfootz(t_int); temp(3) = _Lfootvz(t_int);	  
+	  com_inte(2) = t_a_plan *(_AAA_inv)*temp;
+	  
+	  /////// linear intepolation
+	  com_inte(0) = (_Lfootx(t_int) - _Lfootx(t_int-1))*((t_cur -t_int*_dt) / _dt) +_Lfootx(t_int-1);
+	  com_inte(1) = (_Lfooty(t_int) - _Lfooty(t_int-1))*((t_cur -t_int*_dt) / _dt) +_Lfooty(t_int-1);
+	  com_inte(2) = (_Lfootz(t_int) - _Lfootz(t_int-1))*((t_cur -t_int*_dt) / _dt) +_Lfootz(t_int-1);	  
+	  
 	  
 	}
 	else
 	{
-	  com_inte(0) = body_in3(0);	  
-	  com_inte(1) = body_in3(1);	  	  
-	  com_inte(2) = body_in3(2);
+// 	  com_inte(0) = body_in3(0);	  
+// 	  com_inte(1) = body_in3(1);	  	  
+// 	  com_inte(2) = body_in3(2);
+	  com_inte(0) = 0;	  
+	  com_inte(1) = RobotParaClass::HALF_HIP_WIDTH();	  	  
+	  com_inte(2) = 0;  	  
 	}
 
  	return com_inte;
 	
-	cout << "Lfooty_generated:"<<com_inte(1)<<endl;
 }
 
 

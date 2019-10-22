@@ -8,9 +8,9 @@ gravity: 9.80665
 # TRUE_SIM_FALSE_REALROBOT: true
 
 for_simulation:
- dt_ode: 0.001
- dt_gaz: 0.001
+ dt_ode: 0.002
+ dt_gaz: 0.002
 
 
 for_realrobot:
- dt    : 0.001
+ dt    : 0.002
