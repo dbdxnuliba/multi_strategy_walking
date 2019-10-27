@@ -55,8 +55,6 @@ private:
 	
 	Eigen::VectorXd _stop_flag_walkdtime;
   
-        
-	Eigen::Vector3d optCoM;
 	
 	int _walkdtime_max, _wal_max;	
 	int _walkdtime1;	
@@ -67,16 +65,8 @@ private:
 	Eigen::MatrixXd _FootL_IN;	
 
 	Eigen::Matrix<double,18,1> _estimated_state;	
-	Eigen::MatrixXd _estimated_state_global;
 	Eigen::Vector3d _Rfoot_location_feedback,_Lfoot_location_feedback;
 	
-	
-	
-	
-	Eigen::MatrixXd _state_generate_interpo;
-
-	
-// 	Eigen::MatrixXd _coeff_inte;
 	
 
 	virtual void StandingReactStepping() final;
@@ -89,8 +79,6 @@ protected:
 	int t_walkdtime_flag;
 	int dt_sample;
 	
-	Vector3d _torso_angle;
-	void torso_angle(int arg1);
 	
 	double _feedback_lamda;
 	

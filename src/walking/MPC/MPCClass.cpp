@@ -35,7 +35,7 @@ MPCClass::MPCClass()                    ///declaration function
 	,_M_R(0,0,0)
 	,_M_L(0,0,0)		
 {  
-    cout<<"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx MPC READY"<<endl;
+//     cout<<"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx MPC READY"<<endl;
   
 }
 
@@ -180,7 +180,7 @@ void MPCClass::Initialize()
 	_footy_real_feed = _footy_ref;	
 	
 	
- 	cout<<"_footy_ref:"<<_footy_ref<<endl;
+ //	cout<<"_footy_ref:"<<_footy_ref<<endl;
 	
 	// == step cycle setup
 	_ts.setConstant(_tstep);
@@ -226,7 +226,7 @@ void MPCClass::Initialize()
 	// %% parameters for first MPC-step timing adjustment and next one step location
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 	_px.setZero(); _py.setZero(); _pz.setZero();
-	_zmpvx.setZero(); _zmpvy.setZero(); 
+// 	_zmpvx.setZero(); _zmpvy.setZero(); 
 	_COMx_is.setZero(); _COMx_es.setZero(); _COMvx_is.setZero(); 
 	_COMy_is.setZero(); _COMy_es.setZero(); _COMvy_is.setZero();
 	_comx_feed.setZero(); _comvx_feed.setZero(); _comax_feed.setZero();
@@ -406,20 +406,17 @@ void MPCClass::Initialize()
 	_footy_max=2*RobotParaClass::HALF_HIP_WIDTH() + 0.2; 
 	_footy_min=RobotParaClass::HALF_HIP_WIDTH() - 0.03; 	
 	
-	_mass = _robot_mass; 
-	_j_ini = _mass* pow(_rad,2);	
+//	_mass = _robot_mass; 
+	_j_ini = _robot_mass* pow(_rad,2);	
 	
 	///external force
 	_FX =160;  _FY =120;
 	_t_last = 0.5;
-	_det_xa = _FX/_mass;  _det_ya = _FY/_mass; 
+	_det_xa = _FX/_robot_mass;  _det_ya = _FY/_robot_mass; 
 	_det_xv = _det_xa*_t_last; _det_yv = _det_ya*_t_last;
 	_det_xp = pow(_det_xv,2)/(2*_det_xa); _det_yp = pow(_det_yv,2)/(2*_det_ya);
 	
 	
-	
-	
-	_tcpu.setZero();
 	
 	_n_loop_omit = 2*round(_tstep/_dt);
 	
@@ -433,6 +430,12 @@ void MPCClass::Initialize()
 	_ki = 0;
 	_k_yu = 0;
 	_Tk = 0; 
+	
+	_Lxx_refx=0;_Lyy_refy=0;
+	_Lxx_refx1=0;_Lyy_refy1=0;
+	
+	_tr1_ref = 0;        _tr2_ref = 0;
+	_tr1_ref1 = 0;  _tr2_ref1 = 0;  
 	
 	/// remaining time boundaries
 	_tr1_min=0;   _tr2_min=0;  _tr1_max=0;  _tr2_max=0;
@@ -551,12 +554,6 @@ void MPCClass::Initialize()
 	_ry_left_right = 0;	
 	
 	
-	 _CoM_position_optimal.setZero();
-	 _torso_angle_optimal.setZero();
-	 _L_foot_optition_optimal.setZero();
-	 _R_foot_optition_optimal.setZero();
-	 _foot_location_optimal.setZero();	
-	
 	
 	
 	
@@ -566,8 +563,17 @@ void MPCClass::Initialize()
 
 	_Rfootx_kmp.setZero();  _Rfooty_kmp.setConstant(-_stepwidth(0));_Rfootz_kmp.setZero(); 
 	_Rfootvx_kmp.setZero(); _Rfootvy_kmp.setZero();                 _Rfootvz_kmp.setZero(); 
+	
+	_Lfootx_kmp_old.setZero();  _Lfooty_kmp_old.setConstant(_stepwidth(0)); _Lfootz_kmp_old.setZero(); 
+	_Lfootvx_kmp_old.setZero(); _Lfootvy_kmp_old.setZero();                 _Lfootvz_kmp_old.setZero(); 
+
+	_Rfootx_kmp_old.setZero();  _Rfooty_kmp_old.setConstant(-_stepwidth(0));_Rfootz_kmp_old.setZero(); 
+	_Rfootvx_kmp_old.setZero(); _Rfootvy_kmp_old.setZero();                 _Rfootvz_kmp_old.setZero(); 	
 
 	cout << "finish!!!!!!!!!!! initial for nlp_KMP parameters"<<endl;
+
+
+
 	///////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	//////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -575,6 +581,8 @@ void MPCClass::Initialize()
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// %% robot parameters		
 	_zmpx_real.setZero(_nsum); _zmpy_real.setZero(_nsum);	
+	
+	
 	_thetax.setZero(_nsum); _thetavx.setZero(_nsum); _thetaax.setZero(_nsum);
 	_thetay.setZero(_nsum); _thetavy.setZero(_nsum); _thetaay.setZero(_nsum);
 	_thetaz.setZero(_nsum); _thetavz.setZero(_nsum); _thetaaz.setZero(_nsum);
@@ -943,7 +951,7 @@ void MPCClass::Initialize()
 	
 	
 	/////////////for ZMP distribution
-	_F_R(2) = _F_L(2) = 0.5 * _mass * RobotParaClass::G();
+	_F_R(2) = _F_L(2) = 0.5 * _robot_mass * RobotParaClass::G();
 	_Co_L.setZero(); _Co_R.setZero();
 	
 	_comxyzx.setZero(); _comvxyzx.setZero(); _comaxyzx.setZero(); 
@@ -965,8 +973,8 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 {
 //   cout <<"i:"<<i<<endl;
   
-  clock_t _t_start,_t_finish;
-  _t_start = clock();
+//  clock_t _t_start,_t_finish;
+//  _t_start = clock();
   
   //// step cycle number when (i+1)*dt fall into: attention that _tstep+1 falls ionto the next cycle      
   Indexfind((i+1)*_dt,xyz0);	   /// next one sampling time
@@ -1000,12 +1008,12 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 
 
   //ZMP & ZMPv
-  _px(0,i) = _footx_ref(_periond_i-1,0); _zmpvx(0,i) = 0; 
-  _py(0,i) = _footy_ref(_periond_i-1,0); _zmpvy(0,i) = 0; 
-  _zmpx_real(0,i) = _px(0,i);
-  _zmpy_real(0,i) = _py(0,i);   
+  _px(0,0) = _footx_ref(_periond_i-1,0); //_zmpvx(0,i) = 0; 
+  _py(0,0) = _footy_ref(_periond_i-1,0); //_zmpvy(0,i) = 0; 
+  _zmpx_real(0,i) = _px(0,0);
+  _zmpy_real(0,i) = _py(0,0);   
   
-//   cout<<"_py:"<<_py(0,i)<<endl;  
+//   cout<<"_py:"<<_py(0,0)<<endl;  
   
   ///remaining step timing for the next stepping
   _ki = round(_tx(_periond_i-1,0)/_dt);
@@ -1209,9 +1217,6 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   _Lyy_ref_real(i) = _Lyy_ref(_periond_i-1);
   _Ts_ref_real(i) = _ts(_periond_i-1);  
   
-/*  cout <<"_Lxx_ref_real:"<<endl<<_Lxx_ref_real<<endl;
-  cout <<"_Lxx_ref_real:"<<endl<<_Lxx_ref_real<<endl; 
-  cout <<"_Ts_ref_real:"<<endl<<_Ts_ref_real<<endl;  */   
   
 
   _COMx_is(_periond_i-1) = _comx_feed(i-1)-_footx_ref(_periond_i-1);  
@@ -1221,9 +1226,7 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   _COMy_es.col(_periond_i-1) = _SS2*_vari_ini*0.5;  
   _COMvy_is(_periond_i-1)= (_COMy_es(_periond_i-1)-_COMy_is(_periond_i-1)*_SS3*_vari_ini)/(1/_Wn *_SS4*_vari_ini);    
 
-/*  cout <<"_Lxx_ref_real:"<<endl<<_Lxx_ref_real<<endl;
-  cout <<"_Lxx_ref_real:"<<endl<<_Lxx_ref_real<<endl; 
-  cout <<"_Ts_ref_real:"<<endl<<_Ts_ref_real<<endl;  */   
+
   
   
 // update walking period and step location 
@@ -1244,8 +1247,8 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
       
 // update CoM state  
    
-  _comx(i)= _COMx_is(_periond_i-1)*cosh(_Wndt) + _COMvx_is(_periond_i-1)*1/_Wn*sinh(_Wndt)+_px(i);
-  _comy(i)= _COMy_is(_periond_i-1)*cosh(_Wndt) + _COMvy_is(_periond_i-1)*1/_Wn*sinh(_Wndt)+_py(i);           
+  _comx(i)= _COMx_is(_periond_i-1)*cosh(_Wndt) + _COMvx_is(_periond_i-1)*1/_Wn*sinh(_Wndt)+_px(0);
+  _comy(i)= _COMy_is(_periond_i-1)*cosh(_Wndt) + _COMvy_is(_periond_i-1)*1/_Wn*sinh(_Wndt)+_py(0);           
   _comvx(i)= _Wn*_COMx_is(_periond_i-1)*sinh(_Wndt) + _COMvx_is(_periond_i-1)*cosh(_Wndt);
   _comvy(i)= _Wn*_COMy_is(_periond_i-1)*sinh(_Wndt) + _COMvy_is(_periond_i-1)*cosh(_Wndt);     
   _comax(i)= pow(_Wn,2)*_COMx_is(_periond_i-1)*cosh(_Wndt) + _COMvx_is(_periond_i-1)*_Wn*sinh(_Wndt);
@@ -1300,19 +1303,18 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 //   }
 
  
-  _comx_feed(i) = (_lamda_comx*(_comx(i)-_px(i))+(1-_lamda_comx)*estimated_state(0,0))+_px(i);    
+  _comx_feed(i) = (_lamda_comx*(_comx(i)-_px(0))+(1-_lamda_comx)*estimated_state(0,0))+_px(0);    
   _comvx_feed(i) = _lamda_comvx*_comvx(i) + (1-_lamda_comvx)*estimated_state(1,0);
   _comax_feed(i) = _lamda_comx*_comax(i) + (1-_lamda_comx)*estimated_state(2,0);
-  _comy_feed(i) = (_lamda_comy*(_comy(i)-_py(i))+(1-_lamda_comy)*estimated_state(3,0))+_py(i);    
+  _comy_feed(i) = (_lamda_comy*(_comy(i)-_py(0))+(1-_lamda_comy)*estimated_state(3,0))+_py(0);    
   _comvy_feed(i) = _lamda_comvy*_comvy(i) + (1-_lamda_comvy)*estimated_state(4,0);  
   _comay_feed(i) = _lamda_comy*_comay(i) + (1-_lamda_comy)*estimated_state(5,0);  
   
 
 
   
-  _t_finish = clock();  
+ // _t_finish = clock();  
   
-  _tcpu(0,i-1) = (double)(_t_finish - _t_start)/CLOCKS_PER_SEC;
   
   
   
@@ -2301,387 +2303,6 @@ Vector3d MPCClass::X_CoM_position_squat(int walktime, double dt_sample)
 
 
 
-//////////////////////////////////////////////////////
-Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample,int j_index, bool _stopwalking)
-{
-  
-  ///////walktime=====>ij;   int j_index====>i;  dt_sample========>dtx;   
-   Vector6d com_inte;	
-// 	
-// 
-  double  Footz_ref = 0.05;    //0.05m 
-  
- 
-//// judge if stop  
-  if(_stopwalking)  
-  {
-    
-    for (int i_t = _bjx1+1; i_t < _footstepsnumber; i_t++) {	
-      if (i_t == _bjx1)
-      {
-      _lift_height_ref(i_t) = _lift_height_ref(i_t)/2;	
-      }
-      else
-      {
-      _lift_height_ref(i_t) = 0.01;  	
-      }
-
-    }	  
-
-  }  
- 
- 
- 
-//   
-  //// three via_points: time, mean, sigma 
-  vec via_point1 =  zeros<vec>(43);
-  vec via_point2 =  zeros<vec>(43);
-  vec via_point3 =  zeros<vec>(43);
-  
-  via_point1(7) =0.00000000001; via_point1(14)=0.00000000001; via_point1(21)=0.00000000001;	
-  via_point1(28)=0.00000000001; via_point1(35)=0.00000000001; via_point1(42)=0.00000000001;  
-  
-  via_point2(0) =0.65/2;
-  via_point2(7) =0.00000000001; via_point2(14)=0.00000000001; via_point2(21)=0.00000000001;	
-  via_point2(28)=0.00000000001; via_point2(35)=0.00000000001; via_point2(42)=0.00000000001;
-  
-  via_point3(0) =0.65;
-  via_point3(7) =0.00000000001; via_point3(14)=0.00000000001; via_point3(21)=0.00000000001;	
-  via_point3(28)=0.00000000001; via_point3(35)=0.00000000001; via_point3(42)=0.00000000001;      
-  
-  
-  
-  double t_des;      /////////desired time during the current step
-  t_des = (walktime+4)*dt_sample - (_tx(_bjx1-1)+_td(_bjx1-1));
-  
-
-  if (_bjx1 >= 2)
-  {      
-    
-    if (_bjx1 % 2 == 0)           //odd:left support
-    {
-      _Lfootx_kmp(walktime) = _footxyz_real(0,_bjx1-1);
-      _Lfooty_kmp(walktime) = _footxyz_real(1,_bjx1-1);
-      _Lfootz_kmp(walktime) = _footxyz_real(2,_bjx1-1);
-      
-      _Lfootvx_kmp(walktime) = 0;
-      _Lfootvy_kmp(walktime) = 0;
-      _Lfootvz_kmp(walktime) = 0;    
-      
-      if (t_des<=0)  // j_index and _bjx1 coincident with matlab: double support
-      {
-
-	_Rfootx_kmp(walktime) = _footxyz_real(0,_bjx1-2);
-	_Rfooty_kmp(walktime) = _footxyz_real(1,_bjx1-2);
-	_Rfootz_kmp(walktime) = _footxyz_real(2,_bjx1-2);
-	
-	_Rfootvx_kmp(walktime) = 0;
-	_Rfootvy_kmp(walktime) = 0;
-	_Rfootvz_kmp(walktime) = 0;  
-	
-      }
-      else
-      {
-	
-	//initial state and final state and the middle state
-	double t_des_k;
-	t_des_k = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*t_des;
-	
-	/////////////first sampling time of the current walking cycle: initialize the KMP_data
-	if (t_des<=dt_sample)
-	{
-	  kmp_leg_R.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp);
-	//// %%% initial state and final state and the middle state
-	/////%%%%% be careful the x position start from zero, the y
-	//// %%%%% position start from -RobotParaClass::HALF_HIP_WIDTH()
-	  ////// add point************ current status****************////////
-	  via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
-	  via_point1(1) = _Rfootx_kmp(walktime-1)-_footxyz_real(0,_bjx1-2);
-	  via_point1(2) = _Rfooty_kmp(walktime-1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  via_point1(3) = _Rfootz_kmp(walktime-1)-_footxyz_real(2,_bjx1-2);
-	  via_point1(4) = _Rfootvx_kmp(walktime-1);
-	  via_point1(5) = _Rfootvy_kmp(walktime-1);
-	  via_point1(6) = _Rfootvz_kmp(walktime-1);
-	  kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp
-	  
-	  ////// add point************ middle point***********////////
-// 	    via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
-	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
-	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+_lift_height_ref(_bjx1-1))-_footxyz_real(2,_bjx1-2);
-	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
-/*	  if (_bjx1==2)
-	  {
-	    via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*0.8;
-	  }*/	    
-	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
- 	  via_point2(6) = 0;
-/*	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
-	  {
-	    via_point2(6) = -0.1;
-	  }
-	  else
-	  {
-	    via_point2(6) = 0;
-	  }*/	    	    
-	  kmp_leg_R.kmp_insertPoint(via_point2);  // insert point into kmp
-
-	  ////// add point************ final status************////////	  
-	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
-	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-// 	  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0030;
-	  if (_bjx1<=4)
-	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
-	  }
-	  else
-	  {
-	    if (_bjx1<=15)
-	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
-	    }
-	    else
-	    {
-// 	      ///obstacle avoidance
-// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
-// 	      ///obstacle avoidance_m
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
-	    }
-	  }
-	  via_point3(4) = 0;
-	  via_point3(5) = 0;
- 	  via_point3(6) = 0.025;
-// 	  if (via_point3(3)<0)  ////downstairs
-// 	  {
-// 	    via_point3(6) = 0.15;
-// 	  }
-// 	  else
-// 	  {
-// 	    via_point3(6) = 0.025;
-// 	  }
-	  
-	  
-	  kmp_leg_R.kmp_insertPoint(via_point3);  // insert point into kmp	
-	  
-	  kmp_leg_R.kmp_estimateMatrix();
-	}
-	else
-	{
-	  if ((abs(_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1))>=0.005)||(abs(_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1))>=0.005)||(abs(_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1))>=0.005))
-	  {
-	    ////// add point************ current status****************////////
-	    via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
-	    via_point1(1) = _Rfootx_kmp(walktime-1)-_footxyz_real(0,_bjx1-2);
-	    via_point1(2) = _Rfooty_kmp(walktime-1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	    via_point1(3) = _Rfootz_kmp(walktime-1)-_footxyz_real(2,_bjx1-2);
-	    via_point1(4) = _Rfootvx_kmp(walktime-1);
-	    via_point1(5) = _Rfootvy_kmp(walktime-1);
-	    via_point1(6) = _Rfootvz_kmp(walktime-1);
-	    kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp	
-	    
-	    kmp_leg_R.kmp_estimateMatrix();
-	    
-// 	    cout<<"Lx_real_error"<<endl<<_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1)<<endl;
-// 	    cout<<"Ly_real_error"<<endl<<_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1)<<endl;
-// 	    cout<<"Ts_real_error"<<endl<<_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1)<<endl;
-	    
-	  }
-	}
-	
-	_query_kmp(0) = t_des_k;
-	kmp_leg_R.kmp_prediction(_query_kmp,_mean_kmp);   ////////time& predictive values
-	if (t_des_k<0.01){
-/*	cout<<"_query_kmp:"<<endl<<trans(_query_kmp)<<endl;
-	cout<<"kmp:"<<endl<<trans(_mean_kmp)<<endl;
-	cout<<"error:"<<trans(_mean_kmp)-trans(via_point1(span(1,6)))<<endl<<endl;*/	      	      
-	}	  
-       
-      _Rfootx_kmp(walktime) = _mean_kmp(0)+_footxyz_real(0,_bjx1-2);
-      _Rfooty_kmp(walktime) = _mean_kmp(1)+(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-      _Rfootz_kmp(walktime) = _mean_kmp(2)+_footxyz_real(2,_bjx1-2);
-      
-      _Rfootvx_kmp(walktime) = _mean_kmp(3);
-      _Rfootvy_kmp(walktime) = _mean_kmp(4);
-      _Rfootvz_kmp(walktime) = _mean_kmp(5);
-      
-      }   
-    }
-    
-    else                       //right support
-    {
-      _Rfootx_kmp(walktime) = _footxyz_real(0,_bjx1-1);
-      _Rfooty_kmp(walktime) = _footxyz_real(1,_bjx1-1);
-      _Rfootz_kmp(walktime) = _footxyz_real(2,_bjx1-1);
-      
-      _Rfootvx_kmp(walktime) = 0;
-      _Rfootvy_kmp(walktime) = 0;
-      _Rfootvz_kmp(walktime) = 0;    
-      
-      if (t_des<=0)  // j_index and _bjx1 coincident with matlab: double support
-      {
-
-	_Lfootx_kmp(walktime) = _footxyz_real(0,_bjx1-2);
-	_Lfooty_kmp(walktime) = _footxyz_real(1,_bjx1-2);
-	_Lfootz_kmp(walktime) = _footxyz_real(2,_bjx1-2);
-	
-	_Lfootvx_kmp(walktime) = 0;
-	_Lfootvy_kmp(walktime) = 0;
-	_Lfootvz_kmp(walktime) = 0;  
-	
-      }
-      else
-      {
-	
-	//initial state and final state and the middle state
-	double t_des_k;
-	t_des_k = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*t_des;
-	
-	if (t_des<=dt_sample)
-	{	
-	  kmp_leg_L.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp);
-         //// %%% initial state and final state and the middle state
-         /////%%%%% be careful the x position start from zero, the y
-         //// %%%%% position start from -RobotParaClass::HALF_HIP_WIDTH()
-	  ////// add point************ current status****************////////
-	  via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
-	  via_point1(1) = _Lfootx_kmp(walktime-1)-_footxyz_real(0,_bjx1-2);
-	  via_point1(2) = _Lfooty_kmp(walktime-1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  via_point1(3) = _Lfootz_kmp(walktime-1)-_footxyz_real(2,_bjx1-2);
-	  via_point1(4) = _Lfootvx_kmp(walktime-1);
-	  via_point1(5) = _Lfootvy_kmp(walktime-1);
-	  via_point1(6) = _Lfootvz_kmp(walktime-1);
- 	  kmp_leg_L.kmp_insertPoint(via_point1);  // insert point into kmp
-	  
-	  ////// add point************ middle point***********////////
-// 	  via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
-	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
-	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+_lift_height_ref(_bjx1-1))-_footxyz_real(2,_bjx1-2);
-	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
-	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
-	  via_point2(6) = 0;
-/*	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
-	  {
-	    via_point2(6) = -0.1;	      
-	  }
-	  else
-	  {
-	    via_point2(6) = 0;
-	  }*/	  	  	  
- 	  kmp_leg_L.kmp_insertPoint(via_point2);  // insert point into kmp
-
-          ////// add point************ final status************////////	  
-	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
-	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	  if (_bjx1<=4)
-	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
-	  }
-	  else
-	  {
-	    if (_bjx1<=15)
-	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
-	    }
-	    else
-	    {
-// 	      ///obstacle avoidance
-// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
-// 	      ///obstacle avoidance_m
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
-
-	    }
-	  }
-	  via_point3(4) = 0;
-	  via_point3(5) = 0;
- 	  via_point3(6) = 0.025;
-/*	  if (via_point3(3)<0)  ////downstairs
-	  {
-	     via_point3(6) = 0.15;
-	  }
-	  else
-	  {
-	    via_point3(6) = 0.025;
-	  }*/	     	 
-	  kmp_leg_L.kmp_insertPoint(via_point3);  // insert point into kmp
-	  
-	  
-	  kmp_leg_L.kmp_estimateMatrix();
-	   
-	  
-	}
-	else
-	{
-	  if ((abs(_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1))>=0.005)||(abs(_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1))>=0.005)||(abs(_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1))>=0.005))
-	  {
-	    ////// add point************ current status****************////////
-	    via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
-	    via_point1(1) = _Lfootx_kmp(walktime-1)-_footxyz_real(0,_bjx1-2);
-	    via_point1(2) = _Lfooty_kmp(walktime-1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	    via_point1(3) = _Lfootz_kmp(walktime-1)-_footxyz_real(2,_bjx1-2);
-	    via_point1(4) = _Lfootvx_kmp(walktime-1);
-	    via_point1(5) = _Lfootvy_kmp(walktime-1);
-	    via_point1(6) = _Lfootvz_kmp(walktime-1);
-	    kmp_leg_L.kmp_insertPoint(via_point1);  // insert point into kmp
-	    
-	    kmp_leg_L.kmp_estimateMatrix();
-	    
-// 	    cout<<"Lx_real_error"<<endl<<_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1)<<endl;
-// 	    cout<<"Ly_real_error"<<endl<<_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1)<<endl;
-// 	    cout<<"Ts_real_error"<<endl<<_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1)<<endl;
-	    
-	  }
-	}	
-	
-	_query_kmp(0) = t_des_k;
-	kmp_leg_L.kmp_prediction(_query_kmp,_mean_kmp);   ////////time& predictive values
-	
-/*	if (t_des_k<0.01){
-	cout<<"_query_kmp:"<<endl<<trans(_query_kmp)<<endl;
-	cout<<"kmp:"<<endl<<trans(_mean_kmp)<<endl;
-	cout<<"error:"<<endl<<trans(_mean_kmp)-trans(via_point1(span(1,6)))<<endl;	
-	}*/		
-	_Lfootx_kmp(walktime) = _mean_kmp(0)+_footxyz_real(0,_bjx1-2);
-	_Lfooty_kmp(walktime) = _mean_kmp(1)+(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
-	_Lfootz_kmp(walktime) = _mean_kmp(2)+_footxyz_real(2,_bjx1-2);
-	
-	_Lfootvx_kmp(walktime) = _mean_kmp(3);
-	_Lfootvy_kmp(walktime) = _mean_kmp(4);
-	_Lfootvz_kmp(walktime) = _mean_kmp(5); 	  	
-	
-      }   
-
-    }
-      
-    
-  }
-  
-  
-  /////Rfoot,xyz, Lfoot,XYZ
-  com_inte(0) = _Rfootx_kmp(walktime);
-  com_inte(1) = _Rfooty_kmp(walktime);
-  com_inte(2) = _Rfootz_kmp(walktime);
-
-  com_inte(3) = _Lfootx_kmp(walktime);
-  com_inte(4) = _Lfooty_kmp(walktime);
-  com_inte(5) = _Lfootz_kmp(walktime);
-
-  _Lfootxyzx(0) = com_inte(3);  
-  _Lfootxyzx(1) = com_inte(4);   
-  _Lfootxyzx(2) = com_inte(5);   
-  _Rfootxyzx(0) = com_inte(0);  
-  _Rfootxyzx(1) = com_inte(1);   
-  _Rfootxyzx(2) = com_inte(2);   
-  
-  return com_inte;
-  
-
-
-}
-
-
-
-
 
 
 
@@ -2708,9 +2329,6 @@ int MPCClass::Get_maximal_number(double dtx)
 Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
   //reference com position
-        _CoM_position_optimal.row(0) = _comx;
-	_CoM_position_optimal.row(1) = _comy;
-	_CoM_position_optimal.row(2) = _comz;
 	_comz(0) = RobotParaClass::Z_C()-_height_offset;
 	_comz(1) = RobotParaClass::Z_C()-_height_offset;
 	_comz(2) = RobotParaClass::Z_C()-_height_offset;
@@ -2806,10 +2424,6 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 
 Vector3d MPCClass::XGetSolution_body_inclination(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
-  //reference com position
-        _torso_angle_optimal.row(0) = _thetax;
-	_torso_angle_optimal.row(1) = _thetay;
-	_torso_angle_optimal.row(2) = _thetaz;
 		
 	Vector3d com_inte(0,0,0);		
 	if (walktime>=2)
@@ -2883,13 +2497,7 @@ Vector3d MPCClass::XGetSolution_body_inclination(int walktime, double dt_sample,
 
 
 Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
-{
-	
-        _R_foot_optition_optimal.row(0) = _Rfootx;
-	_R_foot_optition_optimal.row(1) = _Rfooty;
-	_R_foot_optition_optimal.row(2) = _Rfootz;
-	
-	
+{	
 	int t_int= floor(walktime* dt_sample/ _dt  );
 	
 	///////////// 4th order interpolation
@@ -2945,7 +2553,9 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 	}
 
 	 
-	
+	_Rfootxyzx(0) = com_inte(0);  
+	_Rfootxyzx(1) = com_inte(1);   
+	_Rfootxyzx(2) = com_inte(2);   	
 
  	return com_inte;
 	
@@ -2956,9 +2566,6 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 
 Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
-        _L_foot_optition_optimal.row(0) = _Lfootx;
-	_L_foot_optition_optimal.row(1) = _Lfooty;
-	_L_foot_optition_optimal.row(2) = _Lfootz;
 	
 	Vector3d com_inte;
 
@@ -3011,10 +2618,408 @@ Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, E
 	  com_inte(1) = RobotParaClass::HALF_HIP_WIDTH();	  	  
 	  com_inte(2) = 0;  	  
 	}
+	
+	_Lfootxyzx(0) = com_inte(0);  
+	_Lfootxyzx(1) = com_inte(1);   
+	_Lfootxyzx(2) = com_inte(2);   
+	
 
  	return com_inte;
 	
 }
+
+
+
+//////////////////////////////////////////////////////
+Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample,int j_index, bool _stopwalking)
+{
+  
+  ///////walktime=====>ij;   int j_index====>i;  dt_sample========>dtx;   
+   Vector6d com_inte;	
+ 
+//// judge if stop  
+  if(_stopwalking)  
+  {
+    
+    for (int i_t = _bjx1+1; i_t < _footstepsnumber; i_t++) {	
+      if (i_t == _bjx1)
+      {
+      _lift_height_ref(i_t) = _lift_height_ref(i_t)/2;	
+      }
+      else
+      {
+      _lift_height_ref(i_t) = 0.01;  	
+      }
+
+    }	  
+
+  }  
+ 
+ 
+ 
+//   
+  //// three via_points: time, mean, sigma 
+  vec via_point1 =  zeros<vec>(43);
+  vec via_point2 =  zeros<vec>(43);
+  vec via_point3 =  zeros<vec>(43);
+  
+  via_point1(7) =0.00000000001; via_point1(14)=0.00000000001; via_point1(21)=0.00000000001;	
+  via_point1(28)=0.00000000001; via_point1(35)=0.00000000001; via_point1(42)=0.00000000001;  
+  
+  via_point2(0) =0.65/2;
+  via_point2(7) =0.00000000001; via_point2(14)=0.00000000001; via_point2(21)=0.00000000001;	
+  via_point2(28)=0.00000000001; via_point2(35)=0.00000000001; via_point2(42)=0.00000000001;
+  
+  via_point3(0) =0.65;
+  via_point3(7) =0.00000000001; via_point3(14)=0.00000000001; via_point3(21)=0.00000000001;	
+  via_point3(28)=0.00000000001; via_point3(35)=0.00000000001; via_point3(42)=0.00000000001;      
+  
+  
+  
+  double t_des;      /////////desired time during the current step
+  t_des = (walktime+4)*dt_sample - (_tx(_bjx1-1)+_td(_bjx1-1));
+  
+
+  if (_bjx1 >= 2)
+  {      
+    
+    if (_bjx1 % 2 == 0)           //odd:left support
+    {
+      _Lfootx_kmp(0) = _footxyz_real(0,_bjx1-1);
+      _Lfooty_kmp(0) = _footxyz_real(1,_bjx1-1);
+      _Lfootz_kmp(0) = _footxyz_real(2,_bjx1-1);
+      
+      _Lfootvx_kmp(0) = 0;
+      _Lfootvy_kmp(0) = 0;
+      _Lfootvz_kmp(0) = 0;    
+      
+      if (t_des<=0)  // j_index and _bjx1 coincident with matlab: double support
+      {
+
+	_Rfootx_kmp(0) = _footxyz_real(0,_bjx1-2);
+	_Rfooty_kmp(0) = _footxyz_real(1,_bjx1-2);
+	_Rfootz_kmp(0) = _footxyz_real(2,_bjx1-2);
+	
+	_Rfootvx_kmp(0) = 0;
+	_Rfootvy_kmp(0) = 0;
+	_Rfootvz_kmp(0) = 0;  
+	
+      }
+      else
+      {
+	
+	//initial state and final state and the middle state
+	double t_des_k;
+	t_des_k = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*t_des;
+	
+	/////////////first sampling time of the current walking cycle: initialize the KMP_data
+	if (t_des<=dt_sample)
+	{
+	  kmp_leg_R.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp);
+	//// %%% initial state and final state and the middle state
+	/////%%%%% be careful the x position start from zero, the y
+	//// %%%%% position start from -RobotParaClass::HALF_HIP_WIDTH()
+	  ////// add point************ current status****************////////
+	  via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
+	  via_point1(1) = _Rfootx_kmp_old(0)-_footxyz_real(0,_bjx1-2);
+	  via_point1(2) = _Rfooty_kmp_old(0)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	  via_point1(3) = _Rfootz_kmp_old(0)-_footxyz_real(2,_bjx1-2);
+	  via_point1(4) = _Rfootvx_kmp_old(0);
+	  via_point1(5) = _Rfootvy_kmp_old(0);
+	  via_point1(6) = _Rfootvz_kmp_old(0);
+	  kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp
+	  
+	  ////// add point************ middle point***********////////
+// 	    via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
+	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
+	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+_lift_height_ref(_bjx1-1))-_footxyz_real(2,_bjx1-2);
+	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
+/*	  if (_bjx1==2)
+	  {
+	    via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*0.8;
+	  }*/	    
+	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
+ 	  via_point2(6) = 0;
+/*	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
+	  {
+	    via_point2(6) = -0.1;
+	  }
+	  else
+	  {
+	    via_point2(6) = 0;
+	  }*/	    	    
+	  kmp_leg_R.kmp_insertPoint(via_point2);  // insert point into kmp
+
+	  ////// add point************ final status************////////	  
+	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
+	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+// 	  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.0030;
+	  if (_bjx1<=4)
+	  {
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
+	  }
+	  else
+	  {
+	    if (_bjx1<=15)
+	    {
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
+	    }
+	    else
+	    {
+// 	      ///obstacle avoidance
+// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+// 	      ///obstacle avoidance_m
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
+	    }
+	  }
+	  via_point3(4) = 0;
+	  via_point3(5) = 0;
+ 	  via_point3(6) = 0.025;
+// 	  if (via_point3(3)<0)  ////downstairs
+// 	  {
+// 	    via_point3(6) = 0.15;
+// 	  }
+// 	  else
+// 	  {
+// 	    via_point3(6) = 0.025;
+// 	  }
+	  
+	  
+	  kmp_leg_R.kmp_insertPoint(via_point3);  // insert point into kmp	
+	  
+	  kmp_leg_R.kmp_estimateMatrix();
+	}
+	else
+	{
+	  if ((abs(_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1))>=0.005)||(abs(_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1))>=0.005)||(abs(_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1))>=0.005))
+	  {
+	    ////// add point************ current status****************////////
+	    via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
+	    via_point1(1) = _Rfootx_kmp_old(0)-_footxyz_real(0,_bjx1-2);
+	    via_point1(2) = _Rfooty_kmp_old(0)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	    via_point1(3) = _Rfootz_kmp_old(0)-_footxyz_real(2,_bjx1-2);
+	    via_point1(4) = _Rfootvx_kmp_old(0);
+	    via_point1(5) = _Rfootvy_kmp_old(0);
+	    via_point1(6) = _Rfootvz_kmp_old(0);
+	    kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp	
+	    
+	    kmp_leg_R.kmp_estimateMatrix();
+	    
+// 	    cout<<"Lx_real_error"<<endl<<_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1)<<endl;
+// 	    cout<<"Ly_real_error"<<endl<<_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1)<<endl;
+// 	    cout<<"Ts_real_error"<<endl<<_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1)<<endl;
+	    
+	  }
+	}
+	
+	_query_kmp(0) = t_des_k;
+	kmp_leg_R.kmp_prediction(_query_kmp,_mean_kmp);   ////////time& predictive values
+	if (t_des_k<0.01){
+/*	cout<<"_query_kmp:"<<endl<<trans(_query_kmp)<<endl;
+	cout<<"kmp:"<<endl<<trans(_mean_kmp)<<endl;
+	cout<<"error:"<<trans(_mean_kmp)-trans(via_point1(span(1,6)))<<endl<<endl;*/	      	      
+	}	  
+       
+      _Rfootx_kmp(0) = _mean_kmp(0)+_footxyz_real(0,_bjx1-2);
+      _Rfooty_kmp(0) = _mean_kmp(1)+(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+      _Rfootz_kmp(0) = _mean_kmp(2)+_footxyz_real(2,_bjx1-2);
+      
+      _Rfootvx_kmp(0) = _mean_kmp(3);
+      _Rfootvy_kmp(0) = _mean_kmp(4);
+      _Rfootvz_kmp(0) = _mean_kmp(5);
+      
+      }   
+    }
+    
+    else                       //right support
+    {
+      _Rfootx_kmp(0) = _footxyz_real(0,_bjx1-1);
+      _Rfooty_kmp(0) = _footxyz_real(1,_bjx1-1);
+      _Rfootz_kmp(0) = _footxyz_real(2,_bjx1-1);
+      
+      _Rfootvx_kmp(0) = 0;
+      _Rfootvy_kmp(0) = 0;
+      _Rfootvz_kmp(0) = 0;    
+      
+      if (t_des<=0)  // j_index and _bjx1 coincident with matlab: double support
+      {
+
+	_Lfootx_kmp(0) = _footxyz_real(0,_bjx1-2);
+	_Lfooty_kmp(0) = _footxyz_real(1,_bjx1-2);
+	_Lfootz_kmp(0) = _footxyz_real(2,_bjx1-2);
+	
+	_Lfootvx_kmp(0) = 0;
+	_Lfootvy_kmp(0) = 0;
+	_Lfootvz_kmp(0) = 0;  
+	
+      }
+      else
+      {
+	
+	//initial state and final state and the middle state
+	double t_des_k;
+	t_des_k = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*t_des;
+	
+	if (t_des<=dt_sample)
+	{	
+	  kmp_leg_L.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp);
+         //// %%% initial state and final state and the middle state
+         /////%%%%% be careful the x position start from zero, the y
+         //// %%%%% position start from -RobotParaClass::HALF_HIP_WIDTH()
+	  ////// add point************ current status****************////////
+	  via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
+	  via_point1(1) = _Lfootx_kmp_old(0)-_footxyz_real(0,_bjx1-2);
+	  via_point1(2) = _Lfooty_kmp_old(0)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	  via_point1(3) = _Lfootz_kmp_old(0)-_footxyz_real(2,_bjx1-2);
+	  via_point1(4) = _Lfootvx_kmp_old(0);
+	  via_point1(5) = _Lfootvy_kmp_old(0);
+	  via_point1(6) = _Lfootvz_kmp_old(0);
+ 	  kmp_leg_L.kmp_insertPoint(via_point1);  // insert point into kmp
+	  
+	  ////// add point************ middle point***********////////
+// 	  via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
+	  via_point2(1) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/2;
+	  via_point2(2) = (_footxyz_real(1,_bjx1-2)+_footxyz_real(1,_bjx1))/2-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	  via_point2(3) = (_footxyz_real(2,_bjx1-1)+_lift_height_ref(_bjx1-1))-_footxyz_real(2,_bjx1-2);
+	  via_point2(4) = (_footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2))/0.65*1.1;
+	  via_point2(5) = (_footxyz_real(1,_bjx1)-_footxyz_real(1,_bjx1-2))/0.65;
+	  via_point2(6) = 0;
+/*	  if (_footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)<=0)  ////downstairs
+	  {
+	    via_point2(6) = -0.1;	      
+	  }
+	  else
+	  {
+	    via_point2(6) = 0;
+	  }*/	  	  	  
+ 	  kmp_leg_L.kmp_insertPoint(via_point2);  // insert point into kmp
+
+          ////// add point************ final status************////////	  
+	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
+	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	  if (_bjx1<=4)
+	  {
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
+	  }
+	  else
+	  {
+	    if (_bjx1<=15)
+	    {
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
+	    }
+	    else
+	    {
+// 	      ///obstacle avoidance
+// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+// 	      ///obstacle avoidance_m
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
+
+	    }
+	  }
+	  via_point3(4) = 0;
+	  via_point3(5) = 0;
+ 	  via_point3(6) = 0.025;
+/*	  if (via_point3(3)<0)  ////downstairs
+	  {
+	     via_point3(6) = 0.15;
+	  }
+	  else
+	  {
+	    via_point3(6) = 0.025;
+	  }*/	     	 
+	  kmp_leg_L.kmp_insertPoint(via_point3);  // insert point into kmp
+	  
+	  
+	  kmp_leg_L.kmp_estimateMatrix();
+	   
+	  
+	}
+	else
+	{
+	  if ((abs(_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1))>=0.005)||(abs(_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1))>=0.005)||(abs(_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1))>=0.005))
+	  {
+	    ////// add point************ current status****************////////
+	    via_point1(0) = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*(t_des-dt_sample);
+	    via_point1(1) = _Lfootx_kmp_old(0)-_footxyz_real(0,_bjx1-2);
+	    via_point1(2) = _Lfooty_kmp_old(0)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	    via_point1(3) = _Lfootz_kmp_old(0)-_footxyz_real(2,_bjx1-2);
+	    via_point1(4) = _Lfootvx_kmp_old(0);
+	    via_point1(5) = _Lfootvy_kmp_old(0);
+	    via_point1(6) = _Lfootvz_kmp_old(0);
+	    kmp_leg_L.kmp_insertPoint(via_point1);  // insert point into kmp
+	    
+	    kmp_leg_L.kmp_estimateMatrix();
+	    
+// 	    cout<<"Lx_real_error"<<endl<<_Lxx_ref_real(j_index)-_Lxx_ref_real(j_index-1)<<endl;
+// 	    cout<<"Ly_real_error"<<endl<<_Lyy_ref_real(j_index)-_Lyy_ref_real(j_index-1)<<endl;
+// 	    cout<<"Ts_real_error"<<endl<<_Ts_ref_real(j_index)-_Ts_ref_real(j_index-1)<<endl;
+	    
+	  }
+	}	
+	
+	_query_kmp(0) = t_des_k;
+	kmp_leg_L.kmp_prediction(_query_kmp,_mean_kmp);   ////////time& predictive values
+	
+/*	if (t_des_k<0.01){
+	cout<<"_query_kmp:"<<endl<<trans(_query_kmp)<<endl;
+	cout<<"kmp:"<<endl<<trans(_mean_kmp)<<endl;
+	cout<<"error:"<<endl<<trans(_mean_kmp)-trans(via_point1(span(1,6)))<<endl;	
+	}*/		
+	_Lfootx_kmp(0) = _mean_kmp(0)+_footxyz_real(0,_bjx1-2);
+	_Lfooty_kmp(0) = _mean_kmp(1)+(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
+	_Lfootz_kmp(0) = _mean_kmp(2)+_footxyz_real(2,_bjx1-2);
+	
+	_Lfootvx_kmp(0) = _mean_kmp(3);
+	_Lfootvy_kmp(0) = _mean_kmp(4);
+	_Lfootvz_kmp(0) = _mean_kmp(5); 	  	
+	
+      }   
+
+    }
+      
+    
+  }
+  
+  
+  /////Rfoot,xyz, Lfoot,XYZ
+  com_inte(0) = _Rfootx_kmp(0);
+  com_inte(1) = _Rfooty_kmp(0);
+  com_inte(2) = _Rfootz_kmp(0);
+
+  com_inte(3) = _Lfootx_kmp(0);
+  com_inte(4) = _Lfooty_kmp(0);
+  com_inte(5) = _Lfootz_kmp(0);
+  
+  _Rfootx_kmp_old = _Rfootx_kmp;
+  _Rfooty_kmp_old = _Rfooty_kmp;
+  _Rfootz_kmp_old = _Rfootz_kmp;
+  _Rfootvx_kmp_old = _Rfootvx_kmp;
+  _Rfootvy_kmp_old = _Rfootvy_kmp;
+  _Rfootvz_kmp_old = _Rfootvz_kmp;
+  
+  _Rfootx_kmp_old = _Lfootx_kmp;
+  _Lfooty_kmp_old = _Lfooty_kmp;
+  _Lfootz_kmp_old = _Lfootz_kmp;
+  _Lfootvx_kmp_old = _Lfootvx_kmp;
+  _Lfootvy_kmp_old = _Lfootvy_kmp;
+  _Lfootvz_kmp_old = _Lfootvz_kmp;
+  
+  
+  
+  _Lfootxyzx(0) = com_inte(3);  
+  _Lfootxyzx(1) = com_inte(4);   
+  _Lfootxyzx(2) = com_inte(5);   
+  _Rfootxyzx(0) = com_inte(0);  
+  _Rfootxyzx(1) = com_inte(1);   
+  _Rfootxyzx(2) = com_inte(2);   
+  
+  return com_inte;
+  
+
+
+}
+
 
 
 
@@ -3332,7 +3337,7 @@ void MPCClass::Force_torque_calculate(Vector3d comxyzx1,Vector3d comaxyzx1,Vecto
   Vector3d gra;
   gra << 0,0, -_ggg;
   
-  Vector3d F_total = _mass * (comaxyzx1 - gra);
+  Vector3d F_total = _robot_mass * (comaxyzx1 - gra);
   
   Vector3d the3a;
   the3a << thetaaxyx1(0),thetaaxyx1(1),0;
@@ -3351,104 +3356,4 @@ void MPCClass::Force_torque_calculate(Vector3d comxyzx1,Vector3d comaxyzx1,Vecto
   _M_L = _Co_L*M_total;
   
 }
-
-
-
-
-
-
-
-
-
-
-void MPCClass::File_wl_steptiming()
-{
-        Eigen::MatrixXd CoM_ZMP_foot;
-	CoM_ZMP_foot.setZero(24,_comx.cols());
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(0, 0,1,_comx.cols()) = _px;
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(1, 0,1,_comx.cols()) = _py;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(2, 0,1,_comx.cols()) = _pz;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(3, 0,1,_comx.cols()) = _comx;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(4, 0,1,_comx.cols()) = _comy;
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(5, 0,1,_comx.cols()) = _comvx;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(6, 0,1,_comx.cols()) = _comvy;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(7, 0,1,_comx.cols()) = _comz;
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(8, 0,1,_comx.cols()) = _comvz;
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(9, 0,1,_comx.cols()) = _comx_feed;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(10, 0,1,_comx.cols()) = _comy_feed;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(11, 0,1,_comx.cols()) = _comvx_feed;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(12, 0,1,_comx.cols()) = _comvy_feed;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(13, 0,1,_comx.cols()) = _comax_feed;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(14, 0,1,_comx.cols()) = _comay_feed;
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(15, 0,1,_comx.cols()) = _Lxx_ref_real;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(16, 0,1,_comx.cols()) = _Lyy_ref_real;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(17, 0,1,_comx.cols()) = _Ts_ref_real;
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(18, 0,1,_comx.cols()) = _Lfootx;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(19, 0,1,_comx.cols()) = _Lfooty;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(20, 0,1,_comx.cols()) = _Lfootz;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(21, 0,1,_comx.cols()) = _Rfootx;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(22, 0,1,_comx.cols()) = _Rfooty;	
-	CoM_ZMP_foot.block< Dynamic, Dynamic>(23, 0,1,_comx.cols()) = _Rfootz;		
-  
-	std::string fileName = "NP_step_timing_runtime.txt" ;
-	std::ofstream outfile( fileName.c_str() ) ; // file name and the operation type. 
-       
-        for(int i=0; i<_tcpu.rows(); i++){
-           for(int j=0; j<_tcpu.cols(); j++){
-                 outfile << (double) _tcpu(i,j) << " " ; 
-           }
-           outfile << std::endl;       // a   newline
-        }
-        outfile.close();
-		
-
-
-	std::string fileName1 = "NP_3robut3_optimal_trajectory.txt" ;
-	std::ofstream outfile1( fileName1.c_str() ) ; // file name and the operation type.        
-	
-        for(int i=0; i<CoM_ZMP_foot.rows(); i++){
-           for(int j=0; j<CoM_ZMP_foot.cols(); j++){
-                 outfile1 << (double) CoM_ZMP_foot(i,j) << " " ; 
-           }
-           outfile1 << std::endl;       // a   newline
-        }
-        outfile1.close();	
-	
-  
-  
-}
-
-
-void MPCClass::File_wl_kmp()
-{
-        Eigen::MatrixXd foot_traj_kmp;
-	foot_traj_kmp.setZero(12,_Rfootx_kmp.cols());
-	foot_traj_kmp.block< Dynamic, Dynamic>(0, 0,1,_Rfootx_kmp.cols()) = _Rfootx_kmp;
-	foot_traj_kmp.block< Dynamic, Dynamic>(1, 0,1,_Rfootx_kmp.cols()) = _Rfooty_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(2, 0,1,_Rfootx_kmp.cols()) = _Rfootz_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(3, 0,1,_Rfootx_kmp.cols()) = _Rfootvx_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(4, 0,1,_Rfootx_kmp.cols()) = _Rfootvy_kmp;
-	foot_traj_kmp.block< Dynamic, Dynamic>(5, 0,1,_Rfootx_kmp.cols()) = _Rfootvz_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(6, 0,1,_Rfootx_kmp.cols()) = _Lfootx_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(7, 0,1,_Rfootx_kmp.cols()) = _Lfooty_kmp;
-	foot_traj_kmp.block< Dynamic, Dynamic>(8, 0,1,_Rfootx_kmp.cols()) = _Lfootz_kmp;
-	foot_traj_kmp.block< Dynamic, Dynamic>(9, 0,1,_Rfootx_kmp.cols()) = _Lfootvx_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(10, 0,1,_Rfootx_kmp.cols()) = _Lfootvy_kmp;	
-	foot_traj_kmp.block< Dynamic, Dynamic>(11, 0,1,_Rfootx_kmp.cols()) = _Lfootvz_kmp;	
-	
-  
-	std::string fileName1 = "KMP_optimal_leg_trajectory.txt" ;
-	std::ofstream outfile1( fileName1.c_str() ) ; // file name and the operation type.        
-	
-        for(int i=0; i<foot_traj_kmp.rows(); i++){
-           for(int j=0; j<foot_traj_kmp.cols(); j++){
-                 outfile1 << (double) foot_traj_kmp(i,j) << " " ; 
-           }
-           outfile1 << std::endl;       // a   newline
-        }
-        outfile1.close();	
-	
-  
-}
-
 
