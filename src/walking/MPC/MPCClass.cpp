@@ -45,9 +45,9 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength.setConstant(steplength);
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
-//         _steplength(_footstepsnumber-1) = 0;
-//         _steplength(_footstepsnumber-2) = 0;		
-// 	_steplength(_footstepsnumber-3) = steplength/2;
+        _steplength(_footstepsnumber-1) = 0;
+        _steplength(_footstepsnumber-2) = 0;		
+	_steplength(_footstepsnumber-3) = steplength/2;
 	
 	
 	_stepwidth.setConstant(stepwidth);
@@ -56,11 +56,11 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_stepheight.setConstant(stepheight);
 	
 	_lift_height_ref.setConstant(_lift_height);
-/*	_lift_height_ref(0) = 0.00;
-	_lift_height_ref(1) = 0.04;
+// 	_lift_height_ref(0) = 0.00;
+// 	_lift_height_ref(1) = 0.04;
         _lift_height_ref(_footstepsnumber-1) = 0;
         _lift_height_ref(_footstepsnumber-2) = 0;	
-        _lift_height_ref(_footstepsnumber-3) = 0.04; */	
+        _lift_height_ref(_footstepsnumber-3) = 0.04; 	
 
 
 // ///////////******************************************************obtacle avoidance-mod:old : 20 period breaking
@@ -129,8 +129,8 @@ void MPCClass::Initialize()
 	_lamda_kmp  = 5, _kh_kmp = 0.75;	    	    //set kmp parameters 
 
 
-// 	static char fileName1[]="/home/jiatao/Dropbox/cat_multi_cogimon/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
-        static char fileName1[]="/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
+ 	static char fileName1[]="/home/jiatao/Dropbox/cat_multi_cogimon/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
+//        static char fileName1[]="/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/src/walking/KMP/referdata_swing.txt";  
 
 	_data_kmp.load( fileName1 );         	    // load original data
 	///modify the data sample:
@@ -1890,7 +1890,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	
 // 	cout << "ssp"<<endl;
 	//initial state and final state and the middle state
-	double t_des = (j_index +1 - round(_tx(_bjx1-1)/_dt) +1)*_dt;
+	double t_des = (j_index  - round(_tx(_bjx1-1)/_dt) +1)*_dt;
 	Eigen::Vector3d t_plan;
 	t_plan(0) = t_des - _dt;
 	t_plan(1) = (_td(_bjx1-1) + _ts(_bjx1-1))/2 + 0.0001;
@@ -1909,7 +1909,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	}
 	else
 	{
-	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);	  
+	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_index);	  
 	  
 	  
           
@@ -1927,7 +1927,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	  
 	  
 	  Eigen::Matrix<double, 1, 7> t_a_plana;
-	  t_a_plana.setZero(7);
+	  t_a_plana.setZero();
 	  t_a_plana(0) = 30*pow(t_des, 4);   t_a_plana(1) = 20*pow(t_des, 3);   t_a_plana(2) = 12*pow(t_des, 2);  t_a_plana(3) = 6*pow(t_des, 1);
 	  t_a_plana(4) = 2;                  t_a_plana(5) = 0;                  t_a_plana(6) = 0;
 	  
@@ -1987,6 +1987,22 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	  _Rfooty(j_index+1) = _Rfooty(j_index)+_dt * _Rfootvy(j_index);
 	  _Rfootz(j_index+1) = _Rfootz(j_index)+_dt * _Rfootvz(j_index);
 	  
+// 	  if ((j_index>135)&&(j_index<140))
+// 	  {
+// 	  cout <<"AAA_inverse="<<endl<<AAA_inv<<endl;	  
+// 	  cout <<"t_des="<<t_des<<endl;
+// 	  cout <<"t_plan="<<t_plan.transpose()<<endl;	
+// 
+// 	  cout <<"last Ffoot_x="<< _Rfootx(j_index-1)<<endl;
+// 	  cout <<"Ffoot_x="<< _Rfootx(j_index)<<endl;	  
+// 	  cout <<"next Ffoot_x="<< _Rfootx(j_index+1)<<endl;
+// 	  cout <<"j_index="<< j_index<<endl;
+// 	  cout <<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+// 	    
+// 	  }
+	  
+	  
+	  
 	}
       }   
     }
@@ -2018,7 +2034,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
       {
 // 	cout << "ssp"<<endl;
 	//initial state and final state and the middle state
-	double t_des = (j_index +1 - round(_tx(_bjx1-1)/_dt) +1)*_dt;
+	double t_des = (j_index  - round(_tx(_bjx1-1)/_dt) +1)*_dt;
 	Eigen::Vector3d t_plan;
 	t_plan(0) = t_des - _dt;
 	t_plan(1) = (_td(_bjx1-1) + _ts(_bjx1-1))/2 + 0.0001;
@@ -2038,7 +2054,7 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	}
 	else
 	{
-	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);          
+	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_index);          
 	 	  
 	  Eigen::Matrix<double, 1, 7> t_a_plan;
 	  t_a_plan.setZero();
@@ -2161,7 +2177,7 @@ void MPCClass::CoM_height_solve(int j_index, bool _stopwalking)
       
 
       
-      Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);         
+      Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan, j_index);         
 	      
       Eigen::Matrix<double, 1, 7> t_a_plan;
       t_a_plan.setZero();
@@ -2238,8 +2254,9 @@ Vector3d MPCClass::X_CoM_position_squat(int walktime, double dt_sample)
 
   if (t_des<=_height_squat_time)
   {
+    int j_x =1;
     
-    Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan);
+    Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_x);
 	    
     Eigen::Matrix<double, 1, 7> t_a_plan;
     t_a_plan.setZero();
@@ -2283,13 +2300,17 @@ Vector3d MPCClass::X_CoM_position_squat(int walktime, double dt_sample)
 
 
 
+
 //////////////////////////////////////////////////////
 Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample,int j_index, bool _stopwalking)
 {
   
   ///////walktime=====>ij;   int j_index====>i;  dt_sample========>dtx;   
    Vector6d com_inte;	
-  com_inte.setZero();
+// 	
+// 
+  double  Footz_ref = 0.05;    //0.05m 
+  
  
 //// judge if stop  
   if(_stopwalking)  
@@ -2317,43 +2338,28 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
   vec via_point2 =  zeros<vec>(43);
   vec via_point3 =  zeros<vec>(43);
   
-  via_point1(7) =0.0000001; via_point1(14)=0.0000001; via_point1(21)=0.0000001;	
-  via_point1(28)=0.0000001; via_point1(35)=0.0000001; via_point1(42)=0.0000001;  
+  via_point1(7) =0.00000000001; via_point1(14)=0.00000000001; via_point1(21)=0.00000000001;	
+  via_point1(28)=0.00000000001; via_point1(35)=0.00000000001; via_point1(42)=0.00000000001;  
   
   via_point2(0) =0.65/2;
-  via_point2(7) =0.0000001; via_point2(14)=0.0000001; via_point2(21)=0.0000001;	
-  via_point2(28)=0.0000001; via_point2(35)=0.0000001; via_point2(42)=0.0000001;
+  via_point2(7) =0.00000000001; via_point2(14)=0.00000000001; via_point2(21)=0.00000000001;	
+  via_point2(28)=0.00000000001; via_point2(35)=0.00000000001; via_point2(42)=0.00000000001;
   
   via_point3(0) =0.65;
-  via_point3(7) =0.0000001; via_point3(14)=0.0000001; via_point3(21)=0.0000001;	
-  via_point3(28)=0.0000001; via_point3(35)=0.0000001; via_point3(42)=0.0000001;      
+  via_point3(7) =0.00000000001; via_point3(14)=0.00000000001; via_point3(21)=0.00000000001;	
+  via_point3(28)=0.00000000001; via_point3(35)=0.00000000001; via_point3(42)=0.00000000001;      
   
   
   
   double t_des;      /////////desired time during the current step
   t_des = (walktime+4)*dt_sample - (_tx(_bjx1-1)+_td(_bjx1-1));
   
-  
-//   //// each cycle: the KMP would be re_initilinzed;
-//   
-//   if (2>1)
-//   {
-// 	kmp_leg_L.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp); // initialize kmp
-// 	kmp_leg_R.kmp_initialize(_data_kmp, _inDim_kmp, _outDim_kmp, _pvFlag_kmp,_lamda_kmp, _kh_kmp); // initialize kmp    
-//     
-//   }
- 
-  
-  
-  
-  
+
   if (_bjx1 >= 2)
   {      
     
     if (_bjx1 % 2 == 0)           //odd:left support
     {
-        
-       DPRINTF("=========KMP left support=============\n");
       _Lfootx_kmp(walktime) = _footxyz_real(0,_bjx1-1);
       _Lfooty_kmp(walktime) = _footxyz_real(1,_bjx1-1);
       _Lfootz_kmp(walktime) = _footxyz_real(2,_bjx1-1);
@@ -2361,8 +2367,6 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
       _Lfootvx_kmp(walktime) = 0;
       _Lfootvy_kmp(walktime) = 0;
       _Lfootvz_kmp(walktime) = 0;    
-      
-      cout<< "t_des:"<<t_des<<endl;
       
       if (t_des<=0)  // j_index and _bjx1 coincident with matlab: double support
       {
@@ -2383,8 +2387,6 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	double t_des_k;
 	t_des_k = (0.65)/((_ts(_bjx1-1)-_td(_bjx1-1)))*t_des;
 	
-        cout<<"_bjx1:"<<_bjx1<<endl;
-        
 	/////////////first sampling time of the current walking cycle: initialize the KMP_data
 	if (t_des<=dt_sample)
 	{
@@ -2401,9 +2403,6 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  via_point1(5) = _Rfootvy_kmp(walktime-1);
 	  via_point1(6) = _Rfootvz_kmp(walktime-1);
 	  kmp_leg_R.kmp_insertPoint(via_point1);  // insert point into kmp
-          
-          DPRINTF("=========insert point1 into right kmp=============\n");
-          cout<< "via_point1:"<<via_point1<<endl;
 	  
 	  ////// add point************ middle point***********////////
 // 	    via_point2(1) = _footxyz_real(0,_bjx1-1)-_footxyz_real(0,_bjx1-2);
@@ -2426,8 +2425,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	    via_point2(6) = 0;
 	  }*/	    	    
 	  kmp_leg_R.kmp_insertPoint(via_point2);  // insert point into kmp
-          cout<< "via_point2:"<<via_point2<<endl;
-          
+
 	  ////// add point************ final status************////////	  
 	  via_point3(1) = _footxyz_real(0,_bjx1)-_footxyz_real(0,_bjx1-2)+0.00;
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
@@ -2438,48 +2436,34 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  }
 	  else
 	  {
-	    if (_bjx1<=6)
+	    if (_bjx1<=15)
 	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
 	    }
 	    else
 	    {
- 	      if (_bjx1<=12)
-	      {
-		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
-	      }
-	      else
-	      {
-		
-		if (_bjx1<=16)
-		{
-		  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
-		}
-		else
-		{
-		  via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
-		}		
-		
-// 		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.005;
-	      }
-	      
+// 	      ///obstacle avoidance
+// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+// 	      ///obstacle avoidance_m
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
 	    }
 	  }
 	  via_point3(4) = 0;
 	  via_point3(5) = 0;
  	  via_point3(6) = 0.025;
-
+// 	  if (via_point3(3)<0)  ////downstairs
+// 	  {
+// 	    via_point3(6) = 0.15;
+// 	  }
+// 	  else
+// 	  {
+// 	    via_point3(6) = 0.025;
+// 	  }
 	  
 	  
 	  kmp_leg_R.kmp_insertPoint(via_point3);  // insert point into kmp	
-          DPRINTF("=========insert point3 into right kmp=============\n");
-	  cout<< "via_point3:"<<via_point3<<endl;
-          
-          
+	  
 	  kmp_leg_R.kmp_estimateMatrix();
-          
-          DPRINTF("=========kmp_leg_R KEMP estimateMatrix()=============\n");
-          
 	}
 	else
 	{
@@ -2525,7 +2509,6 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
     
     else                       //right support
     {
-        DPRINTF("=========KMP right support=============\n");
       _Rfootx_kmp(walktime) = _footxyz_real(0,_bjx1-1);
       _Rfooty_kmp(walktime) = _footxyz_real(1,_bjx1-1);
       _Rfootz_kmp(walktime) = _footxyz_real(2,_bjx1-1);
@@ -2592,24 +2575,20 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 	  via_point3(2) = _footxyz_real(1,_bjx1)-(_footxyz_real(1,_bjx1-2)-(-RobotParaClass::HALF_HIP_WIDTH()));
 	  if (_bjx1<=4)
 	  {
-	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.001;
+	    via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
 	  }
 	  else
 	  {
-	    if (_bjx1<=6)
+	    if (_bjx1<=15)
 	    {
-	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.003;
 	    }
 	    else
 	    {
- 	      if (_bjx1<=14)
-	      {
-		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.002;
-	      }
-	      else
-	      {
-		via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.000;
-	      }
+// 	      ///obstacle avoidance
+// 	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2)-0.004;
+// 	      ///obstacle avoidance_m
+	      via_point3(3) = _footxyz_real(2,_bjx1)-_footxyz_real(2,_bjx1-2);
 
 	    }
 	  }
@@ -2677,7 +2656,6 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
     
   }
   
-
   
   /////Rfoot,xyz, Lfoot,XYZ
   com_inte(0) = _Rfootx_kmp(walktime);
@@ -2700,6 +2678,7 @@ Vector6d MPCClass::XGetSolution_Foot_position_KMP(int walktime, double dt_sample
 
 
 }
+
 
 
 
@@ -2754,7 +2733,7 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
 	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
 	  
-	  cout<< "t_plan"<<t_plan<<endl;
+//	  cout<< "t_plan"<<t_plan<<endl;
           
 	  solve_AAA_inv(t_plan);
 	   
@@ -2964,6 +2943,8 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 	  com_inte(1) = -RobotParaClass::HALF_HIP_WIDTH();	  	  
 	  com_inte(2) = 0;  	  
 	}
+
+	 
 	
 
  	return com_inte;
@@ -3080,7 +3061,7 @@ void MPCClass::solve_AAA_inv(Eigen::Matrix<double, 4, 1> t_plan)
 }
 
 ////solve the inverse matrix of 7*7 coefficient matrices
-Eigen::Matrix<double, 7, 7> MPCClass::solve_AAA_inv_x(Eigen::Vector3d t_plan)
+Eigen::Matrix<double, 7, 7> MPCClass::solve_AAA_inv_x(Eigen::Vector3d t_plan, int j_index)
 {
   Eigen::Matrix<double,7,7> AAA;
   AAA.setZero();
@@ -3114,6 +3095,14 @@ Eigen::Matrix<double, 7, 7> MPCClass::solve_AAA_inv_x(Eigen::Vector3d t_plan)
   aaaa(0) = 30*pow(t_plan(2), 4);  aaaa(1) =  20*pow(t_plan(2), 3);  aaaa(2) =  12*pow(t_plan(2), 2);   aaaa(3) =  6*pow(t_plan(2), 1);
   aaaa(4) = 2;                     aaaa(5) = 0;                      aaaa(6) =  0;
   AAA.row(6) = aaaa;  
+  
+//   	  if ((j_index>135)&&(j_index<140))
+// 	  {
+// 	  cout <<"AAA="<<endl<<AAA<<endl;	  	    
+// 	  }
+	  
+  
+  
   
   Eigen::Matrix<double,7,7> AAA_inv = AAA.inverse(); 
   

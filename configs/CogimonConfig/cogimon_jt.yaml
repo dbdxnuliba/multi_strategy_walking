@@ -1,12 +1,9 @@
 XBotCore:
-  config_path: "configs/CogimonConfig/configs/cogimon_francescox.yaml"  #/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/configs/CogimonConfig/configs/cogimon_francescox.yaml
-  
+  config_path: "configs/CogimonConfig/configs/cogimon_francesco.yaml"  
 
 XBotInterface:
-   urdf_path: "configs/CogimonConfig/urdf/cogimon.urdf"
-   srdf_path: "configs/CogimonConfig/srdf/cogimon.srdf"
-  #"/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/configs/CogimonConfig/urdf/cogimon.urdf"
-  #"/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/configs/CogimonConfig/srdf/cogimon.srdf"
+  urdf_path: "configs/CogimonConfig/urdf/cogimon.urdf"
+  srdf_path: "configs/CogimonConfig/srdf/cogimon.srdf"
   joint_map_path: "configs/CogimonConfig/joint_map/cogimon_joint_map.yaml"
 
 RobotInterface:

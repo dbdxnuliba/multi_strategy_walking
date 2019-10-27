@@ -9,7 +9,7 @@ WholeBodySensingClass.cpp
 WholeBodySensingClass::WholeBodySensingClass()
 //raw_data_cop(21,0), filter_data_cop(21,0),
 //raw_data_GLOBAL_1(12,0), filter_data_GLOBAL_1(12,0), raw_data_GLOBAL_2(18,0), filter_data_GLOBAL_2(18,0),
-	: FilterCutOff(30.0)
+	: FilterCutOff(10.0)
 	, N_ButWth(4)
 	, IsRefDelayInit(false)
 	, Fz_ratio_l(0)
@@ -1138,6 +1138,9 @@ void WholeBodySensingClass::InitWBS(const double &dt)
 	}
 }
 
+
+
+////// using the updata RBDL functio for state estimation
 void WholeBodySensingClass::UpdateRBDL()
 {
 
@@ -1146,7 +1149,7 @@ void WholeBodySensingClass::UpdateRBDL()
 	irobot._model->q_all_floating[4] = 0 * irobot.gPitch;
 	irobot._model->q_all_floating[5] = 0 * irobot.gYaw;
 
-	irobot._model->UpdateKinematicsOnce();
+	irobot._model->UpdateKinematicsOnce(irobot.q_all_mesure);
 	switch (irobot.WhichFootRef)
 	{
 	case OnLFoot:

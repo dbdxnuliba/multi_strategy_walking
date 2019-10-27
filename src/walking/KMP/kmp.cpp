@@ -97,9 +97,9 @@ int kmp::kernel_extend( vec a, vec b, mat& kext )
 int kmp::kmp_estimateMatrix()
 {
 	//cout<<"data"<<endl<<data<<endl;
-	cout<<"len:"<<len<<endl;
+	//cout<<"len:"<<len<<endl;
 
-	if (len<=0) {std::cout<<"error1:initial kmp"<<endl;return 0;}
+	if (len<=0) {cout<<"error1:initial kmp"<<endl;return 0;}
 
 	int i, j, k, index;
 	mat Y    (len*outDim, 1);
@@ -135,15 +135,10 @@ int kmp::kmp_estimateMatrix()
 		Y( span( i*outDim, (i+1)*outDim - 1), 0 ) = trans( data(i, span( inDim, inDim + outDim - 1) ) );   //Y dim: (len*outDim)  1
 	}
 
-	cout<<"=========kmp_estimateMatrix estimateMatrix() before inverse=============\n"<<endl;
-        cout<<"K.n_rows<\n"<<len*outDim<<endl;
-//         cout<<"K.n_rows<\n"<<K.n_rows<<endl;
-        
-//         mat Kx    (len len);
 	invK = inv(K);            // invK=K^{-1}
 	W = invK * Y;		// W=K^{-1} * Y
 
-	cout<<"Y"<<"\n"<<Y<<endl;
+	//cout<<"Y"<<"\n"<<Y<<endl;
 	//cout<<"K"<<"\n"<<K<<endl;
 	//cout<<"invK"<<"\n"<<invK<<endl;
 	//cout<<"W"<<"\n"<<W<<endl;

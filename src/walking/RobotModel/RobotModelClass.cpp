@@ -289,6 +289,8 @@ void RBDLModelClass::InitRBDL(const RobotParaClass& robotpara)
   std::cout << "=====================================================\n\n\n" << std::endl;
 }
 
+
+///// go t0 this loop to updataRBDL
 void RBDLModelClass::UpdateRBDL(const std::vector<double>& qall_msr)
 {
   q_all_floating_old = q_all_floating;
@@ -299,6 +301,8 @@ void RBDLModelClass::UpdateRBDL(const std::vector<double>& qall_msr)
 
   CalcCenterOfMass(true);
   InverseDynamics();
+  
+//  std::cout <<"xxxx"<<std::endl;
 
   // _CMM = centroidal_momentum_matrix();
 //   _CMM = CalcCMM();
@@ -309,6 +313,7 @@ void RBDLModelClass::UpdateRBDL(const std::vector<double>& qall_msr)
   //std::cout<< q_all_floating.size()<<std::endl;
 }
 
+
 void RBDLModelClass::UpdateRBDL(const Eigen::VectorXd& qall_msr)
 {
   q_all_floating_old = q_all_floating;
@@ -317,7 +322,7 @@ void RBDLModelClass::UpdateRBDL(const Eigen::VectorXd& qall_msr)
   // vJointNameToRBDL(qall_msr, q_all_floating); // without the first 6 floating base DoF
   dq_all_floating = (q_all_floating - q_all_floating_old) / dt;
   ddq_all_floating = (dq_all_floating - dq_all_floating_old) / dt;
-
+//  std::cout <<"xxxxXXXXX"<<std::endl;
   CalcCenterOfMass(true);
   InverseDynamics();
 
@@ -373,8 +378,19 @@ void RBDLModelClass::CalcCenterOfMass(const bool & IsUpdateKinematics)
   // std::cout << "kine_energy = " << Ek << " pot_energy =  " << Ep << " mass = " << mass << " com = " << com_floating.transpose() << std::endl;
 }
 
-void RBDLModelClass::UpdateKinematicsOnce()
+
+
+/////////////update kinematics
+void RBDLModelClass::UpdateKinematicsOnce(const std::vector<double>& qall_msr)
 {
+  
+//   q_all_floating_old = q_all_floating;
+//   dq_all_floating_old = dq_all_floating;
+//   q_all_floating.segment(6, qall_msr.size()) = qall_msr;
+//   // vJointNameToRBDL(qall_msr, q_all_floating); // without the first 6 floating base DoF
+//   dq_all_floating = (q_all_floating - q_all_floating_old) / dt;
+//   ddq_all_floating = (dq_all_floating - dq_all_floating_old) / dt;  
+//   
   RBDL::UpdateKinematics(_rbdl_model, q_all_floating, dq_all_floating, ddq_all_floating);
   lsole = CalcFrameTransform(getRBDLBodyID(LEFT_FOOT), Eigen::Matrix3d::Identity(), _ankle_offset, getRBDLBodyID(PELVIS));
   rsole = CalcFrameTransform(getRBDLBodyID(RIGHT_FOOT), Eigen::Matrix3d::Identity(), _ankle_offset, getRBDLBodyID(PELVIS));

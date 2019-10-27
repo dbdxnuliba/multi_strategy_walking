@@ -30,7 +30,7 @@ using namespace arma;
 
 
 /// constant variable defintion
-const int _footstepsnumber = 20;       //  number of _footstepnumber
+const int _footstepsnumber = 15;       //  number of _footstepnumber
 const double _dt = 0.05;                //sampling time
 const int _nh = 30;                    /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
 const double _tstep = 0.7;              ///step period
@@ -531,7 +531,7 @@ private:
 	
 	void solve_AAA_inv(Eigen::Matrix<double, 4, 1> t_plana); 
 	
-	Eigen::Matrix<double, 7, 7> solve_AAA_inv_x(Eigen::Vector3d t_plan); 
+	Eigen::Matrix<double, 7, 7> solve_AAA_inv_x(Eigen::Vector3d t_plan, int j_index); 
 		
 	
 	

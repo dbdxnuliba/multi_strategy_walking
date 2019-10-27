@@ -34,7 +34,7 @@ bool multi_strategy_walking::init_control_plugin(XBot::Handle::Ptr handle)
 	_robot->getRobotState("home", _q_home);
 
 	/* Print the homing */
- 	std::cerr << "_q_home from SRDF : " << _q_home << std::endl;
+ 	std::cout << "_q_home from SRDF : " << _q_home.transpose() << std::endl;
 
 	_robot->sense();
 	_robot->getMotorPosition(_q0);
@@ -147,7 +147,7 @@ void multi_strategy_walking::control_loop(double time, double period)
 		_q = _q0 + 0.5 * (1 - std::cos(M_PI * (time - _first_loop_time) / _homing_time)) * (_q_home - _q0);
 		_q_tmp = _q;
 		_qref = _q;
-  		//DPRINTF("=========  intial pose_control_loop. =============\n");
+//  		DPRINTF("=========  intial pose_control_loop. =============\n");
 		
 	}
 	else {
@@ -156,8 +156,8 @@ void multi_strategy_walking::control_loop(double time, double period)
 // 		RTControl.JointRefToXBot(_q);
 		RTControl.JointRefToXBot(_q_tmp);
 		//// interpolation of stabilizer angle
-		if ( (time - _first_loop_time -_homing_time)  <= 1.5){
-		  _q = pow(time - _first_loop_time -_homing_time,1.5)/2.25*(_q_tmp-_qref)+_qref;
+		if ( (time - _first_loop_time -_homing_time)  <= 2){
+		  _q = pow(time - _first_loop_time -_homing_time,2)/4*(_q_tmp-_qref)+_qref;
 //		  _q = _q_tmp;
 // 		  if ( (time - _first_loop_time -_homing_time)  <= 0.01)
 // 		  {
@@ -175,11 +175,41 @@ void multi_strategy_walking::control_loop(double time, double period)
 //		_q = _q_tmp;	
 	}
 	
-
 	
- 
- 	_robot->setPositionReference(_q);
-	_robot->move();
+/*	// Go to homing: walking_no_arm
+	if ( (time - _first_loop_time) <= _homing_time ) {
+		_q = _q0;
+		_q_tmp = _q0 + 0.5 * (1 - std::cos(M_PI * (time - _first_loop_time) / _homing_time)) * (_q_home - _q0);
+		_q.head(12) = _q_tmp.head(12); //only lower body moven
+// 		_q = _q_tmp; //whole-body movement		
+		_qref = _q;
+		
+ 		DPRINTF("=========  intial pose_control_loop. =============\n");
+		
+	}
+	else {
+ 	        DPRINTF("=========  RUN rt_control_loop. =============\n"); 
+		RTControl.Run();
+		// RTControl.JointRefToXBot_LowerBody(_q);
+		RTControl.JointRefToXBot(_q_tmp);
+// 		_q.head(12) = _q_tmp.head(12); ///joint	angle of lower limb, other angle are upper angles	
+		//// interpolation of stabilizer angle
+		if ( (time - _first_loop_time -_homing_time)  <= 1){
+		  _q.head(12) = pow(time - _first_loop_time -_homing_time,1)/1*(_q_tmp.head(12)-_qref.head(12))+_qref.head(12);
+//		  cout<< "transition process"<<endl;
+		}
+		else{
+		  _q.head(12) = _q_tmp.head(12);
+// 		  _q.head(4) = -_q_tmp.head(4); 
+//		  cout<< "normal process"<<endl;
+		}	
+	}*/	
+	
+	
+	// _q[_q.size()-1] = _q_home[_q.size()-1];
+// 	cout<<"_q:"<< _q.transpose()<<endl; 
+  	_robot->setPositionReference(_q);
+ 	_robot->move();
 }
 
 bool multi_strategy_walking::close()
@@ -196,14 +226,9 @@ bool multi_strategy_walking::close()
 
 void multi_strategy_walking::updateWBS()
 {
-  /// for reference calculation:
-  
-  _q_msr = _q;
-  
-  /// for hardware experiment:
-//	_robot->getJointPosition(_q_msr);
+//  _q_msr =_q;
+ 	_robot->getJointPosition(_q_msr);
 
-	// 	_robot->getJointPosition(_q_name);
 	RTControl.SortFromXBotToJointName(_q_msr, qall);
 
 	ft_map["l_leg_ft"]->getWrench(l_leg_ft);
@@ -254,7 +279,7 @@ void multi_strategy_walking::updateWBS()
 	// imu_map["imu_link"]->getImuData(Rpelvis_abs, LnAcc, AgVel);
 	RTControl.UpdateWBS(qall, Rpelvis_abs, LnAcc, AgVel, FTSensor);
 
-
+//         DPRINTF("_q_msr[3]: %.3f,\t qall[LEFT_KNEE_PITCH]: %.3f\n",_q_msr[3], qall[LEFT_KNEE_PITCH]);
 }
 
 

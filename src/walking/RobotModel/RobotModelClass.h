@@ -179,7 +179,7 @@ public:
 	Eigen::Vector3d base_pos;
 	RBDL::Math::SpatialTransform waist_pos;
 
-	void UpdateKinematicsOnce();
+	void UpdateKinematicsOnce(const std::vector<double>& qall_msr);
 
 protected:
 	RBDL::Model _rbdl_model;
