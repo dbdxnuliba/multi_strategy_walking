@@ -340,159 +340,120 @@ private:
 	Eigen::RowVectorXd _thetay, _thetavy, _thetaay;	
 	Eigen::RowVectorXd _thetaz, _thetavz, _thetaaz;	
 	
-	Eigen::RowVectorXd _torquex_real, _torquey_real;	
+//	Eigen::RowVectorXd _torquex_real, _torquey_real;	
 	
 	// CoM+angular momentum state and contro input
-	Eigen::MatrixXd _xk,_yk,_zk,_thetaxk,_thetayk;
-	Eigen::RowVectorXd _x_vacc_k,_y_vacc_k,_z_vacc_k,_thetax_vacc_k,_thetay_vacc_k;
+//	Eigen::MatrixXd _xk,_yk,_zk,_thetaxk,_thetayk;
+//	Eigen::RowVectorXd _x_vacc_k,_y_vacc_k,_z_vacc_k,_thetax_vacc_k,_thetay_vacc_k;
 	
-	std::vector<Eigen::Vector3d> _footsteps;
 	
 	// initial parameters for MPC
 
-	Eigen::MatrixXd _Hcom1;
+//	Eigen::MatrixXd _Hcom1;
 
 	Eigen::VectorXd _ggg;
-// 	int    _nh;
-	Eigen::MatrixXd _a,_b,_c,_cp,_cv,_ca;
+	
+//	Eigen::MatrixXd _a,_b,_c,_cp,_cv,_ca;
 	
 	
 	//vertical height constraints
-	Eigen::VectorXd _z_max;
-	Eigen::VectorXd _z_min;
+//	Eigen::VectorXd _z_max;
+//	Eigen::VectorXd _z_min;
 	
 	
 	//footz
-	Eigen::MatrixXd _Zsc;
+//	Eigen::MatrixXd _Zsc;
 	
 	//predictive model
-	Eigen::MatrixXd _pps,_ppu,_pvs,_pvu,_pas,_pau;
+//	Eigen::MatrixXd _pps,_ppu,_pvs,_pvu,_pas,_pau;
 	
 	
-	Eigen::VectorXd _footx_real, _footy_real, _footz_real;
-	Eigen::VectorXd _footx_real_next, _footy_real_next, _footz_real_next;
-	Eigen::VectorXd _footx_real_next1, _footy_real_next1, _footz_real_next1;
-	
+//	Eigen::VectorXd _footx_real, _footy_real, _footz_real;
+//	Eigen::VectorXd _footx_real_next, _footy_real_next, _footz_real_next;
+//	Eigen::VectorXd _footx_real_next1, _footy_real_next1, _footz_real_next1;
 
-
-
-	Eigen::MatrixXd _Lfootxyz, _Rfootxyz;
-	
-	
-
-	
 
 	
 	// zmp-constraints
-	Eigen::VectorXd _zmpx_ub, _zmpx_lb, _zmpy_ub, _zmpy_lb;
+//	Eigen::VectorXd _zmpx_ub, _zmpx_lb, _zmpy_ub, _zmpy_lb;
 	
 	// com-support range
-	Eigen::VectorXd _comx_max,  _comx_min,  _comy_max, _comy_min;
+//	Eigen::VectorXd _comx_max,  _comx_min,  _comy_max, _comy_min;
 	
 	// angle range
-	Eigen::VectorXd _thetax_max,  _thetax_min,  _thetay_max, _thetay_min;
+//	Eigen::VectorXd _thetax_max,  _thetax_min,  _thetay_max, _thetay_min;
 	
 	
 	// torque range
-	Eigen::VectorXd _torquex_max, _torquex_min, _torquey_max, _torquey_min; 
-	
-
-
+//	Eigen::VectorXd _torquex_max, _torquex_min, _torquey_max, _torquey_min; 
 
 	// solution preparation
-	Eigen::MatrixXd _V_optimal;
-	Eigen::VectorXd _flag;
-	Eigen::VectorXd _flag_global;
+//	Eigen::MatrixXd _V_optimal;
+// 	Eigen::VectorXd _flag;
+// 	Eigen::VectorXd _flag_global;
 	
 	
-	double _Rx,     _Ry,     _Rz;
-	double _alphax, _alphay, _alphaz;
-	double _beltax, _beltay, _beltaz;
-	double _gamax,  _gamay,  _gamaz;
-	double _Rthetax, _Rthetay;
-	double _alphathetax, _alphathetay;
-	double _beltathetax, _beltathetay;
-	
-	// time cost consumption
-
-	Eigen::RowVectorXd _tcpu_iterative;
-	Eigen::RowVectorXd _tcpu_prepara;
-	Eigen::RowVectorXd _tcpu_prepara2;
-	Eigen::RowVectorXd _tcpu_qp;	
+// 	double _Rx,     _Ry,     _Rz;
+// 	double _alphax, _alphay, _alphaz;
+// 	double _beltax, _beltay, _beltaz;
+// 	double _gamax,  _gamay,  _gamaz;
+// 	double _Rthetax, _Rthetay;
+// 	double _alphathetax, _alphathetay;
+// 	double _beltathetax, _beltathetay;	
 	
 	
 // predictive model control_tracking with time_varying height		
+//        Eigen::VectorXd _Lx_ref, _Ly_ref,_Lz_ref;
+//	Eigen::MatrixXd _V_ini;
 
-	Eigen::VectorXd _bjx, _tnx;
+//        Eigen::VectorXd _fx, _fy;
+//	Eigen::VectorXd _fxx_global, _fyy_global;
 	
-	Eigen::MatrixXd _v_i, _VV_i;
+//	Eigen::MatrixXd _comx_center_ref, _comy_center_ref,_comz_center_ref;
 	
-	int _n_vis;
+//	Eigen::MatrixXd _thetax_center_ref, _thetay_center_ref;      
 	
-        Eigen::VectorXd _Lx_ref, _Ly_ref,_Lz_ref;
-	
-// 	int _Nt;
-// 	int _nstep;
-	Eigen::MatrixXd _V_ini;
-	
-	int xxx, xxx1,xxx2;
-
-        Eigen::VectorXd _fx, _fy;
-	Eigen::VectorXd _fxx_global, _fyy_global;
-	
-	Eigen::MatrixXd _comx_center_ref, _comy_center_ref,_comz_center_ref;
-	
-	Eigen::MatrixXd _thetax_center_ref, _thetay_center_ref;      
-	
-	int _loop;
+//	int _loop;
 	
 	// sqp model
 	
-	Eigen::MatrixXd _ppu_2, _pvu_2;
+//	Eigen::MatrixXd _ppu_2, _pvu_2;
 	
-	Eigen::MatrixXd _WX, _WY, _WZ, _WthetaX, _WthetaY, _PHIX, _PHIY, _PHIZ, _Q_goal, _q_goal, _Q_goal1, _q_goal1;
+//	Eigen::MatrixXd _WX, _WY, _WZ, _WthetaX, _WthetaY, _PHIX, _PHIY, _PHIZ, _Q_goal, _q_goal, _Q_goal1, _q_goal1;
 	
-	Eigen::MatrixXd A_unit, B_unit, C_unit;	
-	Eigen::MatrixXd _Sjx,_Sjy,_Sjz,_Sjthetax,_Sjthetay,_Sfx,_Sfy,_Sfz;
+//	Eigen::MatrixXd A_unit, C_unit;	
+//	Eigen::MatrixXd _Sjx,_Sjy,_Sjz,_Sjthetax,_Sjthetay;
 	
 	// inequality constraints
 	
-	Eigen::MatrixXd _H_q_upx,_F_zmp_upx,_H_q_lowx,_F_zmp_lowx,_H_q_upy,_F_zmp_upy,_H_q_lowy,_F_zmp_lowy;
+//	Eigen::MatrixXd _H_q_upx,_F_zmp_upx,_H_q_lowx,_F_zmp_lowx,_H_q_upy,_F_zmp_upy,_H_q_lowy,_F_zmp_lowy;
 	
-	Eigen::MatrixXd _H_h_upz,_F_h_upz,_H_h_lowz,_F_h_lowz, _delta_footz_up, _delta_footz_low;
+//	Eigen::MatrixXd _H_h_upz,_F_h_upz,_H_h_lowz,_F_h_lowz, _delta_footz_up, _delta_footz_low;
 	
-	Eigen::MatrixXd _H_hacc_lowz,_F_hacc_lowz, _delta_footzacc_up;
+//	Eigen::MatrixXd _H_hacc_lowz,_F_hacc_lowz, _delta_footzacc_up;
 	
-	Eigen::MatrixXd _q_upx,_qq_upx,_q_lowx,_qq_lowx,_q_upy,_qq_upy,_q_lowy,_qq_lowy,_qq1_upx,_qq1_lowx,_qq1_upy,_qq1_lowy;
+//	Eigen::MatrixXd _q_upx,_qq_upx,_q_lowx,_qq_lowx,_q_upy,_qq_upy,_q_lowy,_qq_lowy,_qq1_upx,_qq1_lowx,_qq1_upy,_qq1_lowy;
 	
-	Eigen::MatrixXd _t_upx,_tt_upx,_t_lowx,_tt_lowx,_t_upy,_tt_upy,_t_lowy,_tt_lowy,_tt1_upx,_tt1_lowx,_tt1_upy,_tt1_lowy;
+//	Eigen::MatrixXd _t_upx,_tt_upx,_t_lowx,_tt_lowx,_t_upy,_tt_upy,_t_lowy,_tt_lowy,_tt1_upx,_tt1_lowx,_tt1_upy,_tt1_lowy;
 	
-	Eigen::MatrixXd _H_q_footx_up,_F_foot_upx,_H_q_footx_low,_F_foot_lowx,_H_q_footy_up,_F_foot_upy,_H_q_footy_low,_F_foot_lowy;
-	
-	Eigen::MatrixXd _Footvx_max,_Footvx_min,_Footvy_max,_Footvy_min, _footubxv,_footlbxv,_footubyv,_footlbyv;
+//	Eigen::MatrixXd _Footvx_max,_Footvx_min,_Footvy_max,_Footvy_min, _footubxv,_footlbxv,_footubyv,_footlbyv;
 	
 	// equality constraints
-	Eigen::MatrixXd _H_q_footz,_F_footz;
+//	Eigen::MatrixXd _H_q_footz,_F_footz;
 	
-	Eigen::MatrixXd _h_h, _hhhx;
-	Eigen::MatrixXd _a_hx, _a_hxx, _a_hy, _a_hyy;
+//	Eigen::MatrixXd _h_h;
+//	Eigen::MatrixXd _a_hx, _a_hxx, _a_hy, _a_hyy;
 	
 	
 	
 	
 	
 	// zmp constraints
-	Eigen::MatrixXd _Si;
-	Eigen::MatrixXd _phi_i_x_up,_p_i_x_t_up,_del_i_x_up,_phi_i_x_low,_p_i_x_t_low,_del_i_x_low;
-	Eigen::MatrixXd _phi_i_y_up,_p_i_y_t_up,_del_i_y_up,_phi_i_y_low,_p_i_y_t_low,_del_i_y_low;
+// 	Eigen::MatrixXd _phi_i_x_up,_p_i_x_t_up,_del_i_x_up,_phi_i_x_low,_p_i_x_t_low,_del_i_x_low;
+// 	Eigen::MatrixXd _phi_i_y_up,_p_i_y_t_up,_del_i_y_up,_phi_i_y_low,_p_i_y_t_low,_del_i_y_low;
 	
 	//foot location constraints
-	Eigen::MatrixXd _Sfoot;
-	
-	//com support leg constraints
-	Eigen::MatrixXd _S1;	
-	
-	Eigen::MatrixXd _V_inix;
+// 	Eigen::MatrixXd _Sfoot;
 	
 // // 	int xxx_vector=30;check check check!!!!
 // 	vector <Eigen::MatrixXd> ZMPx_constraints_offfline;
@@ -511,18 +472,12 @@ private:
 	
 	Eigen::Matrix<double, 7, 7> solve_AAA_inv_x(Eigen::Vector3d t_plan, int j_index); 
 		
-	
-	
-
 	////for lowel level control: ZMP optimal distribution
-// 	Vector3d _F_R, _F_L,_M_R,_M_L;
 	Matrix<double,3,3> _Co_L, _Co_R;
 		 
 	void Force_torque_calculate(Vector3d comxyzx1,Vector3d comaxyzx1,Vector3d thetaaxyx1,Vector3d Lfootxyz,Vector3d Rfootxyz);
 
-	void zmp_interpolation(int t_int,int walktime, double dt_sample);
-	
-// 	void Zmp_distributor(int walktime, double dt_sample);	
+	void zmp_interpolation(int t_int,int walktime, double dt_sample);		
 	
 };
 

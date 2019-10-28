@@ -171,6 +171,7 @@ void MPCClass::Initialize()
 	  _footy_ref(i) = _footy_ref(i-1) + (int)pow(-1,i-1)*_stepwidth(i-1);   
 	  _footz_ref(i) = _footz_ref(i-1) + _stepheight(i-1);
 	}
+	cout <<"_footz_ref"<<_footz_ref<<endl;
 	_footx_offline = _footx_ref;
 	_footy_offline = _footy_ref;
 	_footz_offline = _footz_ref;
@@ -586,25 +587,20 @@ void MPCClass::Initialize()
 	_thetax.setZero(_nsum); _thetavx.setZero(_nsum); _thetaax.setZero(_nsum);
 	_thetay.setZero(_nsum); _thetavy.setZero(_nsum); _thetaay.setZero(_nsum);
 	_thetaz.setZero(_nsum); _thetavz.setZero(_nsum); _thetaaz.setZero(_nsum);
-
 	
-	_torquex_real.setZero(_nsum); _torquey_real.setZero(_nsum);
-
-
-
-	 
+//	_torquex_real.setZero(_nsum); _torquey_real.setZero(_nsum);
 	
-	_xk.setZero(3,_nsum); _yk.setZero(3,_nsum); _zk.setZero(3,_nsum);
-	_thetaxk.setZero(3,_nsum); _thetayk.setZero(3,_nsum);
-	_x_vacc_k.setZero(_nsum); _y_vacc_k.setZero(_nsum); _z_vacc_k.setZero(_nsum); 
-	_thetax_vacc_k.setZero(_nsum); _thetay_vacc_k.setZero(_nsum); 
+//	_xk.setZero(3,_nsum); _yk.setZero(3,_nsum); _zk.setZero(3,_nsum);
+//	_thetaxk.setZero(3,_nsum); _thetayk.setZero(3,_nsum);
+//	_x_vacc_k.setZero(_nsum); _y_vacc_k.setZero(_nsum); _z_vacc_k.setZero(_nsum); 
+//	_thetax_vacc_k.setZero(_nsum); _thetay_vacc_k.setZero(_nsum); 
 	
         // ==initial parameters for MPC==
 	_ggg.setConstant(1, 9.8);
 
-	_Hcom1.setConstant(_nh,1,_hcom);
+//	_Hcom1.setConstant(_nh,1,_hcom);
         	
-	_a.setZero(3,3);
+/*	_a.setZero(3,3);
 	_a << 1, _dt, pow(_dt,2)/2,    
 	      0,   1,            _dt,
 	      0,   0,              1;
@@ -620,147 +616,119 @@ void MPCClass::Initialize()
 	_cv.setZero(1,3);
 	_cv(0,1) = 1;
 	_ca.setZero(1,3);
-	_ca(0,2) = 1;	
+	_ca(0,2) = 1;*/	
 		
 
 	//vertical height constraints
-	_z_max.setConstant(_nsum,0.1);
-	_z_min.setConstant(_nsum,-0.1);	
+//	_z_max.setConstant(_nsum,0.1);
+//	_z_min.setConstant(_nsum,-0.1);	
 	
         //footz refer: height of step
-	_Zsc.setZero(_nsum,1);		
+// 	_Zsc.setZero(_nsum,1);			
+//   	for (int i = 0; i < _nsum-1; i++) {
+//           Indexfind(_t(i),xyz1);	  
+// 	  _Zsc(i) = _footz_ref(_j_period);   
+// 	  _j_period = 0;   
+// 	}		
 
-
-
-	
-  	for (int i = 0; i < _nsum-1; i++) {
-          Indexfind(_t(i),xyz1);	  
-	  _Zsc(i) = _footz_ref(_j_period);   
-	  _j_period = 0;   
-	}		
-
-        _yk.topRows(1).setConstant(_footy_ref(0)); 
-	_zk.topRows(1).setConstant(_hcom);
+//         _yk.topRows(1).setConstant(_footy_ref(0)); 
+// 	_zk.topRows(1).setConstant(_hcom);
 	
 
 	//predictive model
-	_pps.setZero(_nh,3); _ppu.setZero(_nh,_nh);
-	_pvs.setZero(_nh,3); _pvu.setZero(_nh,_nh);
-	_pas.setZero(_nh,3); _pau.setZero(_nh,_nh);
-
-        _pps = Matrix_ps(_a,_nh,_cp);
-	_pvs = Matrix_ps(_a,_nh,_cv);
-	_pas = Matrix_ps(_a,_nh,_ca);
-
-	_ppu = Matrix_pu(_a,_b,_nh,_cp);
-	_pvu = Matrix_pu(_a,_b,_nh,_cv);
-	_pau = Matrix_pu(_a,_b,_nh,_ca);
-
+// 	_pps.setZero(_nh,3); _ppu.setZero(_nh,_nh);
+// 	_pvs.setZero(_nh,3); _pvu.setZero(_nh,_nh);
+// 	_pas.setZero(_nh,3); _pau.setZero(_nh,_nh);
+// 
+//         _pps = Matrix_ps(_a,_nh,_cp);
+// 	_pvs = Matrix_ps(_a,_nh,_cv);
+// 	_pas = Matrix_ps(_a,_nh,_ca);
+// 
+// 	_ppu = Matrix_pu(_a,_b,_nh,_cp);
+// 	_pvu = Matrix_pu(_a,_b,_nh,_cv);
+// 	_pau = Matrix_pu(_a,_b,_nh,_ca);	
 	
-	
-	
-	
-	_footx_real.setZero(_footstepsnumber);  _footy_real.setZero(_footstepsnumber); _footz_real.setZero(_footstepsnumber);
-	_footx_real_next.setZero(_nsum);  _footy_real_next.setZero(_nsum); _footz_real_next.setZero(_nsum);
-	_footx_real_next1.setZero(_nsum);  _footy_real_next1.setZero(_nsum); _footz_real_next1.setZero(_nsum);
-	
+//	_footx_real.setZero(_footstepsnumber);  _footy_real.setZero(_footstepsnumber); _footz_real.setZero(_footstepsnumber);
+//	_footx_real_next.setZero(_nsum);  _footy_real_next.setZero(_nsum); _footz_real_next.setZero(_nsum);
+//	_footx_real_next1.setZero(_nsum);  _footy_real_next1.setZero(_nsum); _footz_real_next1.setZero(_nsum);
 	
 
+// 	_fx.setZero(1);
+// 	_fy.setZero(1);
 
+// 	_fxx_global.setZero(1);
+// 	_fyy_global.setZero(1);	
 	
 	
-	
-	
-
-	
-	_fx.setZero(1);
-	_fy.setZero(1);
-
-	_fxx_global.setZero(1);
-	_fyy_global.setZero(1);	
-	
-	
-	/// zmp-constraints
-// 	_zmpx_ub.setConstant(_nsum,0.07);  _zmpx_lb.setConstant(_nsum,-0.03);
-// 	_zmpy_ub.setConstant(_nsum,0.05); _zmpy_lb.setConstant(_nsum,-0.05);
-// 	
-	_zmpx_ub.setConstant(_nsum,0.07);  _zmpx_lb.setConstant(_nsum,-0.03);
-	_zmpy_ub.setConstant(_nsum,0.05); _zmpy_lb.setConstant(_nsum,-0.05);
+	/// zmp-constraints	
+//	_zmpx_ub.setConstant(_nsum,0.07);  _zmpx_lb.setConstant(_nsum,-0.03);
+//	_zmpy_ub.setConstant(_nsum,0.05); _zmpy_lb.setConstant(_nsum,-0.05);
 		
 	
 	// com-support range
-	_comx_max.setConstant(1,0.06);
-	_comx_min.setConstant(1,-0.04);  
-	_comy_max.setConstant(1,0.6);  
-	_comy_min.setConstant(1,0.02);
+// 	_comx_max.setConstant(1,0.06);
+// 	_comx_min.setConstant(1,-0.04);  
+// 	_comy_max.setConstant(1,0.6);  
+// 	_comy_min.setConstant(1,0.02);
 	
 	// angle range
-	_thetax_max.setConstant(1,10*M_PI/180);  
-	_thetax_min.setConstant(1,-5*M_PI/180);
-	_thetay_max.setConstant(1,10*M_PI/180);  
-	_thetay_min.setConstant(1,-10*M_PI/180);
+// 	_thetax_max.setConstant(1,10*M_PI/180);  
+// 	_thetax_min.setConstant(1,-5*M_PI/180);
+// 	_thetay_max.setConstant(1,10*M_PI/180);  
+// 	_thetay_min.setConstant(1,-10*M_PI/180);
 	
 	// torque range
-	_torquex_max.setConstant(1,80/_j_ini); 
-	_torquex_min.setConstant(1,-60/_j_ini);
-	_torquey_max.setConstant(1,80/_j_ini);  
-	_torquey_min.setConstant(1,-80/_j_ini);	
+// 	_torquex_max.setConstant(1,80/_j_ini); 
+// 	_torquex_min.setConstant(1,-60/_j_ini);
+// 	_torquey_max.setConstant(1,80/_j_ini);  
+// 	_torquey_min.setConstant(1,-80/_j_ini);	
 
 	
 	
 	cout << "finish!!!!!!!!!!! initial for MPC parameters"<<endl;
-///===========initiallize: preparation for MPC solution
-// 	_nstep = 2;
-// 	_Nt = 5*_nh + 3*_nstep;	
-	
+///===========initiallize: preparation for MPC solution	
 	// sulotion preparation		
-	_V_optimal.setZero(_Nt, _nsum);	
-	_Lx_ref.setZero(_nstep); _Ly_ref.setZero(_nstep); _Lz_ref.setZero(_nstep);
-	_V_ini.setZero(_Nt,1);
-	_comx_center_ref.setZero(_nh,1);
-	_comy_center_ref.setZero(_nh,1);
-	_comz_center_ref.setZero(_nh,1);
+//	_V_optimal.setZero(_Nt, _nsum);	
 	
-	_thetax_center_ref.setZero(_nh,1); 
-	_thetay_center_ref.setZero(_nh,1);	
+// 	 store n_vis
+// 	_flag.setZero(_nsum);	
+// 	_flag_global.setZero(_nsum);	
+	
+//	_Lx_ref.setZero(_nstep); _Ly_ref.setZero(_nstep); _Lz_ref.setZero(_nstep);
+//	_V_ini.setZero(_Nt,1);
+// 	_comx_center_ref.setZero(_nh,1);
+// 	_comy_center_ref.setZero(_nh,1);
+// 	_comz_center_ref.setZero(_nh,1);
+	
+/*	_thetax_center_ref.setZero(_nh,1); 
+	_thetay_center_ref.setZero(_nh,1);*/	
 	
         
-// 	 store n_vis
-	_flag.setZero(_nsum);
-	
-	_flag_global.setZero(_nsum);
+
 	
 // 	parameters for objective function======================	
-	 _Rx = 1;           _Ry = 1;            _Rz =1;
-	_alphax = 1;       _alphay = 1;        _alphaz = 10; 
-	_beltax = 5000;   _beltay = 10;     _beltaz = 20000000;
-	_gamax =  10000000; _gamay = 10000000;  _gamaz = 200;
-	_Rthetax = 1; _Rthetay = 1;
-	_alphathetax = 100; _alphathetay = 100;
-	_beltathetax = 500000; _beltathetay = 500000;
+// 	 _Rx = 1;           _Ry = 1;            _Rz =1;
+// 	_alphax = 1;       _alphay = 1;        _alphaz = 10; 
+// 	_beltax = 5000;   _beltay = 10;     _beltaz = 20000000;
+// 	_gamax =  10000000; _gamay = 10000000;  _gamaz = 200;
+// 	_Rthetax = 1; _Rthetay = 1;
+// 	_alphathetax = 100; _alphathetay = 100;
+// 	_beltathetax = 500000; _beltathetay = 500000;
+	
+//	_pvu_2 = _pvu.transpose()*_pvu;
+//	_ppu_2 = _ppu.transpose()*_ppu;
 
 	
-	// time cost consumption
-	_tcpu_iterative.setZero(_nsum);
-	_tcpu_prepara.setZero(_nsum);
-	_tcpu_prepara2.setZero(_nsum);
-	_tcpu_qp.setZero(_nsum);
-
-	
-	_pvu_2 = _pvu.transpose()*_pvu;
-	_ppu_2 = _ppu.transpose()*_ppu;
-
-	
-	_loop = 2;
+//	_loop = 2;
 
 ///////////////////////////////////////////////////////////////
 //////////// next code block just run once	
-	  A_unit.setIdentity(_nh,_nh);
-	  C_unit.setIdentity(_nstep,_nstep);		
+/*	  A_unit.setIdentity(_nh,_nh);
+	  C_unit.setIdentity(_nstep,_nstep);*/		
 	
 
 	  // optimization objective function 	
-	  _WX.setZero(_nh,_nh);
+/*	  _WX.setZero(_nh,_nh);
 	  _WY.setZero(_nh,_nh);
 	  _WZ.setZero(_nh,_nh);
 	  _WthetaX.setZero(_nh,_nh);
@@ -791,32 +759,32 @@ void MPCClass::Initialize()
 	  _Q_goal.block< Dynamic, Dynamic>(5*_nh+_nstep, 5*_nh+_nstep,_nstep, _nstep) = _PHIY;
 	  _Q_goal.block< Dynamic, Dynamic>(5*_nh+2*_nstep, 5*_nh+2*_nstep,_nstep, _nstep) = _PHIZ;	  
 	
-	  _Q_goal1 = 2 * _Q_goal;	
+	  _Q_goal1 = 2 * _Q_goal;*/	
 	
 	
 	  // constraints
-	  _Sjx.setZero(_nh,_Nt);
-	  _Sjy.setZero(_nh,_Nt);
-	  _Sjz.setZero(_nh,_Nt);
-	  _Sjthetax.setZero(_nh,_Nt);
-	  _Sjthetay.setZero(_nh,_Nt);
-	  _Sjx.block<_nh, _nh>(0, 0) = A_unit;
-	  _Sjy.block<_nh, _nh>(0, _nh) = A_unit;
-	  _Sjz.block<_nh, _nh>(0, 2*_nh) = A_unit;	
-	  _Sjthetax.block<_nh, _nh>(0, 3*_nh) = A_unit;
-	  _Sjthetay.block<_nh, _nh>(0, 4*_nh) = A_unit;
+// 	  _Sjx.setZero(_nh,_Nt);
+// 	  _Sjy.setZero(_nh,_Nt);
+// 	  _Sjz.setZero(_nh,_Nt);
+// 	  _Sjthetax.setZero(_nh,_Nt);
+// 	  _Sjthetay.setZero(_nh,_Nt);
+// 	  _Sjx.block<_nh, _nh>(0, 0) = A_unit;
+// 	  _Sjy.block<_nh, _nh>(0, _nh) = A_unit;
+// 	  _Sjz.block<_nh, _nh>(0, 2*_nh) = A_unit;	
+// 	  _Sjthetax.block<_nh, _nh>(0, 3*_nh) = A_unit;
+// 	  _Sjthetay.block<_nh, _nh>(0, 4*_nh) = A_unit;
 	  
 	  // ZMP boundary preparation
-	  _H_q_upx.setZero(_nh,_Nt);
-	  _F_zmp_upx.setZero(_nh,1);
-	  _H_q_lowx.setZero(_nh,_Nt);
-	  _F_zmp_lowx.setZero(_nh,1);
-	  _H_q_upy.setZero(_nh,_Nt);
-	  _F_zmp_upy.setZero(_nh,1);
-	  _H_q_lowy.setZero(_nh,_Nt);
-	  _F_zmp_lowy.setZero(_nh,1);
+// 	  _H_q_upx.setZero(_nh,_Nt);
+// 	  _F_zmp_upx.setZero(_nh,1);
+// 	  _H_q_lowx.setZero(_nh,_Nt);
+// 	  _F_zmp_lowx.setZero(_nh,1);
+// 	  _H_q_upy.setZero(_nh,_Nt);
+// 	  _F_zmp_upy.setZero(_nh,1);
+// 	  _H_q_lowy.setZero(_nh,_Nt);
+// 	  _F_zmp_lowy.setZero(_nh,1);
 
-	  _phi_i_x_up.setZero(_Nt,_Nt);
+/*	  _phi_i_x_up.setZero(_Nt,_Nt);
 	  _p_i_x_t_up.setZero(_Nt,_nh);
 	  _del_i_x_up.setZero(1,_nh);
 	  _phi_i_x_low.setZero(_Nt,_Nt);
@@ -827,10 +795,10 @@ void MPCClass::Initialize()
 	  _del_i_y_up.setZero(1,_nh);
 	  _phi_i_y_low.setZero(_Nt,_Nt);
 	  _p_i_y_t_low.setZero(_Nt,_nh);
-	  _del_i_y_low.setZero(1,_nh);	  
+	  _del_i_y_low.setZero(1,_nh);	*/  
 	  
 	  // angle boundary preparation
-	  _q_upx.setZero(_nh,_Nt);
+/*	  _q_upx.setZero(_nh,_Nt);
 	  _qq_upx.setZero(_nh,1);
 	  _q_lowx.setZero(_nh,_Nt);
 	  _qq_lowx.setZero(_nh,1);
@@ -842,69 +810,68 @@ void MPCClass::Initialize()
 	  _qq1_upx.setZero(_nh,1);
 	  _qq1_lowx.setZero(_nh,1);
 	  _qq1_upy.setZero(_nh,1);
-	  _qq1_lowy.setZero(_nh,1);	  
+	  _qq1_lowy.setZero(_nh,1);*/	  
 
 	  // torque bondary preparation
-	  _t_upx.setZero(_nh,_Nt);
-	  _tt_upx.setZero(_nh,1);
-	  _t_lowx.setZero(_nh,_Nt);
-	  _tt_lowx.setZero(_nh,1);
-	  _t_upy.setZero(_nh,_Nt);
-	  _tt_upy.setZero(_nh,1);
-	  _t_lowy.setZero(_nh,_Nt);
-	  _tt_lowy.setZero(_nh,1);
-	  
-	  _tt1_upx.setZero(_nh,1);
-	  _tt1_lowx.setZero(_nh,1);
-	  _tt1_upy.setZero(_nh,1);
-	  _tt1_lowy.setZero(_nh,1);
+// 	  _t_upx.setZero(_nh,_Nt);
+// 	  _tt_upx.setZero(_nh,1);
+// 	  _t_lowx.setZero(_nh,_Nt);
+// 	  _tt_lowx.setZero(_nh,1);
+// 	  _t_upy.setZero(_nh,_Nt);
+// 	  _tt_upy.setZero(_nh,1);
+// 	  _t_lowy.setZero(_nh,_Nt);
+// 	  _tt_lowy.setZero(_nh,1);
+// 	  
+// 	  _tt1_upx.setZero(_nh,1);
+// 	  _tt1_lowx.setZero(_nh,1);
+// 	  _tt1_upy.setZero(_nh,1);
+// 	  _tt1_lowy.setZero(_nh,1);
 	  
 	  // CoM height boundary preparation
-	  _H_h_upz.setZero(_nh,_Nt);
-	  _F_h_upz.setZero(_nh,1);
-	  _H_h_lowz.setZero(_nh,_Nt);
-	  _F_h_lowz.setZero(_nh,1);
-	  _delta_footz_up.setZero(_nh,1);
-	  _delta_footz_low.setZero(_nh,1);
+// 	  _H_h_upz.setZero(_nh,_Nt);
+// 	  _F_h_upz.setZero(_nh,1);
+// 	  _H_h_lowz.setZero(_nh,_Nt);
+// 	  _F_h_lowz.setZero(_nh,1);
+// 	  _delta_footz_up.setZero(_nh,1);
+// 	  _delta_footz_low.setZero(_nh,1);
 
 	  // CoM height acceleration boundary preparation
-	  _H_hacc_lowz.setZero(_nh,_Nt);
+/*	  _H_hacc_lowz.setZero(_nh,_Nt);
 	  _F_hacc_lowz.setZero(_nh,1);
-	  _delta_footzacc_up.setZero(_nh,1);	  
+	  _delta_footzacc_up.setZero(_nh,1);*/	  
 
 	  
 	  //swing foot velocity constraints
-	  _Footvx_max.setZero(1,_Nt);
-	  _Footvx_min.setZero(1,_Nt);
-	  _Footvy_max.setZero(1,_Nt);
-	  _Footvy_min.setZero(1,_Nt);
-	  _footubxv.setZero(1,1);
-	  _footlbxv.setZero(1,1);
-	  _footubyv.setZero(1,1);
-	  _footlbyv.setZero(1,1);
+// 	  _Footvx_max.setZero(1,_Nt);
+// 	  _Footvx_min.setZero(1,_Nt);
+// 	  _Footvy_max.setZero(1,_Nt);
+// 	  _Footvy_min.setZero(1,_Nt);
+// 	  _footubxv.setZero(1,1);
+// 	  _footlbxv.setZero(1,1);
+// 	  _footubyv.setZero(1,1);
+// 	  _footlbyv.setZero(1,1);
 	  
 	  // foot vertical location-equality constraints
-	  _H_q_footz.setZero(1, _Nt);
-	  _F_footz.setZero(1, 1);
+// 	  _H_q_footz.setZero(1, _Nt);
+// 	  _F_footz.setZero(1, 1);
 	  
 	  // CoMZ height-equality constraints
-	  _h_h.setZero(_nh, _Nt);
-	  _F_footz.setZero(_nh, 1);	  
+/*	  _h_h.setZero(_nh, _Nt);*/	  
 
 	  // body inclination-equality constraints
-	  _a_hx.setZero(_nh, _Nt);
-	  _a_hxx.setZero(_nh, 1);
-	  _a_hy.setZero(_nh, _Nt);
-	  _a_hyy.setZero(_nh, 1);
+// 	  _a_hx.setZero(_nh, _Nt);
+// 	  _a_hxx.setZero(_nh, 1);
+// 	  _a_hy.setZero(_nh, _Nt);
+// 	  _a_hyy.setZero(_nh, 1);
 	  
 	  
 	  // foot location constraints_ki, _k_yu
-	  _Sfoot.setZero(1,2);
-	  _Sfoot(0,0) = -1;
-	  _Sfoot(0,1) = 1;
+// 	  _Sfoot.setZero(1,2);
+// 	  _Sfoot(0,0) = -1;
+// 	  _Sfoot(0,1) = 1;
 	  
-	  _S1.setZero(1,_nh);
-	  _S1(0,0) = 1;	  
+/*	  _S1.setZero(1,_nh);
+	  _S1(0,0) = 1;	*/  
 	  
           
         cout << "Before initialization for ZMP constraints"<<endl;  
@@ -1866,13 +1833,29 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
     if (_bjx1 % 2 == 0)           //odd:left support
     {
 //       cout << "left support"<<endl;
-      _Lfootx(j_index) = _Lfootx(round(_tx(_bjx1-1)/_dt) -1-1);
+/*      _Lfootx(j_index) = _Lfootx(round(_tx(_bjx1-1)/_dt) -1-1);
       _Lfooty(j_index) = _Lfooty(round(_tx(_bjx1-1)/_dt) -1-1);
       _Lfootz(j_index) = _Lfootz(round(_tx(_bjx1-1)/_dt) -1-1);
       
       _Lfootx(j_index+1) = _Lfootx(round(_tx(_bjx1-1)/_dt) -1-1);
       _Lfooty(j_index+1) = _Lfooty(round(_tx(_bjx1-1)/_dt) -1-1);
-      _Lfootz(j_index+1) = _Lfootz(round(_tx(_bjx1-1)/_dt) -1-1);      
+      _Lfootz(j_index+1) = _Lfootz(round(_tx(_bjx1-1)/_dt) -1-1); */     
+   
+      _Lfootx(j_index) = _Lfootx(j_index-1);
+      _Lfooty(j_index) = _Lfooty(j_index-1);
+      _Lfootz(j_index) = _Lfootz(j_index-1);
+      
+      _Lfootx(j_index+1) = _Lfootx(j_index-1);
+      _Lfooty(j_index+1) = _Lfooty(j_index-1);
+      _Lfootz(j_index+1) = _Lfootz(j_index-1); 
+
+      
+      if (_Lfootz(j_index)>0.005)
+      {
+	cout <<"j_index"<<j_index<<endl;
+	cout <<"_Lfootz"<<_Lfootz(round(_tx(_bjx1-1)/_dt) -1-1)<<endl;
+	cout <<"_Lfootxyz"<<_footxyz_real(2,_bjxx)<<endl; 
+      }
       
       if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1))  // j_index and _bjx1 coincident with matlab: double support
       {
@@ -2012,13 +1995,22 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
     else                       //right support
     {
 //       cout << "right support"<<endl;
-      _Rfootx(j_index) = _Rfootx(round(_tx(_bjx1-1)/_dt) -1-1);
+/*      _Rfootx(j_index) = _Rfootx(round(_tx(_bjx1-1)/_dt) -1-1);
       _Rfooty(j_index) = _Rfooty(round(_tx(_bjx1-1)/_dt) -1-1);
       _Rfootz(j_index) = _Rfootz(round(_tx(_bjx1-1)/_dt) -1-1);
       
       _Rfootx(j_index+1) = _Rfootx(round(_tx(_bjx1-1)/_dt) -1-1);
       _Rfooty(j_index+1) = _Rfooty(round(_tx(_bjx1-1)/_dt) -1-1);
-      _Rfootz(j_index+1) = _Rfootz(round(_tx(_bjx1-1)/_dt) -1-1);      
+      _Rfootz(j_index+1) = _Rfootz(round(_tx(_bjx1-1)/_dt) -1-1); */  
+      _Rfootx(j_index) = _Rfootx(j_index-1);
+      _Rfooty(j_index) = _Rfooty(j_index-1);
+      _Rfootz(j_index) = _Rfootz(j_index-1);
+      
+      _Rfootx(j_index+1) = _Rfootx(j_index-1);
+      _Rfooty(j_index+1) = _Rfooty(j_index-1);
+      _Rfootz(j_index+1) = _Rfootz(j_index-1); 
+
+
       
       if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1))  // j_index and _bjx1 coincident with matlab: double suppot
       {
