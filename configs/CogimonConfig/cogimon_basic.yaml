@@ -1,5 +1,5 @@
 XBotCore:
-  config_path: "configs/CogimonConfig/configs/cogimon_francesco.yaml"
+  config_path: "configs/CogimonConfig/configs/cogimon.yaml"
 
 XBotInterface:
   urdf_path: "configs/CogimonConfig/urdf/cogimon.urdf"
@@ -17,14 +17,14 @@ MasterCommunicationInterface:
   framework_name: "ROS"
 
 XBotRTPlugins:
-  plugins: ["HomingExample","multi_strategy_walking"] 
+  plugins: ["HomingExample","multi_strategy_walking"] #multi_strategy_walking
   io_plugins: []
   
 NRTPlugins:
   plugins: [] 
   
 TransmissionPlugins:
-  plugins: [] #CogimonImpedanceAnkles CogimonAnkles
+  plugins: ["CogimonAnkles"] #CogimonImpedanceAnkles CogimonAnkles
   
 WebServer:
   enable: "true"
@@ -32,7 +32,4 @@ WebServer:
   port: "8081"
 
 SimulationOptions:
-  verbose_mode: "true"
-
-
-
+  verbose_mode: "false"

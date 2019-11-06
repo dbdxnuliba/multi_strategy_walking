@@ -94,29 +94,29 @@ void multi_strategy_walking::on_start(double time)
 	RTControl.HomingInit(_q_home_JOINT_NAME);
 
 	if (RTControl.RobotPara().name == "walkman") {
-		DPRINTF("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-		DPRINTF("\n\n\n==================================================\n");
-		DPRINTF(" _       _____    __    __ __ __  ______    _   __ \n");
-		DPRINTF("| |     / /   |  / /   / //_//  |/  /   |  / | / / \n");
-		DPRINTF("| | /| / / /| | / /   / ,<  / /|_/ / /| | /  |/ /  \n");
-		DPRINTF("| |/ |/ / ___ |/ /___/ /| |/ /  / / ___ |/ /|  /   \n");
-		DPRINTF("|__/|__/_/  |_/_____/_/ |_/_/  /_/_/  |_/_/ |_/    \n");
-
-		DPRINTF("\n==================================================\n\n\n");
+// 		DPRINTF("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+// 		DPRINTF("\n\n\n==================================================\n");
+// 		DPRINTF(" _       _____    __    __ __ __  ______    _   __ \n");
+// 		DPRINTF("| |     / /   |  / /   / //_//  |/  /   |  / | / / \n");
+// 		DPRINTF("| | /| / / /| | / /   / ,<  / /|_/ / /| | /  |/ /  \n");
+// 		DPRINTF("| |/ |/ / ___ |/ /___/ /| |/ /  / / ___ |/ /|  /   \n");
+// 		DPRINTF("|__/|__/_/  |_/_____/_/ |_/_/  /_/_/  |_/_/ |_/    \n");
+// 
+// 		DPRINTF("\n==================================================\n\n\n");
 	}
 	else if (RTControl.RobotPara().name == "cogimon") {
-		DPRINTF("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-		DPRINTF("\n\n\n=====================================================\n");
-		DPRINTF("   ______                  ____  __  ___                 \n");
-		DPRINTF("  / ____/ ____    ____ _  /  _/ /  |/  / ____    ____    \n");
-		DPRINTF(" / /     / __ \\  / __ `/  / /  / /|_/ / / __ \\  / __ \\\n");
-		DPRINTF("/ /___  / /_/ / / /_/ /  / /  / /  / / / /_/ / / / / /   \n");
-		DPRINTF("\\____/  \\____/  \\__,/  /___/ /_/  /_/  \\____/ /_/ /_/\n");
-
-		DPRINTF("\n=====================================================\n\n\n");
+// 		DPRINTF("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+// 		DPRINTF("\n\n\n=====================================================\n");
+// 		DPRINTF("   ______                  ____  __  ___                 \n");
+// 		DPRINTF("  / ____/ ____    ____ _  /  _/ /  |/  / ____    ____    \n");
+// 		DPRINTF(" / /     / __ \\  / __ `/  / /  / /|_/ / / __ \\  / __ \\\n");
+// 		DPRINTF("/ /___  / /_/ / / /_/ /  / /  / /  / / / /_/ / / / / /   \n");
+// 		DPRINTF("\\____/  \\____/  \\__,/  /___/ /_/  /_/  \\____/ /_/ /_/\n");
+// 
+// 		DPRINTF("\n=====================================================\n\n\n");
 	}
 	else if (RTControl.RobotPara().name == "coman") {
-		DPRINTF("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+// 		DPRINTF("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 	}	
 	/* Save the robot starting config to a class member */
 	// _start_time = time;
@@ -135,11 +135,11 @@ void multi_strategy_walking::on_stop(double time)
 
 void multi_strategy_walking::control_loop(double time, double period)
 {
-	/* This function is called on every control loop from when the plugin is start until
-	 * it is stopped.
-	 * Since this function is called within the real-time loop, you should not perform
-	 * operations that are not rt-safe. */
-
+// 	/* This function is called on every control loop from when the plugin is start until
+// 	 * it is stopped.
+// 	 * Since this function is called within the real-time loop, you should not perform
+// 	 * operations that are not rt-safe. */
+// 
 	updateWBS();
 
 	// Go to homing: original verision
@@ -169,47 +169,16 @@ void multi_strategy_walking::control_loop(double time, double period)
 		else{
 		  _q = _q_tmp;
 		}
-		
-		
-//  		_q.head(12) = _q_tmp.head(12); ///joint	angle of lower limb, other angle are upper angles	
-//		_q = _q_tmp;	
+
 	}
-	
-	
-/*	// Go to homing: walking_no_arm
-	if ( (time - _first_loop_time) <= _homing_time ) {
-		_q = _q0;
-		_q_tmp = _q0 + 0.5 * (1 - std::cos(M_PI * (time - _first_loop_time) / _homing_time)) * (_q_home - _q0);
-		_q.head(12) = _q_tmp.head(12); //only lower body moven
-// 		_q = _q_tmp; //whole-body movement		
-		_qref = _q;
-		
- 		DPRINTF("=========  intial pose_control_loop. =============\n");
-		
-	}
-	else {
- 	        DPRINTF("=========  RUN rt_control_loop. =============\n"); 
-		RTControl.Run();
-		// RTControl.JointRefToXBot_LowerBody(_q);
-		RTControl.JointRefToXBot(_q_tmp);
-// 		_q.head(12) = _q_tmp.head(12); ///joint	angle of lower limb, other angle are upper angles	
-		//// interpolation of stabilizer angle
-		if ( (time - _first_loop_time -_homing_time)  <= 1){
-		  _q.head(12) = pow(time - _first_loop_time -_homing_time,1)/1*(_q_tmp.head(12)-_qref.head(12))+_qref.head(12);
-//		  cout<< "transition process"<<endl;
-		}
-		else{
-		  _q.head(12) = _q_tmp.head(12);
-// 		  _q.head(4) = -_q_tmp.head(4); 
-//		  cout<< "normal process"<<endl;
-		}	
-	}*/	
-	
-	
-	// _q[_q.size()-1] = _q_home[_q.size()-1];
-// 	cout<<"_q:"<< _q.transpose()<<endl; 
-  	_robot->setPositionReference(_q);
- 	_robot->move();
+// 		
+// 	
+// 	
+// 	// _q[_q.size()-1] = _q_home[_q.size()-1];
+// // 	cout<<"_q:"<< _q.transpose()<<endl; 
+   	_robot->setPositionReference(_q);
+//   	_robot->move();    /// lead to real time unsafety;
+    
 }
 
 bool multi_strategy_walking::close()
@@ -218,9 +187,9 @@ bool multi_strategy_walking::close()
 	 * It can be used to do some clean-up, or to save logging data to disk. */
 
 	/* Save logged data to disk */
-	// 	_logger->flush();
+//	 	_logger->flush();
 
-	// RTControl.savedata();
+//	 RTControl.savedata();
 	return true;
 }
 

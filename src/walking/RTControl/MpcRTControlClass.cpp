@@ -186,6 +186,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	_walkdtime1 -= (int)_height_offset_time/_dtx;	      
 	if(_walkdtime1 < _walkdtime_max)
 	{
+            
 	  _t_walkdtime_flag = _walkdtime1;	  		
 	  _t_int = floor(_walkdtime1 * _dtx / dt_mpc);
 	  
@@ -392,8 +393,8 @@ void MpcRTControlClass::WalkingReactStepping()
 	else  //walking beyond time counter
 	{
 	  
-	  DPRINTF("=========Finish normal walking=============\n"); 
-	  DPRINTF("=========!!!!!!!!!!!!!!!!1=============\n"); 
+// 	  DPRINTF("=========Finish normal walking=============\n"); 
+//	  DPRINTF("=========!!!!!!!!!!!!!!!!1=============\n"); 
 	  _t_walkdtime_restart_flag = walkdtime;	  
 	  IsStartWalk = false;	  
 	  _t_walkdtime_restart_flag = walkdtime;	  
@@ -844,14 +845,15 @@ void MpcRTControlClass::StartWalking()
 {
   
   IsStartWalk = true;
+//  DPRINTF(" start  Walking\n");
   if (_stop_walking)
   {
     _start_walking_again = true;
-    DPRINTF("========= start walking again. =============\n");     
+ //   DPRINTF("========= start walking again. =============\n");     
   }
   else
   {
-    DPRINTF("========= start walking-first time =============\n");   
+//    DPRINTF("========= start walking-first time =============\n");   
   }
    _stop_walking = false;
   
