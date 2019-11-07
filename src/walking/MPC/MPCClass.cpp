@@ -45,22 +45,22 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength.setConstant(steplength);
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
-        _steplength(_footstepsnumber-1) = 0;
-        _steplength(_footstepsnumber-2) = 0;		
-	_steplength(_footstepsnumber-3) = steplength/2;
+        _steplength(_footstepsnumber-1) = 0;		
+	_steplength(_footstepsnumber-2) = steplength/2;
 	
 	
 	_stepwidth.setConstant(stepwidth);
 	_stepwidth(0) = _stepwidth(0)/2;	
 	
 	_stepheight.setConstant(stepheight);
+	_stepheight(_footstepsnumber)=0;
+	_stepheight(_footstepsnumber-1)=0;	
 	
 	_lift_height_ref.setConstant(_lift_height);
 // 	_lift_height_ref(0) = 0.00;
 // 	_lift_height_ref(1) = 0.04;
-        _lift_height_ref(_footstepsnumber-1) = 0;
-        _lift_height_ref(_footstepsnumber-2) = 0;	
-        _lift_height_ref(_footstepsnumber-3) = 0.04; 	
+        _lift_height_ref(_footstepsnumber-1) = 0;	
+        _lift_height_ref(_footstepsnumber-2) = 0.04; 	
 
 
 // ///////////******************************************************obtacle avoidance-mod:old : 20 period breaking
@@ -371,15 +371,17 @@ void MPCClass::Initialize()
 // 	_aax1 =300;              _aay1 =300;            
 // 	_bbx1 =1000000;          _bby1 =1000000;
 // 	_rr11 =1000000;          _rr21 =1000000; 
+	
+        // for slow walking
+	_aax = 1000000;          _aay  =1000000;
+	_aaxv= 100000;           _aayv =50000;         
+	_bbx = 500000000;        _bby  =1500000000;      
+	_rr1 = 100000000;        _rr2  =100000000;        
+	_aax1 =300;              _aay1 =100;            
+	_bbx1 =1000000;          _bby1 =1000000;
+	_rr11 =1000000;          _rr21 =1000000; 
 
 
-	_aax = 500000000;        _aay  =700000000;
-	_aaxv= 800000;           _aayv =1000000;         
-	_bbx = 1000000000;       _bby  =1000000000;      
-	_rr1 = 500000000;        _rr2  =500000000;        
-	_aax1 =30;              _aay1 =30;            
-	_bbx1 =100000;          _bby1 =100000;
-	_rr11 =100000;          _rr21 =100000; 	
 	
 	
 /*	  /// zmp-constraints	
