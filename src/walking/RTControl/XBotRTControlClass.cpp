@@ -76,8 +76,8 @@ XBotRTControlClass::XBotRTControlClass()
 	, walkingVel(0.0, 0.0, 0.0)
 	, EnableFtPos(false)
 	, EnableFtOri(false)
- 	, IsStartWalk(false)
-//	, IsStartWalk(true)
+// 	, IsStartWalk(false)
+	, IsStartWalk(true)
 {
 	deltaFtOri_left = deltaFtOri_right = Eigen::Matrix3d::Identity();
 	deltaHip = deltaFtPos_l = deltaFtPos_r = Eigen::Vector3d::Zero();
@@ -370,8 +370,8 @@ void XBotRTControlClass::Run()
   ////// then run ./xddp_console, to keyboard input the c/s to start or stop the real-time loop
 	const RobotStateClass& irobot = _WBS.getRobotState();
 
-	char cmd;
-	user_input(cmd);
+// 	char cmd;
+// 	user_input(cmd);
 
 	realtime = dtime * dt;
 	MoveToInitialPosition();
@@ -383,7 +383,7 @@ void XBotRTControlClass::Run()
 		double UpdateTcycle = 1 * dt;
 		double time = realtime - walkstarttime;
 		if (IsFixed) {
-		  DPRINTF("========= IsFixed. =============\n");
+		  //DPRINTF("========= IsFixed. =============\n");
 			
 		}
 		else {		  
@@ -398,7 +398,7 @@ void XBotRTControlClass::Run()
 
 
 	if (IsInit) {
-	  Admittance_controller();
+//	  Admittance_controller();
 	}
 
  	SolveIK();    ///lead to real-time unsafety;
@@ -420,7 +420,7 @@ void XBotRTControlClass::Run()
 static int jnt_idx = 12;
 void XBotRTControlClass::KeyBoardControl(char cmd)
 {
-        StartWalking();
+ //       StartWalking();
 	switch (cmd)
 	{
 	case 'c':
@@ -1080,10 +1080,10 @@ int XBotRTControlClass::user_input(void *buffer, ssize_t buff_size)
 
 int XBotRTControlClass::user_input(char &cmd)
 {
-// 	int nbytes = user_input((void*)&cmd, sizeof(cmd));
-// 	if (nbytes <= 0) {
-// 		return nbytes;
-// 	}
+	int nbytes = user_input((void*)&cmd, sizeof(cmd));
+	if (nbytes <= 0) {
+		return nbytes;
+	}
 
 	KeyBoardControl(cmd);
         //DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start  Walking!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");

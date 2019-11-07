@@ -393,7 +393,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	else  //walking beyond time counter
 	{
 	  
-// 	  DPRINTF("=========Finish normal walking=============\n"); 
+ 	  DPRINTF("=========Finish normal walking=============\n"); 
 //	  DPRINTF("=========!!!!!!!!!!!!!!!!1=============\n"); 
 	  _t_walkdtime_restart_flag = walkdtime;	  
 	  IsStartWalk = false;	  
@@ -801,6 +801,8 @@ void MpcRTControlClass::WalkingReactStepping()
 	    }
 	    else  //walking beyond time counter
 	    {
+	      
+	      
 	      _t_walkdtime_restart_flag = walkdtime;
 	      
 	      IsStartWalk = false;
