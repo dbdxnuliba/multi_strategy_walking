@@ -1,7 +1,7 @@
 RobotName: "cogimon"
 
 GazeboXBotPlugin:
-  control_rate: 0.002
+  control_rate: 0.005
   gains:
 ###chengxu para
 #    RShSag:        {p: 4000, d: 10}
@@ -101,8 +101,8 @@ ec_board_ctrl:
   #eth_iface: eth1
   #sync_cycle_time_ns: 500000
   #sync_cycle_time_ns: 1000000
-  sync_cycle_time_ns: 2000000
-  #sync_cycle_time_ns: 5000000
+  #sync_cycle_time_ns: 2000000
+  sync_cycle_time_ns: 5000000
   #sync_cycle_time_ns: 10000000
   #sync_cycle_time_ns: 0
   sync_cycle_offset_ns: 1000000000

@@ -55,7 +55,7 @@ MpcRTControlClass::MpcRTControlClass()
   }
   else if (RobotPara().name == "cogimon")
    {
-    steplengthinput = 0.15;
+    steplengthinput = 0.0;
   } 
   else
   {DPRINTF("Errorrrrrrrr for IK\n");}
