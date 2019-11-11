@@ -1,12 +1,5 @@
 /*****************************************************************************
 MpcRTControlClass.cpp
-
-Description:    source file of MpcRTControlClass
-
-@Version:   1.0
-@Author:    Chengxu Zhou (chengxu.zhou@iit.it)
-@Release:   Tue 27 Jun 2017 09:33:32 AM CEST
-@Update:    Tue 27 Jun 2017 09:33:37 AM CEST
 *****************************************************************************/
 #include "RTControl/MpcRTControlClass.h"
 

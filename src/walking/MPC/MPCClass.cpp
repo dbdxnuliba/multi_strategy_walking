@@ -2,11 +2,6 @@
 MPCClass.cpp
 
 Description:    source file of MPCClass
-
-@Version:   1.0
-@Author:    Chengxu Zhou (zhouchengxu@gmail.com)
-@Release:   Thu 02 Aug 2018 12:33:23 PM CEST
-@Update:    Thu 02 Aug 2018 12:33:19 PM CEST
 *****************************************************************************/
 #include "MPC/MPCClass.h"
 // #include "MPC/spline.h"

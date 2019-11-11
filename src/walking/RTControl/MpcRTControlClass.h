@@ -2,11 +2,6 @@
 MpcRTControlClass.h
 
 Description:	Header file of MpcRTControlClass
-
-@Version:	1.0
-@Author:	Chengxu Zhou (chengxu.zhou@iit.it)
-@Release:	Tue 27 Jun 2017 09:31:28 AM CEST
-@Update:	Tue 27 Jun 2017 09:31:24 AM CEST
 *****************************************************************************/
 #pragma once
 #include "RTControl/XBotRTControlClass.h"
