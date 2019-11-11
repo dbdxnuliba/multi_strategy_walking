@@ -45,22 +45,22 @@ void MPCClass::FootStepInputs( double stepwidth, double steplength, double steph
 	_steplength.setConstant(steplength);
 	_steplength(0) = 0;
 	_steplength(1) = steplength/2;
-        _steplength(_footstepsnumber-1) = 0;
-        _steplength(_footstepsnumber-2) = 0;		
-	_steplength(_footstepsnumber-3) = steplength/2;
+        _steplength(_footstepsnumber-1) = 0;		
+	_steplength(_footstepsnumber-2) = steplength/2;
 	
 	
 	_stepwidth.setConstant(stepwidth);
 	_stepwidth(0) = _stepwidth(0)/2;	
 	
 	_stepheight.setConstant(stepheight);
+	_stepheight(_footstepsnumber)=0;
+	_stepheight(_footstepsnumber-1)=0;	
 	
 	_lift_height_ref.setConstant(_lift_height);
 // 	_lift_height_ref(0) = 0.00;
 // 	_lift_height_ref(1) = 0.04;
-        _lift_height_ref(_footstepsnumber-1) = 0;
-        _lift_height_ref(_footstepsnumber-2) = 0;	
-        _lift_height_ref(_footstepsnumber-3) = 0.04; 	
+        _lift_height_ref(_footstepsnumber-1) = 0;	
+        _lift_height_ref(_footstepsnumber-2) = 0.04; 	
 
 
 // ///////////******************************************************obtacle avoidance-mod:old : 20 period breaking
@@ -309,7 +309,7 @@ void MPCClass::Initialize()
 	  _rad = 0.2; 	
 	  
 	//step timing constraints:
-	_t_min = 0.4; _t_max = 1.5;
+	_t_min = 0.4; _t_max = 2;
 	
 	// swing foot velocity constraints	
 	_footx_vmax = 3;
@@ -350,7 +350,7 @@ void MPCClass::Initialize()
 	  _rad = 0.2; 	 
 	  
 	//step timing constraints:
-	_t_min = 0.4; _t_max = 1.5;
+	_t_min = 0.4; _t_max = 2;
 	
 	// swing foot velocity constraints	
 	_footx_vmax = 3;
@@ -364,29 +364,26 @@ void MPCClass::Initialize()
 	_comay_max = 5;
 	_comay_min = -5;	  
 	//weight coefficient
-/*	_aax = 500000000;        _aay  =500000000;
-	_aaxv= 800000;           _aayv =1000000;         
-	_bbx = 500000000;        _bby  =500000000;      
+// 	_aax = 500000000;        _aay  =700000000;
+// 	_aaxv= 800000;           _aayv =1000000;         
+// 	_bbx = 500000000;        _bby  =500000000;      
+// 	_rr1 = 100000000;        _rr2  =100000000;        
+// 	_aax1 =300;              _aay1 =300;            
+// 	_bbx1 =1000000;          _bby1 =1000000;
+// 	_rr11 =1000000;          _rr21 =1000000; 
+	
+        // for slow walking
+	_aax = 1000000;          _aay  =1000000;
+	_aaxv= 100000;           _aayv =50000;         
+	_bbx = 500000000;        _bby  =1500000000;      
 	_rr1 = 100000000;        _rr2  =100000000;        
-	_aax1 =300;              _aay1 =300;            
-	_bbx1 =1000000;          _bby1 =1000000;
-	_rr11 =1000000;          _rr21 =1000000; */		
-/*	_aax = 500000000;        _aay  =100000000;
-	_aaxv= 800000;           _aayv =1000000;         
-	_bbx = 500000000;        _bby  =500000000;      
-	_rr1 = 100000000;        _rr2  =100000000;        
-	_aax1 =300;              _aay1 =300;            
-	_bbx1 =1000000;          _bby1 =1000000;
-	_rr11 =1000000;          _rr21 =1000000; */
-	_aax = 500000000;        _aay  =700000000;
-	_aaxv= 800000;           _aayv =1000000;         
-	_bbx = 500000000;        _bby  =500000000;      
-	_rr1 = 100000000;        _rr2  =100000000;        
-	_aax1 =300;              _aay1 =300;            
+	_aax1 =300;              _aay1 =100;            
 	_bbx1 =1000000;          _bby1 =1000000;
 	_rr11 =1000000;          _rr21 =1000000; 
 
 
+	
+	
 /*	  /// zmp-constraints	
 	  _zmpx_ub=(RobotParaClass::FOOT_LENGTH()/2+RobotParaClass::HIP_TO_ANKLE_X_OFFSET())*_ZMP_ratio;  
 	  _zmpx_lb=(-(RobotParaClass::FOOT_LENGTH()/2-RobotParaClass::HIP_TO_ANKLE_X_OFFSET())*_ZMP_ratio);
@@ -1066,10 +1063,6 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
         _comvy_endref= _Wn*_COMy_is(_periond_i-1)*_SS4*_vari_ini + _COMvy_is(_periond_i-1)*_SS3*_vari_ini;     
   }
 
-/*  cout <<_comvx_endref<<endl;
-  cout <<_comvy_endref<<endl;  */ 
-//   cout <<_COMvy_is<<endl;
- 
   
 // SEQUENCE QUADARTIC PROGRAMMING-step timing &step location optimization
   for (int xxxx=1; xxxx<=3; xxxx++)
@@ -1105,7 +1098,6 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   
   _Vari_ini.col(i) = _vari_ini;  
   
-//   cout <<"_vari_ini:"<<endl<<_vari_ini<<endl;
   
   
 // update the optimal parameter in the real-time: at the result, the effect of optimization reduced gradually
@@ -1392,9 +1384,6 @@ void MPCClass::step_timing_object_function(int i)
     _SQ_goal1 = 2 * _SQ_goal;
     _Sq_goal1 = 2 * _SQ_goal * _vari_ini + _Sq_goal;
     
-/*  cout <<"_SQ_goal1:"<<_SQ_goal1<<endl;
-  cout <<"_Sq_goal1:"<<_Sq_goal1<<endl;   */   
-     
     
     
     _Ax= _SS3.transpose()*_AxO*_SS7+_SS4.transpose()*_BxO*_SS7-_SS1.transpose()*_SS7+_SS4.transpose()*_AxO*_SS8+_SS3.transpose()*_BxO*_SS8;   
@@ -1459,9 +1448,7 @@ void MPCClass::step_timing_constraints(int i)
     _det_trx.row(0) = _det_trx1_up; _det_trx.row(1) = _det_trx1_lp; _det_trx.row(2) = _det_trx2_up; _det_trx.row(3) = _det_trx2_lp;
     _det_trx.row(4) = _det_trx3_up; _det_trx.row(5) = _det_trx3_lp; _det_trx.row(6) = _det_trx4_up; _det_trx.row(7) = _det_trx4_lp;		
     
-    
-//     cout <<"_trx:"<<endl<<_trx<<endl;
-//     cout <<"_det_trx:"<<endl<<_det_trx<<endl;  
+     
   
   
 // tr1 & tr2: equation constraints:   
@@ -1476,9 +1463,7 @@ void MPCClass::step_timing_constraints(int i)
     _trxx.row(0) = _trx12;   _trxx.row(1) = _trx121;
     _det_trxx.row(0) = _det_trx12; _det_trxx.row(1) = _det_trx121;    
 
-    
-/*    cout <<"_trxx:"<<endl<<_trxx<<endl;
-    cout <<"_det_trxx:"<<endl<<_det_trxx<<endl;  */    
+     
 
 //  foot location constraints      
     if (_periond_i % 2 == 0)
@@ -1595,9 +1580,7 @@ void MPCClass::step_timing_constraints(int i)
     _h_lvx_upx.row(4)= _h_lvx_up1;   _h_lvx_upx.row(5)= _h_lvx_lp1; _h_lvx_upx.row(6)= _h_lvy_up1;  _h_lvx_upx.row(7)= _h_lvy_lp1;
     _det_h_lvx_upx.row(0)=_det_h_lvx_up; _det_h_lvx_upx.row(1)=_det_h_lvx_lp; _det_h_lvx_upx.row(2)=_det_h_lvy_up; _det_h_lvx_upx.row(3)=_det_h_lvy_lp;
     _det_h_lvx_upx.row(4)=_det_h_lvx_up1;_det_h_lvx_upx.row(5)=_det_h_lvx_lp1;_det_h_lvx_upx.row(6)=_det_h_lvy_up1;_det_h_lvx_upx.row(7)=_det_h_lvy_lp1;    
-
-/*    cout <<"_h_lvx_upx:"<<endl<<_h_lvx_upx<<endl;
-    cout <<"_det_h_lvx_upx:"<<endl<<_det_h_lvx_upx<<endl;   */    
+  
     
 
 
@@ -1657,9 +1640,6 @@ void MPCClass::step_timing_constraints(int i)
     _det_CoM_lvx_upx.row(0) = _det_CoM_lvx_up;  _det_CoM_lvx_upx.row(1) = _det_CoM_lvx_lp; 
     _det_CoM_lvx_upx.row(2) = _det_CoM_lvy_up;  _det_CoM_lvx_upx.row(3) = _det_CoM_lvy_lp;  
     
-/*    cout <<"_CoM_lvx_upx:"<<endl<<_CoM_lvx_upx<<endl;
-    cout <<"_det_CoM_lvx_upx:"<<endl<<_det_CoM_lvx_upx<<endl; */          
-    
     
     
 //   CoM intial velocity boundary: check   
@@ -1684,10 +1664,6 @@ void MPCClass::step_timing_constraints(int i)
     _det_CoM_lvx_upx1.row(0) = _det_CoM_lvx_up1;  _det_CoM_lvx_upx1.row(1) = _det_CoM_lvx_lp1; 
     _det_CoM_lvx_upx1.row(2) = _det_CoM_lvy_up1;  _det_CoM_lvx_upx1.row(3) = _det_CoM_lvy_lp1;      
     
-//     cout <<"_CoM_lvx_upx1:"<<endl<<_CoM_lvx_upx1<<endl;
-//     cout <<"_det_CoM_lvx_upx1:"<<endl<<_det_CoM_lvx_upx1<<endl; 
-      
-  
   
   
 }
@@ -1811,9 +1787,13 @@ void MPCClass::Solve()
 //// each time: planer for foot_trajectory:
 void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 {
+  
+  
     
   _footxyz_real(1,0) = -_stepwidth(0);
+ 
   
+  Eigen::Vector3d t_plan(0,0,0);  
   
 //// judge if stop  
   if(_stopwalking)  
@@ -1832,14 +1812,6 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 //     cout << "_bjx1 >= 2"<<endl;
     if (_bjx1 % 2 == 0)           //odd:left support
     {
-//       cout << "left support"<<endl;
-/*      _Lfootx(j_index) = _Lfootx(round(_tx(_bjx1-1)/_dt) -1-1);
-      _Lfooty(j_index) = _Lfooty(round(_tx(_bjx1-1)/_dt) -1-1);
-      _Lfootz(j_index) = _Lfootz(round(_tx(_bjx1-1)/_dt) -1-1);
-      
-      _Lfootx(j_index+1) = _Lfootx(round(_tx(_bjx1-1)/_dt) -1-1);
-      _Lfooty(j_index+1) = _Lfooty(round(_tx(_bjx1-1)/_dt) -1-1);
-      _Lfootz(j_index+1) = _Lfootz(round(_tx(_bjx1-1)/_dt) -1-1); */     
    
       _Lfootx(j_index) = _Lfootx(j_index-1);
       _Lfooty(j_index) = _Lfooty(j_index-1);
@@ -1848,18 +1820,9 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
       _Lfootx(j_index+1) = _Lfootx(j_index-1);
       _Lfooty(j_index+1) = _Lfooty(j_index-1);
       _Lfootz(j_index+1) = _Lfootz(j_index-1); 
-
-      
-      if (_Lfootz(j_index)>0.005)
-      {
-	cout <<"j_index"<<j_index<<endl;
-	cout <<"_Lfootz"<<_Lfootz(round(_tx(_bjx1-1)/_dt) -1-1)<<endl;
-	cout <<"_Lfootxyz"<<_footxyz_real(2,_bjxx)<<endl; 
-      }
       
       if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1))  // j_index and _bjx1 coincident with matlab: double support
       {
-// 	cout << "dsp"<<endl;
 	_Rfootx(j_index) = _Rfootx(round(_tx(_bjx1-1)/_dt) -1-1);
 	_Rfooty(j_index) = _Rfooty(round(_tx(_bjx1-1)/_dt) -1-1);
 	_Rfootz(j_index) = _Rfootz(round(_tx(_bjx1-1)/_dt) -1-1);	
@@ -1876,10 +1839,13 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 // 	cout << "ssp"<<endl;
 	//initial state and final state and the middle state
 	double t_des = (j_index  - round(_tx(_bjx1-1)/_dt) +1)*_dt;
-	Eigen::Vector3d t_plan;
+//	Eigen::Vector3d t_plan;
 	t_plan(0) = t_des - _dt;
-	t_plan(1) = (_td(_bjx1-1) + _ts(_bjx1-1))/2 + 0.0001;
-	t_plan(2) = _ts(_bjx1-1) + 0.0001;
+// 	t_plan(1) = (_td(_bjx1-1) + _ts(_bjx1-1))/2 + 0.0001;
+// 	t_plan(2) = _ts(_bjx1-1) + 0.0001;
+	t_plan(1) = round((_td(_bjx1-1) + _ts(_bjx1-1))/2/_dt)*_dt + _dt/2 ;
+	t_plan(2) = round( _ts(_bjx1-1)/_dt)*_dt+ _dt/2;	
+	
 	
 	if (abs(t_des - _ts(_bjx1-1)) <= (_dt + 0.0005))
 	{
@@ -1894,99 +1860,119 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	}
 	else
 	{
-	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_index);	  
+// 	    if (abs(t_plan(0)-t_plan(1))<_dt/2)
+// 	    {
+// 	      if (t_plan(0)>t_plan(1))
+// 	      {
+// 		t_plan(1) = t_plan(1)-_dt/4;
+// 	      }
+// 	      else
+// 	      {
+// 		t_plan(1) = t_plan(1)+_dt/4;
+// 	      }
+// 	      
+// 	    }
 	  
-	  
-          
-	 	  
-	  Eigen::Matrix<double, 1, 7> t_a_plan;
-	  t_a_plan.setZero();
-	  t_a_plan(0) = pow(t_des, 6);   t_a_plan(1) = pow(t_des, 5);   t_a_plan(2) = pow(t_des, 4);  t_a_plan(3) = pow(t_des, 3);
-	  t_a_plan(4) = pow(t_des, 2);   t_a_plan(5) = pow(t_des, 1);   t_a_plan(6) = 1;
-	  
-
-	  Eigen::Matrix<double, 1, 7> t_a_planv;
-	  t_a_planv.setZero();
-	  t_a_planv(0) = 6*pow(t_des, 5);   t_a_planv(1) = 5*pow(t_des, 4);   t_a_planv(2) = 4*pow(t_des, 3);  t_a_planv(3) = 3*pow(t_des, 2);
-	  t_a_planv(4) = 2*pow(t_des, 1);   t_a_planv(5) = 1;                 t_a_planv(6) = 0;
-	  
-	  
-	  Eigen::Matrix<double, 1, 7> t_a_plana;
-	  t_a_plana.setZero();
-	  t_a_plana(0) = 30*pow(t_des, 4);   t_a_plana(1) = 20*pow(t_des, 3);   t_a_plana(2) = 12*pow(t_des, 2);  t_a_plana(3) = 6*pow(t_des, 1);
-	  t_a_plana(4) = 2;                  t_a_plana(5) = 0;                  t_a_plana(6) = 0;
-	  
-
-	  
-	  ////////////////////////////////////////////////////////////////////////////
-	  Eigen::Matrix<double, 7, 1> Rfootx_plan;
-	  Rfootx_plan.setZero();	
-	  Rfootx_plan(0) = _Rfootvx(j_index-1);     Rfootx_plan(1) = _Rfootax(j_index-1); Rfootx_plan(2) = _Rfootx(j_index-1); Rfootx_plan(3) = _Lfootx(j_index);
-	  Rfootx_plan(4) = _footxyz_real(0,_bjxx);  Rfootx_plan(5) = 0;                   Rfootx_plan(6) = 0;
-	  
-	  
-	  Eigen::Matrix<double, 7, 1> Rfootx_co;
-	  Rfootx_co.setZero();
-	  Rfootx_co = AAA_inv * Rfootx_plan;
-	  
-	  _Rfootx(j_index) = t_a_plan * Rfootx_co;
-	  _Rfootvx(j_index) = t_a_planv * Rfootx_co;
-	  _Rfootax(j_index) = t_a_plana * Rfootx_co;
-	  
-	  /////////////////////////////////////////////////////////////////////////////
-	  if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1)+_dt)
-	  {
-	    _ry_left_right = (_footxyz_real(1,_bjxx) + _footxyz_real(1,_bjxx-2))/2;
-	  }
-	  
-	  Eigen::Matrix<double, 7, 1> Rfooty_plan;
-	  Rfooty_plan.setZero();	
-	  Rfooty_plan(0) = _Rfootvy(j_index-1);     Rfooty_plan(1) = _Rfootay(j_index-1); Rfooty_plan(2) = _Rfooty(j_index-1); Rfooty_plan(3) = _ry_left_right;
-	  Rfooty_plan(4) = _footxyz_real(1,_bjxx);  Rfooty_plan(5) = 0;                   Rfooty_plan(6) = 0;	    
-	  
-	  Eigen::Matrix<double, 7, 1> Rfooty_co;
-	  Rfooty_co.setZero();
-	  Rfooty_co = AAA_inv * Rfooty_plan;
-	  
-	  _Rfooty(j_index) = t_a_plan * Rfooty_co;
-	  _Rfootvy(j_index) = t_a_planv * Rfooty_co;
-	  _Rfootay(j_index) = t_a_plana * Rfooty_co;	
-	  
-	  
-	  //////////////////////////////////////////////////////////
-	  Eigen::Matrix<double, 7, 1> Rfootz_plan;
-	  Rfootz_plan.setZero();	
-	  Rfootz_plan(0) = _Rfootvz(j_index-1);     Rfootz_plan(1) = _Rfootaz(j_index-1); Rfootz_plan(2) = _Rfootz(j_index-1); Rfootz_plan(3) = _Lfootz(j_index)+_lift_height_ref(_bjx1-1);
-	  Rfootz_plan(4) = _footxyz_real(2,_bjxx);  Rfootz_plan(5) = 0;                   Rfootz_plan(6) = 0;	
-	  
-	  Eigen::Matrix<double, 7, 1> Rfootz_co;
-	  Rfootz_co.setZero();
-	  Rfootz_co = AAA_inv * Rfootz_plan;
-	  
-	  _Rfootz(j_index) = t_a_plan * Rfootz_co;
-	  _Rfootvz(j_index) = t_a_planv * Rfootz_co;
-	  _Rfootaz(j_index) = t_a_plana * Rfootz_co;	
-	 
-	  
-	  _Rfootx(j_index+1) = _Rfootx(j_index)+_dt * _Rfootvx(j_index);
-	  _Rfooty(j_index+1) = _Rfooty(j_index)+_dt * _Rfootvy(j_index);
-	  _Rfootz(j_index+1) = _Rfootz(j_index)+_dt * _Rfootvz(j_index);
-	  
-// 	  if ((j_index>135)&&(j_index<140))
+// 	  if ((abs(t_plan(0))<=0.01)||(abs(t_plan(2))<=0.4)||((abs(t_plan(0)-t_plan(1))<=_dt)))
 // 	  {
-// 	  cout <<"AAA_inverse="<<endl<<AAA_inv<<endl;	  
-// 	  cout <<"t_des="<<t_des<<endl;
-// 	  cout <<"t_plan="<<t_plan.transpose()<<endl;	
-// 
-// 	  cout <<"last Ffoot_x="<< _Rfootx(j_index-1)<<endl;
-// 	  cout <<"Ffoot_x="<< _Rfootx(j_index)<<endl;	  
-// 	  cout <<"next Ffoot_x="<< _Rfootx(j_index+1)<<endl;
-// 	  cout <<"j_index="<< j_index<<endl;
-// 	  cout <<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-// 	    
+// // 	    _Rfootx(j_index) = _Rfootx(j_index-1);
+// // 	    _Rfooty(j_index) = _Rfooty(j_index-1);
+// // 	    _Rfootz(j_index) = _Rfootz(j_index-1);
+// // 	    
+// // 	    _Rfootx(j_index+1) = _Rfootx(j_index-1);
+// // 	    _Rfooty(j_index+1) = _Rfooty(j_index-1);
+// // 	    _Rfootz(j_index+1) = _Rfootz(j_index-1); 	    
+// // 	    
 // 	  }
+// 	  else	      
+// 	  {
+	    Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_index);	  
+	    
+	    
+	    
+		    
+	    Eigen::Matrix<double, 1, 7> t_a_plan;
+	    t_a_plan.setZero();
+	    t_a_plan(0) = pow(t_des, 6);   t_a_plan(1) = pow(t_des, 5);   t_a_plan(2) = pow(t_des, 4);  t_a_plan(3) = pow(t_des, 3);
+	    t_a_plan(4) = pow(t_des, 2);   t_a_plan(5) = pow(t_des, 1);   t_a_plan(6) = 1;
+	    
+
+	    Eigen::Matrix<double, 1, 7> t_a_planv;
+	    t_a_planv.setZero();
+	    t_a_planv(0) = 6*pow(t_des, 5);   t_a_planv(1) = 5*pow(t_des, 4);   t_a_planv(2) = 4*pow(t_des, 3);  t_a_planv(3) = 3*pow(t_des, 2);
+	    t_a_planv(4) = 2*pow(t_des, 1);   t_a_planv(5) = 1;                 t_a_planv(6) = 0;
+	    
+	    
+	    Eigen::Matrix<double, 1, 7> t_a_plana;
+	    t_a_plana.setZero();
+	    t_a_plana(0) = 30*pow(t_des, 4);   t_a_plana(1) = 20*pow(t_des, 3);   t_a_plana(2) = 12*pow(t_des, 2);  t_a_plana(3) = 6*pow(t_des, 1);
+	    t_a_plana(4) = 2;                  t_a_plana(5) = 0;                  t_a_plana(6) = 0;
+	    
+
+	    
+	    ////////////////////////////////////////////////////////////////////////////
+	    Eigen::Matrix<double, 7, 1> Rfootx_plan;
+	    Rfootx_plan.setZero();	
+	    Rfootx_plan(0) = _Rfootvx(j_index-1);     Rfootx_plan(1) = _Rfootax(j_index-1); Rfootx_plan(2) = _Rfootx(j_index-1); Rfootx_plan(3) = _Lfootx(j_index);
+	    Rfootx_plan(4) = _footxyz_real(0,_bjxx);  Rfootx_plan(5) = 0;                   Rfootx_plan(6) = 0;
+	    
+	    
+	    Eigen::Matrix<double, 7, 1> Rfootx_co;
+	    Rfootx_co.setZero();
+	    Rfootx_co = AAA_inv * Rfootx_plan;
+	    
+	    _Rfootx(j_index) = t_a_plan * Rfootx_co;
+	    _Rfootvx(j_index) = t_a_planv * Rfootx_co;
+	    _Rfootax(j_index) = t_a_plana * Rfootx_co;
+	    
+	    /////////////////////////////////////////////////////////////////////////////
+	    if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1)+_dt)
+	    {
+	      _ry_left_right = (_footxyz_real(1,_bjxx) + _footxyz_real(1,_bjxx-2))/2;
+	    }
+	    
+	    Eigen::Matrix<double, 7, 1> Rfooty_plan;
+	    Rfooty_plan.setZero();	
+	    Rfooty_plan(0) = _Rfootvy(j_index-1);     Rfooty_plan(1) = _Rfootay(j_index-1); Rfooty_plan(2) = _Rfooty(j_index-1); Rfooty_plan(3) = _ry_left_right;
+	    Rfooty_plan(4) = _footxyz_real(1,_bjxx);  Rfooty_plan(5) = 0;                   Rfooty_plan(6) = 0;	    
+	    
+	    Eigen::Matrix<double, 7, 1> Rfooty_co;
+	    Rfooty_co.setZero();
+	    Rfooty_co = AAA_inv * Rfooty_plan;
+	    
+	    _Rfooty(j_index) = t_a_plan * Rfooty_co;
+	    _Rfootvy(j_index) = t_a_planv * Rfooty_co;
+	    _Rfootay(j_index) = t_a_plana * Rfooty_co;	
+	    
+	    
+	    //////////////////////////////////////////////////////////
+	    Eigen::Matrix<double, 7, 1> Rfootz_plan;
+	    Rfootz_plan.setZero();	
+	    Rfootz_plan(0) = _Rfootvz(j_index-1);     Rfootz_plan(1) = _Rfootaz(j_index-1); Rfootz_plan(2) = _Rfootz(j_index-1); Rfootz_plan(3) = _Lfootz(j_index)+_lift_height_ref(_bjx1-1);
+	    Rfootz_plan(4) = _footxyz_real(2,_bjxx);  Rfootz_plan(5) = 0;                   Rfootz_plan(6) = 0;	
+	    
+	    Eigen::Matrix<double, 7, 1> Rfootz_co;
+	    Rfootz_co.setZero();
+	    Rfootz_co = AAA_inv * Rfootz_plan;
+	    
+	    _Rfootz(j_index) = t_a_plan * Rfootz_co;
+	    _Rfootvz(j_index) = t_a_planv * Rfootz_co;
+	    _Rfootaz(j_index) = t_a_plana * Rfootz_co;	
 	  
-	  
+	    
+	    _Rfootx(j_index+1) = _Rfootx(j_index)+_dt * _Rfootvx(j_index);
+	    _Rfooty(j_index+1) = _Rfooty(j_index)+_dt * _Rfootvy(j_index);
+	    _Rfootz(j_index+1) = _Rfootz(j_index)+_dt * _Rfootvz(j_index);	
+	    
+/*	    cout << "_t_plan:"<<t_plan.transpose()<<endl;
+            cout << "_footxyz_real:"<<_footxyz_real.col(_bjxx)<<endl;
+	    
+	    cout << "_Rfootx(j_index):"<<_Rfootx(j_index)<<endl;  
+	    cout << "_Rfooty(j_index):"<<_Rfooty(j_index)<<endl;   
+	    cout << "_Rfootz(j_index):"<<_Rfootz(j_index)<<endl; */ 	    
+	    
+	    
+/*	  }*/  
 	  
 	}
       }   
@@ -2029,10 +2015,13 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 // 	cout << "ssp"<<endl;
 	//initial state and final state and the middle state
 	double t_des = (j_index  - round(_tx(_bjx1-1)/_dt) +1)*_dt;
-	Eigen::Vector3d t_plan;
+// 	Eigen::Vector3d t_plan;
 	t_plan(0) = t_des - _dt;
-	t_plan(1) = (_td(_bjx1-1) + _ts(_bjx1-1))/2 + 0.0001;
-	t_plan(2) = _ts(_bjx1-1) + 0.0001;
+	t_plan(0) = t_des - _dt;
+// 	t_plan(1) = (_td(_bjx1-1) + _ts(_bjx1-1))/2 + 0.0001;
+// 	t_plan(2) = _ts(_bjx1-1) + 0.0001;
+	t_plan(1) = round((_td(_bjx1-1) + _ts(_bjx1-1))/2/_dt)*_dt + _dt/2 ;
+	t_plan(2) = round( _ts(_bjx1-1)/_dt)*_dt+ _dt/2;
 	
 	if (abs(t_des - _ts(_bjx1-1)) <= (_dt + 0.0005))
 	{
@@ -2048,85 +2037,122 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
 	}
 	else
 	{
-	  Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_index);          
-	 	  
-	  Eigen::Matrix<double, 1, 7> t_a_plan;
-	  t_a_plan.setZero();
-	  t_a_plan(0) = pow(t_des, 6);   t_a_plan(1) = pow(t_des, 5);   t_a_plan(2) = pow(t_des, 4);  t_a_plan(3) = pow(t_des, 3);
-	  t_a_plan(4) = pow(t_des, 2);   t_a_plan(5) = pow(t_des, 1);   t_a_plan(6) = 1;
+	  
+// 	  if ((abs(t_plan(0))<=0.01)||(abs(t_plan(2))<=0.4)||((abs(t_plan(0)-t_plan(1))<=_dt)))
+// 	  {
+// /*	    _Lfootx(j_index) = _Lfootx(j_index-1);
+// 	    _Lfooty(j_index) = _Lfooty(j_index-1);
+// 	    _Lfootz(j_index) = _Lfootz(j_index-1);
+// 	    
+// 	    _Lfootx(j_index+1) = _Lfootx(j_index-1);
+// 	    _Lfooty(j_index+1) = _Lfooty(j_index-1);
+// 	    _Lfootz(j_index+1) = _Lfootz(j_index-1); */	    
+// 	    
+// 	  }
+// 	  else
+// 	  {
+// 	    if (abs(t_plan(0)-t_plan(1))<_dt/2)
+// 	    {
+// 	      if (t_plan(0)>t_plan(1))
+// 	      {
+// 		t_plan(1) = t_plan(1)-_dt/4;
+// 	      }
+// 	      else
+// 	      {
+// 		t_plan(1) = t_plan(1)+_dt/4;
+// 	      }
+// 	      
+// 	    }
+	     
+	  
+	    Eigen::Matrix<double,7,7> AAA_inv = solve_AAA_inv_x(t_plan,j_index);          
+		    
+	    Eigen::Matrix<double, 1, 7> t_a_plan;
+	    t_a_plan.setZero();
+	    t_a_plan(0) = pow(t_des, 6);   t_a_plan(1) = pow(t_des, 5);   t_a_plan(2) = pow(t_des, 4);  t_a_plan(3) = pow(t_des, 3);
+	    t_a_plan(4) = pow(t_des, 2);   t_a_plan(5) = pow(t_des, 1);   t_a_plan(6) = 1;
+	    
+
+	    Eigen::Matrix<double, 1, 7> t_a_planv;
+	    t_a_planv.setZero();
+	    t_a_planv(0) = 6*pow(t_des, 5);   t_a_planv(1) = 5*pow(t_des, 4);   t_a_planv(2) = 4*pow(t_des, 3);  t_a_planv(3) = 3*pow(t_des, 2);
+	    t_a_planv(4) = 2*pow(t_des, 1);   t_a_planv(5) = 1;                 t_a_planv(6) = 0;
+	    
+	    
+	    Eigen::Matrix<double, 1, 7> t_a_plana;
+	    t_a_plana.setZero();
+	    t_a_plana(0) = 30*pow(t_des, 4);   t_a_plana(1) = 20*pow(t_des, 3);   t_a_plana(2) = 12*pow(t_des, 2);  t_a_plana(3) = 6*pow(t_des, 1);
+	    t_a_plana(4) = 2;                  t_a_plana(5) = 0;                  t_a_plana(6) = 0;
+	    
+  // 	  cout <<"AAA="<<endl<<AAA<<endl;
+  // 	  cout <<"AAA_inverse="<<endl<<AAA.inverse()<<endl;	  
+  // 	  cout <<"t_des="<<endl<<t_des<<endl;
+  // 	  cout <<"t_plan="<<endl<<t_plan<<endl;
+	    
+	    ////////////////////////////////////////////////////////////////////////////
+	    Eigen::Matrix<double, 7, 1> Lfootx_plan;
+	    Lfootx_plan.setZero();	
+	    Lfootx_plan(0) = _Lfootvx(j_index-1);     Lfootx_plan(1) = _Lfootax(j_index-1); Lfootx_plan(2) = _Lfootx(j_index-1); Lfootx_plan(3) = _Rfootx(j_index);
+	    Lfootx_plan(4) = _footxyz_real(0,_bjxx);  Lfootx_plan(5) = 0;                   Lfootx_plan(6) = 0;	  
+	    
+	    
+	    Eigen::Matrix<double, 7, 1> Lfootx_co;
+	    Lfootx_co.setZero();
+	    Lfootx_co = AAA_inv * Lfootx_plan;
+	    
+	    _Lfootx(j_index) = t_a_plan * Lfootx_co;
+	    _Lfootvx(j_index) = t_a_planv * Lfootx_co;
+	    _Lfootax(j_index) = t_a_plana * Lfootx_co;
+	    
+	    /////////////////////////////////////////////////////////////////////////////
+	    if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1)+_dt)
+	    {
+	      _ry_left_right = (_footxyz_real(1,_bjxx) + _footxyz_real(1,_bjxx-2))/2;
+	    }
+	    
+	    Eigen::Matrix<double, 7, 1> Lfooty_plan;
+	    Lfooty_plan.setZero();	
+	    Lfooty_plan(0) = _Lfootvy(j_index-1);     Lfooty_plan(1) = _Lfootay(j_index-1); Lfooty_plan(2) = _Lfooty(j_index-1); Lfooty_plan(3) = _ry_left_right;
+	    Lfooty_plan(4) = _footxyz_real(1,_bjxx);  Lfooty_plan(5) = 0;                   Lfooty_plan(6) = 0;		  
+	    
+	    
+	    Eigen::Matrix<double, 7, 1> Lfooty_co;
+	    Lfooty_co.setZero();
+	    Lfooty_co = AAA_inv * Lfooty_plan;
+	    
+	    _Lfooty(j_index) = t_a_plan * Lfooty_co;
+	    _Lfootvy(j_index) = t_a_planv * Lfooty_co;
+	    _Lfootay(j_index) = t_a_plana * Lfooty_co;	
+	    
+	    
+	    //////////////////////////////////////////////////////////
+	    Eigen::Matrix<double, 7, 1> Lfootz_plan;
+	    Lfootz_plan.setZero();			
+	    Lfootz_plan(0) = _Lfootvz(j_index-1);     Lfootz_plan(1) = _Lfootaz(j_index-1); Lfootz_plan(2) = _Lfootz(j_index-1); Lfootz_plan(3) = _Rfootz(j_index)+_lift_height_ref(_bjx1-1);
+	    Lfootz_plan(4) = _footxyz_real(2,_bjxx);  Lfootz_plan(5) = 0;                   Lfootz_plan(6) = 0;		  
+	    
+	    
+	    Eigen::VectorXd Lfootz_co;
+	    Lfootz_co.setZero(7);
+	    Lfootz_co = AAA_inv * Lfootz_plan;
+	    
+	    _Lfootz(j_index) = t_a_plan * Lfootz_co;
+	    _Lfootvz(j_index) = t_a_planv * Lfootz_co;
+	    _Lfootaz(j_index) = t_a_plana * Lfootz_co;
+	    
+	    
+	    _Lfootx(j_index+1) = _Lfootx(j_index)+_dt * _Lfootvx(j_index);
+	    _Lfooty(j_index+1) = _Lfooty(j_index)+_dt * _Lfootvy(j_index);
+	    _Lfootz(j_index+1) = _Lfootz(j_index)+_dt * _Lfootvz(j_index);	    
+// 	  }
+	  
+// 	    cout << "_t_plan:"<<t_plan.transpose()<<endl;
+// 	    cout << "_footxyz_real:"<<_footxyz_real.col(_bjxx)<<endl;	    
+// 	    cout << "_Lfootx(j_index):"<<_Lfootx(j_index)<<endl;  
+// 	    cout << "_Lfooty(j_index):"<<_Lfooty(j_index)<<endl;   
+// 	    cout << "_Lfootz(j_index):"<<_Lfootz(j_index)<<endl;  
 	  
 
-	  Eigen::Matrix<double, 1, 7> t_a_planv;
-	  t_a_planv.setZero();
-	  t_a_planv(0) = 6*pow(t_des, 5);   t_a_planv(1) = 5*pow(t_des, 4);   t_a_planv(2) = 4*pow(t_des, 3);  t_a_planv(3) = 3*pow(t_des, 2);
-	  t_a_planv(4) = 2*pow(t_des, 1);   t_a_planv(5) = 1;                 t_a_planv(6) = 0;
-	  
-	  
-	  Eigen::Matrix<double, 1, 7> t_a_plana;
-	  t_a_plana.setZero();
-	  t_a_plana(0) = 30*pow(t_des, 4);   t_a_plana(1) = 20*pow(t_des, 3);   t_a_plana(2) = 12*pow(t_des, 2);  t_a_plana(3) = 6*pow(t_des, 1);
-	  t_a_plana(4) = 2;                  t_a_plana(5) = 0;                  t_a_plana(6) = 0;
-	  
-// 	  cout <<"AAA="<<endl<<AAA<<endl;
-// 	  cout <<"AAA_inverse="<<endl<<AAA.inverse()<<endl;	  
-// 	  cout <<"t_des="<<endl<<t_des<<endl;
-// 	  cout <<"t_plan="<<endl<<t_plan<<endl;
-	  
-	  ////////////////////////////////////////////////////////////////////////////
-	  Eigen::Matrix<double, 7, 1> Lfootx_plan;
-	  Lfootx_plan.setZero();	
-	  Lfootx_plan(0) = _Lfootvx(j_index-1);     Lfootx_plan(1) = _Lfootax(j_index-1); Lfootx_plan(2) = _Lfootx(j_index-1); Lfootx_plan(3) = _Rfootx(j_index);
-	  Lfootx_plan(4) = _footxyz_real(0,_bjxx);  Lfootx_plan(5) = 0;                   Lfootx_plan(6) = 0;	  
-	  
-	  
-	  Eigen::Matrix<double, 7, 1> Lfootx_co;
-	  Lfootx_co.setZero();
-	  Lfootx_co = AAA_inv * Lfootx_plan;
-	  
-	  _Lfootx(j_index) = t_a_plan * Lfootx_co;
-	  _Lfootvx(j_index) = t_a_planv * Lfootx_co;
-	  _Lfootax(j_index) = t_a_plana * Lfootx_co;
-	  
-	  /////////////////////////////////////////////////////////////////////////////
-	  if ((j_index +1 - round(_tx(_bjx1-1)/_dt))*_dt < _td(_bjx1-1)+_dt)
-	  {
-	    _ry_left_right = (_footxyz_real(1,_bjxx) + _footxyz_real(1,_bjxx-2))/2;
-	  }
-	  
-	  Eigen::Matrix<double, 7, 1> Lfooty_plan;
-	  Lfooty_plan.setZero();	
-	  Lfooty_plan(0) = _Lfootvy(j_index-1);     Lfooty_plan(1) = _Lfootay(j_index-1); Lfooty_plan(2) = _Lfooty(j_index-1); Lfooty_plan(3) = _ry_left_right;
-	  Lfooty_plan(4) = _footxyz_real(1,_bjxx);  Lfooty_plan(5) = 0;                   Lfooty_plan(6) = 0;		  
-	  
-	  
-	  Eigen::Matrix<double, 7, 1> Lfooty_co;
-	  Lfooty_co.setZero();
-	  Lfooty_co = AAA_inv * Lfooty_plan;
-	  
-	  _Lfooty(j_index) = t_a_plan * Lfooty_co;
-	  _Lfootvy(j_index) = t_a_planv * Lfooty_co;
-	  _Lfootay(j_index) = t_a_plana * Lfooty_co;	
-	  
-	  
-	  //////////////////////////////////////////////////////////
-	  Eigen::Matrix<double, 7, 1> Lfootz_plan;
-	  Lfootz_plan.setZero();			
-	  Lfootz_plan(0) = _Lfootvz(j_index-1);     Lfootz_plan(1) = _Lfootaz(j_index-1); Lfootz_plan(2) = _Lfootz(j_index-1); Lfootz_plan(3) = _Rfootz(j_index)+_lift_height_ref(_bjx1-1);
-	  Lfootz_plan(4) = _footxyz_real(2,_bjxx);  Lfootz_plan(5) = 0;                   Lfootz_plan(6) = 0;		  
-	  
-	  
-	  Eigen::VectorXd Lfootz_co;
-	  Lfootz_co.setZero(7);
-	  Lfootz_co = AAA_inv * Lfootz_plan;
-	  
-	  _Lfootz(j_index) = t_a_plan * Lfootz_co;
-	  _Lfootvz(j_index) = t_a_planv * Lfootz_co;
-	  _Lfootaz(j_index) = t_a_plana * Lfootz_co;
-	  
-	  
-	  _Lfootx(j_index+1) = _Lfootx(j_index)+_dt * _Lfootvx(j_index);
-	  _Lfooty(j_index+1) = _Lfooty(j_index)+_dt * _Lfootvy(j_index);
-	  _Lfootz(j_index+1) = _Lfootz(j_index)+_dt * _Lfootvz(j_index);
 	  
 	  
 	}
@@ -2142,6 +2168,22 @@ void MPCClass::Foot_trajectory_solve(int j_index, bool _stopwalking)
   }
     
 
+   
+//    cout << "_t_plan:"<<t_plan.transpose()<<endl;
+   
+   if ((abs(_Lfootx(j_index))>1)||(abs(_Lfooty(j_index))>1)||(abs(_Lfootz(j_index))>1)||(abs(_Rfootx(j_index))>1)||(abs(_Rfooty(j_index))>1)||(abs(_Rfootz(j_index))>1))
+   {
+/*   cout << "j_index:"<<j_index<<endl;*/ 
+//    cout << "_Lfootx(j_index):"<<_Lfootx(j_index)<<endl;  
+//    cout << "_Lfooty(j_index):"<<_Lfooty(j_index)<<endl;   
+//    cout << "_Lfootz(j_index):"<<_Lfootz(j_index)<<endl;   
+//    cout << "_Rfootx(j_index):"<<_Rfootx(j_index)<<endl;  
+//    cout << "_Rfooty(j_index):"<<_Rfooty(j_index)<<endl;   
+//    cout << "_Rfootz(j_index):"<<_Rfootz(j_index)<<endl;    
+//     cout << "_t_plan:"<<t_plan<<endl;
+//     cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!1:"<<j_index<<endl;
+   
+   }  
   
 }
 
@@ -2497,9 +2539,22 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 	
 	if (t_int>=1)
 	{
+	 
 	  
+	  double t_cur = walktime * dt_sample ;
 	  
-	  double t_cur = walktime * dt_sample;
+
+	  Eigen::Matrix<double, 4, 1> t_plan;
+	  t_plan.setZero();
+	  t_plan(0) = t_cur - 2*dt_sample-( t_cur - 2*dt_sample);
+	  t_plan(1) = t_cur - 1*dt_sample-( t_cur - 2*dt_sample);
+	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
+	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
+	  
+//	  cout<< "t_plan"<<t_plan<<endl;
+          
+	  solve_AAA_inv(t_plan);	  
+	  
 	  	  
 	  Eigen::Matrix<double, 1, 4> t_a_plan;
 	  t_a_plan.setZero();
@@ -2567,9 +2622,19 @@ Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, E
 	{
 	  
 
+	  double t_cur = walktime * dt_sample ;
 	  
-	  double t_cur = walktime * dt_sample;
+
+	  Eigen::Matrix<double, 4, 1> t_plan;
+	  t_plan.setZero();
+	  t_plan(0) = t_cur - 2*dt_sample-( t_cur - 2*dt_sample);
+	  t_plan(1) = t_cur - 1*dt_sample-( t_cur - 2*dt_sample);
+	  t_plan(2) = (t_int + 1) *_dt-( t_cur - 2*dt_sample);
+	  t_plan(3) = (t_int + 2) *_dt-( t_cur - 2*dt_sample);
 	  
+//	  cout<< "t_plan"<<t_plan<<endl;
+          
+	  solve_AAA_inv(t_plan);
 	  
 
 	  
@@ -3102,6 +3167,9 @@ Eigen::Matrix<double, 7, 7> MPCClass::solve_AAA_inv_x(Eigen::Vector3d t_plan, in
   
   
   Eigen::Matrix<double,7,7> AAA_inv = AAA.inverse(); 
+  
+//   cout <<"t_plan:" <<t_plan<<endl;
+//   cout <<"AAA:" <<AAA<<endl;
   
   return AAA_inv;
   
