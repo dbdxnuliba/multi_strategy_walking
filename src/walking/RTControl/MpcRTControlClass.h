@@ -1,5 +1,12 @@
 /*****************************************************************************
 MpcRTControlClass.h
+
+Description:	Header file of MpcRTControlClass
+
+@Version:	1.0
+@Author:	Chengxu Zhou (chengxu.zhou@iit.it)
+@Release:	Tue 27 Jun 2017 09:31:28 AM CEST
+@Update:	Tue 27 Jun 2017 09:31:24 AM CEST
 *****************************************************************************/
 #pragma once
 #include "RTControl/XBotRTControlClass.h"
@@ -7,19 +14,16 @@ MpcRTControlClass.h
 
 #include <iostream>
 #include <Eigen/Dense>
-#include <math.h>
+#include <math.h> 
 #include <fstream>
 #include <time.h>
 
-const double dt_mpc = 0.05;   // definition of sampling time of MPC solover
+const double dt_mpc = 0.1;   // definition of sampling time of MPC solover
  const double _height_offsetx = 0.05;  
-const double _height_offset_time = 2; 
-
+const double _height_offset_time = 2;  
 
 using namespace Eigen;
 using namespace std;
-
-
 
 class MpcRTControlClass: public XBotRTControlClass
 {
@@ -55,6 +59,7 @@ private:
 	
 	Eigen::VectorXd _stop_flag_walkdtime;
   
+
 	
 	int _walkdtime_max, _wal_max;	
 	int _walkdtime1;	
@@ -65,8 +70,16 @@ private:
 	Eigen::MatrixXd _FootL_IN;	
 
 	Eigen::Matrix<double,18,1> _estimated_state;	
+	Eigen::MatrixXd _estimated_state_global;
 	Eigen::Vector3d _Rfoot_location_feedback,_Lfoot_location_feedback;
 	
+	
+	
+	
+	Eigen::MatrixXd _state_generate_interpo;
+
+	
+// 	Eigen::MatrixXd _coeff_inte;
 	
 
 	virtual void StandingReactStepping() final;
@@ -79,15 +92,12 @@ protected:
 	int t_walkdtime_flag;
 	int dt_sample;
 	
+//	Vector3d _torso_angle;
+	void torso_angle(int arg1);
 	
 	double _feedback_lamda;
 	
-	
-	/****KMP based trajectory***********************/
-	Vector6d _kmp_leg_traje;
-	
-	
-	Vector3d _F_r_mpc, _F_l_mpc,_M_r_mpc,_M_l_mpc;	
+	Vector3d _F_r_mpc, _F_l_mpc,_M_r_mpc,_M_l_mpc;
 	
 	
 };
