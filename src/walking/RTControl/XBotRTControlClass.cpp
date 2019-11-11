@@ -76,8 +76,8 @@ XBotRTControlClass::XBotRTControlClass()
 	, walkingVel(0.0, 0.0, 0.0)
 	, EnableFtPos(false)
 	, EnableFtOri(false)
- 	, IsStartWalk(false)
-//	, IsStartWalk(true)
+// 	, IsStartWalk(false)
+	, IsStartWalk(true)
 {
 	deltaFtOri_left = deltaFtOri_right = Eigen::Matrix3d::Identity();
 	deltaHip = deltaFtPos_l = deltaFtPos_r = Eigen::Vector3d::Zero();
@@ -206,7 +206,7 @@ void XBotRTControlClass::initOpenSoTIK(std::string path_to_config_file)
 void XBotRTControlClass::Init(const double &dT)
 {
 	IsInit = true;
-	DPRINTF("Gait parameters initialization finished.\n");
+	//DPRINTF("Gait parameters initialization finished.\n");
 }
 
 void XBotRTControlClass::HomingInit(const std::vector<double> &homing_angles)
@@ -240,10 +240,9 @@ void XBotRTControlClass::MoveToInitialPosition()
 	const RobotStateClass& irobot = _WBS.getRobotState();
 
 	double start_time = RobotPara().setParaForSimOrReal(1.0, 3.0);
-// 	std::cout<< "start_time:"<<start_time<<std::endl;
 
 	if (realtime == 0.0) {
-		DPRINTF("\n======== Start moving to initial postion ===============\n");
+		//DPRINTF("\n======== Start moving to initial postion ===============\n");
 	}
 
 	if (realtime <= start_time) {
@@ -257,7 +256,6 @@ void XBotRTControlClass::MoveToInitialPosition()
 		initHipx = 0.025*scale;
 
 		Eigen::Vector3d vWorldToWaist(0.0, 0.0, RobotParaClass::WAIST_HEIGHT());
-		// Eigen::Vector3d vWorldToWaist = irobot._model->waist_pos.r;
 		if (RobotPara().name == "walkman") {
 			vWorldToWaist[0] = -0.051; // for new walkman upper body only, because the urdf of the waist was changed
 		}
@@ -267,17 +265,8 @@ void XBotRTControlClass::MoveToInitialPosition()
 		Eigen::Vector3d LFootHomingDistance = Eigen::Vector3d(0.0, RobotParaClass::HALF_FOOT_DIS(), 0.0) - LftHomingPosGlobal; // difference with ref foot position
 		Eigen::Vector3d RFootHomingDistance = Eigen::Vector3d(0.0, -RobotParaClass::HALF_FOOT_DIS(), 0.0) - RftHomingPosGlobal;
 
-		// Eigen::Vector3d LftHomingPosGlobal = Eigen::Vector3d(0, 0, RobotParaClass::FULL_LEG()) + LEFT_FOOT_HOME_POS; // actual ankle position in global frame
-		// Eigen::Vector3d RftHomingPosGlobal = Eigen::Vector3d(0, 0, RobotParaClass::FULL_LEG()) + RIGHT_FOOT_HOME_POS;
-		// Eigen::Vector3d LFootHomingDistance = Eigen::Vector3d(0.0, RobotParaClass::HALF_FOOT_DIS(), RobotParaClass::ANKLE_HEIGHT()) - LftHomingPosGlobal; // difference with ref ankle position
-		// Eigen::Vector3d RFootHomingDistance = Eigen::Vector3d(0.0, -RobotParaClass::HALF_FOOT_DIS(), RobotParaClass::ANKLE_HEIGHT()) - RftHomingPosGlobal;
-
 		LeftFootPos = LftHomingPosGlobal + scale * LFootHomingDistance;
 		RightFootPos = RftHomingPosGlobal + scale * RFootHomingDistance;
-		// LeftFootPos[2] -= RobotParaClass::ANKLE_HEIGHT();
-		// RightFootPos[2] -= RobotParaClass::ANKLE_HEIGHT();
-		// LeftFootO = ZMPwalk.SwingFoot->SwingFootRGen(0.0, start_time, realtime, LEFT_FOOT_HOME_ORI, Eigen::Matrix3d::Identity());
-		// RightFootO = ZMPwalk.SwingFoot->SwingFootRGen(0.0, start_time, realtime, RIGHT_FOOT_HOME_ORI, Eigen::Matrix3d::Identity());
 
 		Eigen::Vector3d LHandHomingDistance(0.0, 0.0, 0.0);
 		Eigen::Vector3d RHandHomingDistance(-0.0, -0.0, -0.0);
@@ -286,21 +275,10 @@ void XBotRTControlClass::MoveToInitialPosition()
 		LeftHandPos = LEFT_HAND_HOME_POS + scale * LHandHomingDistance;
 		RightHandPos = RIGHT_HAND_HOME_POS + scale * RHandHomingDistance;
 
-		// LeftHandPosGlobal = PelvisPos + LeftHandPos;
-		// RightHandPosGlobal = PelvisPos + RightHandPos;
-
 		// Eigen::Matrix3d Lhd_end = LEFT_HAND_HOME_ORI;
 		Eigen::Matrix3d Lhd_end = Ry(-M_PI * 0.5);
-		// LeftHandO = ZMPwalk.SwingFoot->SwingFootRGen(0.0, start_time, realtime, LEFT_HAND_HOME_ORI, Lhd_end);
-		// LeftHandOGlobal = WaistO * LeftHandO;
-
 		// Eigen::Matrix3d Rhd_end = RIGHT_HAND_HOME_ORI;
 		Eigen::Matrix3d Rhd_end = Ry(-M_PI * 0.5);
-		// RightHandO = ZMPwalk.SwingFoot->SwingFootRGen(0.0, start_time, realtime, RIGHT_HAND_HOME_ORI, Rhd_end);
-		// RightHandOGlobal = WaistO * RightHandO;
-
-		// COUT("\nRIGHT_HAND_HOME_ORI:\n", RIGHT_HAND_HOME_ORI);
-		// COUT("RIGHT_HAND_HOME_POS:", RIGHT_HAND_HOME_POS.transpose());
 
 		Eigen::Vector3d com_ref_eigen = PelvisPos;
 		Eigen::Vector3d lft_ref_eigen = LeftFootPos;
@@ -314,30 +292,26 @@ void XBotRTControlClass::MoveToInitialPosition()
 			_WBS.q_off[i] = DEGTORAD(RobotPara().offset_pos[i]) * scale;
 // 			DPRINTF("%.2f\t",RobotPara().offset_pos[i]);
 		}
-// 		DPRINTF("%.2f\t",RobotPara().offset_pos[LEFT_FOOT_PITCH]);
 		for (int i = 15; i < srdf_homing_angles.size(); i++) {
 			irobot.SendToRobot->q_ref[i] = irobot.SendToRobot->q[i] = srdf_homing_angles[i] + (DEGTORAD(RobotPara().HOMING_POS()[i]) - srdf_homing_angles[i]) * scale;
 		}
-// 		DPRINTF("\n");
 
 		if (realtime == start_time) {
-			DPRINTF("Finish moving to initial postion.\n");
-			// DPRINTF("CoM height is %.4f m.\n\n", irobot._model->com_ft[2]);
-			DPRINTF("CoM is at %.4f\t%.4f\t%.4f m.\n\n", irobot._model->com_ft[0], irobot._model->com_ft[1], irobot._model->com_ft[2]);
-			DPRINTF("Pelvis is at %.4f\t%.4f\t%.4f m.\n\n", PelvisPos[0], PelvisPos[1], PelvisPos[2]);
-			DPRINTF("\n================================================\n");
-			DPRINTF("Normal Keyboard Control is running, Press\n");
-			DPRINTF("v:     Switch to AutoWalk Keyboard.\n");
-			DPRINTF("x/y/z: Enable stabilizer in x/y/z, respectively.\n");
-			DPRINTF("d:     Disable stabilizer in x, y and z.\n");
-			DPRINTF("c:     Start/Restart Walking.\n");
-			DPRINTF("s:     Stop Walking.\n");
-			DPRINTF("F:     Enable/Disable Fixed Walking.\n");
-			DPRINTF("B:     Enable/Disable Stop wiht parallel feet.\n");
-			DPRINTF("e:     Enable standing reactive stepping.\n");
-			DPRINTF("================================================\n");
-			// KeyBoardControl('x');
-			// KeyBoardControl('y');
+// 			DPRINTF("Finish moving to initial postion.\n");
+// 			// DPRINTF("CoM height is %.4f m.\n\n", irobot._model->com_ft[2]);
+// 			DPRINTF("CoM is at %.4f\t%.4f\t%.4f m.\n\n", irobot._model->com_ft[0], irobot._model->com_ft[1], irobot._model->com_ft[2]);
+// 			DPRINTF("Pelvis is at %.4f\t%.4f\t%.4f m.\n\n", PelvisPos[0], PelvisPos[1], PelvisPos[2]);
+// 			DPRINTF("\n================================================\n");
+// 			DPRINTF("Normal Keyboard Control is running, Press\n");
+// 			DPRINTF("v:     Switch to AutoWalk Keyboard.\n");
+// 			DPRINTF("x/y/z: Enable stabilizer in x/y/z, respectively.\n");
+// 			DPRINTF("d:     Disable stabilizer in x, y and z.\n");
+// 			DPRINTF("c:     Start/Restart Walking.\n");
+// 			DPRINTF("s:     Stop Walking.\n");
+// 			DPRINTF("F:     Enable/Disable Fixed Walking.\n");
+// 			DPRINTF("B:     Enable/Disable Stop wiht parallel feet.\n");
+// 			DPRINTF("e:     Enable standing reactive stepping.\n");
+// 			DPRINTF("================================================\n");
 #ifdef USE_OPENSOT
 			Eigen::VectorXd q_postural = ik_sot->getSolution(); // get the size
 			JointRefToXBot(q_postural); // get the last solution
@@ -389,15 +363,15 @@ void XBotRTControlClass::Run()
 {
   
   
-    clock_t t_start,t_finish;
+//    clock_t t_start,t_finish;
     
-	  t_start = clock();    
+//	  t_start = clock();    
   //// run: logic: firstly: move to initial postion: upper arm put down. after 3s, keep the initial position;
   ////// then run ./xddp_console, to keyboard input the c/s to start or stop the real-time loop
 	const RobotStateClass& irobot = _WBS.getRobotState();
 
-	char cmd;
-	user_input(cmd);
+// 	char cmd;
+// 	user_input(cmd);
 
 	realtime = dtime * dt;
 	MoveToInitialPosition();
@@ -409,7 +383,7 @@ void XBotRTControlClass::Run()
 		double UpdateTcycle = 1 * dt;
 		double time = realtime - walkstarttime;
 		if (IsFixed) {
-		  DPRINTF("========= IsFixed. =============\n");
+		  //DPRINTF("========= IsFixed. =============\n");
 			
 		}
 		else {		  
@@ -425,23 +399,20 @@ void XBotRTControlClass::Run()
 
 	if (IsInit) {
 //	  Admittance_controller();
- //	  std::cout<<"admittance controller"<<std::endl;
 	}
 
-	SolveIK();
+ 	SolveIK();    ///lead to real-time unsafety;
 
 #ifdef USE_XBOT_LOGGER
 	addToLog();
 #endif
 	dtime++;
 	
-//  	std::cout<<"Isinit:"<< IsInit<<std::endl; 
-// 	std::cout<<"IsStartWalk:"<< IsStartWalk<<std::endl;
-// 	std::cout<<"IsFixed:"<< IsFixed<<std::endl;
 
-	  t_finish = clock();   
-	  
-	  t_compute = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	  
+//	  t_finish = clock();   
+
+          t_compute = 0 ;             
+//	  t_compute = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	  
     
 	
 }
@@ -449,19 +420,18 @@ void XBotRTControlClass::Run()
 static int jnt_idx = 12;
 void XBotRTControlClass::KeyBoardControl(char cmd)
 {
-        //StartWalking();
+ //       StartWalking();
 	switch (cmd)
 	{
 	case 'c':
-	{
-		DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start  Walking!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");	  
-		StartWalking();
+	{	  
+//		StartWalking();
 	}
 	break;
 
 	case 's':
 	{
-		DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  Stop Walking !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		//DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  Stop Walking !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
 		StopWalking();
 	}
@@ -903,21 +873,6 @@ void XBotRTControlClass::SolveIK()
 {
 
 	const RobotStateClass& irobot = _WBS.getRobotState();
-	
-        
-	
-// 	if (RobotPara().name == "coman") {
-// 	  std::vector<double> qL(6, 0);
-// 	  std::vector<double> qR(6, 0);
-// 	}
-// 	else
-// 	{
-// 	  Eigen::Vector6d qL, qR;	  
-// 	}
-	
-	
-	
-//  	Eigen::Vector6d qL, qR;
 
 	Eigen::Matrix3d TurnYawO = Rz(TurnYaw);
 	Eigen::Vector3d modCopHip(initHipx, initHipy, 0);
@@ -939,10 +894,6 @@ void XBotRTControlClass::SolveIK()
 	RightFootPos += RightFootPosx;
 	RightFootPos(2) += det_footz_lr(1);			
 	
-	
-
-	// DPRINTF("deltaHip x: %.3f,\ty: %.3f,\tz: %.3f\n", deltaHip[0], deltaHip[1], deltaHip[2]);
-
 
 	Eigen::Matrix3d HipO_Left_Ref = HipO_Left_comp;
 	Eigen::Matrix3d HipO_Right_Ref = HipO_Right_comp;
@@ -1013,7 +964,7 @@ void XBotRTControlClass::SolveIK()
 		}
 		else {
 			// MoveHands();
-		  DPRINTF("========= IsSetHandRefToWorld=============\n");
+		//  DPRINTF("========= IsSetHandRefToWorld=============\n");
 		}
 		FinalLeftHandPos  = LeftHandPosGlobal;
 		FinalRightHandPos = RightHandPosGlobal;
@@ -1135,8 +1086,9 @@ int XBotRTControlClass::user_input(char &cmd)
 	}
 
 	KeyBoardControl(cmd);
+        //DPRINTF("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start  Walking!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-	return nbytes;
+	return 0;
 }
 
 #ifdef USE_XBOT_LOGGER
