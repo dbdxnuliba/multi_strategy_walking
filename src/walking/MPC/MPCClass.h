@@ -3,10 +3,6 @@ MPCClass.h
 
 Description:	Header file of MPCClass
 
-@Version:	1.0
-@Author:	Chengxu Zhou (zhouchengxu@gmail.com)
-@Release:	Thu 02 Aug 2018 11:53:47 AM CEST
-@Update:	Thu 02 Aug 2018 11:53:41 AM CEST
 */
 #pragma once
 
