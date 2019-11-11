@@ -42,7 +42,7 @@ MpcRTControlClass::MpcRTControlClass()
   mpc._robot_name = RobotPara().name;
   mpc._robot_mass = RobotPara().totalmass;
 //   mpc._lift_height = RobotPara().LIFT_HEIGHT;
-    mpc._lift_height = 0.09;
+    mpc._lift_height = 0.05;
 //  mpc._tstep = RobotPara().Tstep;
   
   // initialization

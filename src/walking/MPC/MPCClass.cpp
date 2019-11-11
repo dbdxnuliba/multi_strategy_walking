@@ -69,7 +69,7 @@ void MPCClass::FootStepInputs(double stepwidth, double steplength, double stephe
 	_lift_height_ref.setConstant(_lift_height);
         _lift_height_ref(_footstepsnumber-1) = 0;
         _lift_height_ref(_footstepsnumber-2) = 0;	
-        _lift_height_ref(_footstepsnumber-3) = 0.02; 	
+/*        _lift_height_ref(_footstepsnumber-3) = 0.02; */	
 }
 
 /////////////////////// initialize all the variables============================================================
@@ -373,15 +373,16 @@ void MPCClass::Initialize()
 	}
 	else if (_robot_name == "cogimon"){
 	  //////// for methx ==2:reactive step + body inclination + height variance: for flat ground walking and up-down stairs: offline
-	  _Rx = 1;           _Ry = 1;            _Rz =1;
-	  _alphax = 1;       _alphay = 1;        _alphaz = 100; 
-	  _beltax = 100;   _beltay = 100;        _beltaz = 20000000;
-	  _gamax =  50000000; _gamay = 100000000;  _gamaz = 200;
-	  _Rthetax = 1; _Rthetay = 1;
-	  _alphathetax =1; _alphathetay = 1;
-	  _beltathetax = 1000; _beltathetay = 1000;
-        _gama_zmpx1 =  1000000000; _gama_zmpx2 = 1000000000;  
-	_gama_zmpy1 =  1000000000; _gama_zmpy2 = 1000000000;     //ZMP constraint relaxation;	  
+	    _Rx = 10;           _Ry = 10;            _Rz =10;                     //com acceleration
+	_alphax = 100;        _alphay = 100;        _alphaz = 100;               //com velocity
+	_beltax = 5000;       _beltay = 2000;      _beltaz = 5000000;          //com position
+	_gamax =  1000000;    _gamay = 1000000;  _gamaz = 200;               //footstep location
+	_Rthetax = 10; _Rthetay = 10;                                         // theta acceleration
+	_alphathetax =100; _alphathetay = 100;                                  // theta velocity
+	_beltathetax = 10000; _beltathetay = 10000;	                            // theta postion
+        _gama_zmpx1 =  50000000; _gama_zmpx2 = 50000000;  
+	_gama_zmpy1 =  50000000; _gama_zmpy2 = 50000000;     //ZMP constraint relaxation;
+	  
         } 
 	else
 	{DPRINTF("Errorrrrrrrr for IK\n");}
