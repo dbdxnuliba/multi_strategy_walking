@@ -155,7 +155,6 @@ void MPCClass::Initialize()
 	_steplength(5) = -0.03;
 	_steplength(6) = -0.1;
 	_steplength(7) = 0.00;
-	_steplength(7) = 0.00;
 	_stepwidth(5) = 0.22;
 	_stepwidth(6) = 0.22;	
 
@@ -2622,21 +2621,21 @@ void MPCClass::Foot_trajectory_solve(int j_index,bool _stopwalking)
 	    
 	    
 
-	    if (j_index>=73)
-	    {
-	      cout<<"_Lfootx_plan:"<<Lfootx_plan<<endl;
-	      cout<<"_Lfooty_plan:"<<Lfooty_plan<<endl;
-	      cout<<"t_a_plan:"<<t_a_plan<<endl;
-	      cout<<"_tx(_bjx1-1)"<<_tx(_bjx1-1)<<endl;
-	      cout<<"(_bjx1-1)"<<_bjx1-1<<endl;
-	      cout<<"t-des"<<(j_index +1 - round(_tx(_bjx1-1)/_dt) +1)*_dt<<endl;
-	    cout<<"j_index:"<<j_index<<endl;	  
-	    cout<<"t-des"<<t_des<<endl;
-	    cout<<"_bjx1:"<<_bjx1<<endl;
-	    cout<<"_Lfootx(j_index):"<<_Lfootx(j_index)<<endl;
-	    cout<<"_Lfooty(j_index):"<<_Lfooty(j_index)<<endl;	  	      
-	      
-	    }
+// 	    if (j_index>=73)
+// 	    {
+// 	      cout<<"_Lfootx_plan:"<<Lfootx_plan<<endl;
+// 	      cout<<"_Lfooty_plan:"<<Lfooty_plan<<endl;
+// 	      cout<<"t_a_plan:"<<t_a_plan<<endl;
+// 	      cout<<"_tx(_bjx1-1)"<<_tx(_bjx1-1)<<endl;
+// 	      cout<<"(_bjx1-1)"<<_bjx1-1<<endl;
+// 	      cout<<"t-des"<<(j_index +1 - round(_tx(_bjx1-1)/_dt) +1)*_dt<<endl;
+// 	    cout<<"j_index:"<<j_index<<endl;	  
+// 	    cout<<"t-des"<<t_des<<endl;
+// 	    cout<<"_bjx1:"<<_bjx1<<endl;
+// 	    cout<<"_Lfootx(j_index):"<<_Lfootx(j_index)<<endl;
+// 	    cout<<"_Lfooty(j_index):"<<_Lfooty(j_index)<<endl;	  	      
+// 	      
+// 	    }
 	    
 	    
 	    

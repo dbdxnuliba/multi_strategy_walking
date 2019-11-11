@@ -849,16 +849,6 @@ void XBotRTControlClass::Admittance_controller()
   deltaFtOri_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
   
   deltaFtOri_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
-//   
-//   ankle_Ori_left = Rz(det_hip_pose(2))*Ry(det_hip_pose(1))*Rx(det_hip_pose(0));
-//   ankle_Ori_right = Rz(det_hip_pose(5))*Ry(det_hip_pose(4))*Rx(det_hip_pose(3));
-  
-// 
-//   
-// //   cout<<"det_hip_pose:"<<det_hip_pose<<endl;
-// //   cout<<"deltaHip:"<<deltaHip.transpose()<<endl;
-// //   cout<<"det_foot_rpy_lr:"<<det_foot_rpy_lr.transpose()<<endl;
-// //   cout<<"det_footz_lr:"<<det_footz_lr.transpose()<<endl;
 
   
 }
