@@ -74,10 +74,8 @@ MpcRTControlClass::MpcRTControlClass()
   mpc.Initialize();
     
   
-  _refer_t_max = mpc.Get_maximal_number_reference();
 
  _t_int = 0;
-  _t_walkdtime_flag = 0;
   _t_walkdtime_restart_flag = 0;
   _walkdtime1 =0;
  
@@ -94,17 +92,14 @@ MpcRTControlClass::MpcRTControlClass()
   _stop_flag_walkdtime.setZero(_walkdtime_max);
     
   _estimated_state.setZero();
-  _estimated_state_global.setZero(19,_walkdtime_max);
   
   _Rfoot_location_feedback.setZero();
   _Lfoot_location_feedback.setZero(); 
   
-  _state_generate_interpo.setZero(12,_walkdtime_max);
   
   _COM_IN.setZero(3,_walkdtime_max);
   _COM_IN(2,0) = RobotParaClass::Z_C()-_height_offsetx;
   _COM_IN(2,1) = RobotParaClass::Z_C()-_height_offsetx;
-  _COM_est.setZero(3,_walkdtime_max); 
   _body_IN.setZero(3,_walkdtime_max);
   _FootR_IN.setZero(3,_walkdtime_max);
   _FootR_IN(1,0) = -RobotParaClass::HALF_HIP_WIDTH();
@@ -124,8 +119,8 @@ MpcRTControlClass::MpcRTControlClass()
   _ppthetay= 0.01; _pdthetay = 0;_pithetax =0.0001; 
   _ppthetaz= 0.1; _pdthetaz = 0.001;_pithetaz =0.0001;     
   
-  _error_com_position.setZero(3);
-  _error_torso_angle.setZero(3);
+  _error_com_position.setZero();
+  _error_torso_angle.setZero();
   
   _feedback_lamda = 0;
   
@@ -146,8 +141,7 @@ void MpcRTControlClass::WalkingReactStepping()
 //         DPRINTF("========= walking loop run. =============\n");
         _walkdtime1 = walkdtime - _t_walkdtime_restart_flag;
 // 	cout << "walkdtime1:"<<_walkdtime1<<endl;
-  
-        clock_t t_start,t_finish;
+
 	
 	
 	if(IsStartWalk)
@@ -187,11 +181,9 @@ void MpcRTControlClass::WalkingReactStepping()
 	      DPRINTF("normal walking\n");
 	      _walkdtime1 -= (int)_height_offset_time/_dtx;
 	      if(_walkdtime1 < _walkdtime_max)
-	      {
-		_t_walkdtime_flag = _walkdtime1;	  		
+	      {	  		
 		_t_int = floor(_walkdtime1 * _dtx / dt_mpc);	
 		//  cout<<"t_int:"<<_t_int<<endl;
-		t_start = clock();
 		
 		if (_t_int >=1)
 		{
@@ -296,21 +288,6 @@ void MpcRTControlClass::WalkingReactStepping()
 		_FootR_IN(1,_walkdtime1) = RightFootPosx(1);
 		_FootR_IN(2,_walkdtime1) = RightFootPosx(2);
 		
-		///////////////////////////////////////////////////////////////////////
-		////// reference state storage
-		
-		_state_generate_interpo(0,_walkdtime1) = PelvisPos(0);
-		_state_generate_interpo(1,_walkdtime1) = PelvisPos(1);
-		_state_generate_interpo(2,_walkdtime1) = PelvisPos(2);
-		_state_generate_interpo(3,_walkdtime1) = body_thetax(0);
-		_state_generate_interpo(4,_walkdtime1) = body_thetax(1);
-		_state_generate_interpo(5,_walkdtime1) = body_thetax(2);
-		_state_generate_interpo(6,_walkdtime1) = LeftFootPosx(0);
-		_state_generate_interpo(7,_walkdtime1) = LeftFootPosx(1);
-		_state_generate_interpo(8,_walkdtime1) = LeftFootPosx(2);
-		_state_generate_interpo(9,_walkdtime1) = RightFootPosx(0);
-		_state_generate_interpo(10,_walkdtime1) = RightFootPosx(1);
-		_state_generate_interpo(11,_walkdtime1) = RightFootPosx(2);	    
 			
 		
 		////// simulator: CoM pelvis_position && velocity:
@@ -395,101 +372,12 @@ void MpcRTControlClass::WalkingReactStepping()
 // 		  HipO_Turn = Rz(body_thetax[1])*Ry(body_thetax[1])*Rx(body_thetax[0]);		    
 // 		}
 // 		
-
-		
-		t_finish = clock();
-
-		
-		
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// actual state storagee
-		_estimated_state_global(0,_walkdtime1) = _estimated_state(0,0);  
-		_estimated_state_global(1,_walkdtime1) = _estimated_state(1,0);
-		_estimated_state_global(2,_walkdtime1) = _estimated_state(2,0);	    
-		
-		_estimated_state_global(3,_walkdtime1) = _estimated_state(3,0);
-		_estimated_state_global(4,_walkdtime1) = _estimated_state(4,0);
-		_estimated_state_global(5,_walkdtime1) = _estimated_state(5,0);	    
-		_estimated_state_global(6,_walkdtime1) = _estimated_state(6,0);
-		_estimated_state_global(7,_walkdtime1) = _estimated_state(7,0);
-		_estimated_state_global(8,_walkdtime1) = _estimated_state(8,0);
-		
-		_estimated_state_global(9,_walkdtime1) = _estimated_state(9,0);
-		_estimated_state_global(10,_walkdtime1) = _estimated_state(10,0);
-		_estimated_state_global(11,_walkdtime1) = _estimated_state(11,0);
-		
-		_estimated_state_global(12,_walkdtime1) = _estimated_state(12,0);
-		_estimated_state_global(13,_walkdtime1) = _estimated_state(13,0);	   
-		_estimated_state_global(14,_walkdtime1) = _estimated_state(14,0);	    
-		
-		_estimated_state_global(15,_walkdtime1) = _estimated_state(15,0);
-		_estimated_state_global(16,_walkdtime1) = _estimated_state(16,0);	   
-		_estimated_state_global(17,_walkdtime1) = _estimated_state(17,0);	
-
-		// time cost:
-		if (_t_int >=1)
-		{
-		  if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
-		  {
-		    _estimated_state_global(18,_walkdtime1) = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	      
-		  }	 
-		}
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	      
 	      
 	      }
 	      else  //walking beyond time counter
 	      {
-		_t_walkdtime_restart_flag = walkdtime;
-		
-		IsStartWalk = false;
-// 		_t_walkdtime_restart_flag = walkdtime;
-		
-		
-		_t_walkdtime_restart_flag = walkdtime;
-		
-		if (_walkdtime1 == _walkdtime_max)
-		{
-		//////=============////data-save==================================
-		  mpc.File_wl(); 
-		  
-		  std::string fileName2 = "NMPC_CoM feedback.txt" ;
-		  std::ofstream outfile2( fileName2.c_str() ) ; // file name and the operation type.        
-		  
-		  for(int i=0; i<_estimated_state_global.rows(); i++){
-		      for(int j=0; j<_estimated_state_global.cols(); j++){
-			    outfile2 << (double) _estimated_state_global(i,j) << " " ; 
-		      }
-		      outfile2 << std::endl;       // a   newline
-		  }
-		  outfile2.close();	
-		  
-		  
-		  std::string fileName1 = "NMPC_optimal_trajectory_interpo.txt" ;
-		  std::ofstream outfile1( fileName1.c_str() ) ; // file name and the operation type.    
-		  
-		  for(int i=0; i<_state_generate_interpo.rows(); i++){
-		      for(int j=0; j<_state_generate_interpo.cols(); j++){
-			    outfile1 << (double) _state_generate_interpo(i,j) << " " ; 
-		      }
-		      outfile1 << std::endl;       // a   newline
-		  }
-		  outfile1.close();  
-
-		  DPRINTF("========= Finish normal walking. =============\n");
-		  DPRINTF("========= data saving. =============\n");
-		  
-		}
-		
-		else
-		{
-
-		  int _t_walkdtime_restart_flagxxx = walkdtime;
-// 		  cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
-		}
-
-		
-		
+		_t_walkdtime_restart_flag = walkdtime;		
+		IsStartWalk = false;		
 	      }      
 	      
 	    }
@@ -522,7 +410,6 @@ void MpcRTControlClass::WalkingReactStepping()
 		if(_walkdtime1 < _wal_max)
 		{	        	      
 		  _t_int = floor(_walkdtime1 * _dtx / dt_mpc);
-		  t_start = clock();
 		  
 		  if (_t_int >=1)
 		  {
@@ -605,25 +492,8 @@ void MpcRTControlClass::WalkingReactStepping()
 
 		  _FootR_IN(0,_walkdtime1) = RightFootPosx(0);
 		  _FootR_IN(1,_walkdtime1) = RightFootPosx(1);
-		  _FootR_IN(2,_walkdtime1) = RightFootPosx(2);
-		  
-		  ///////////////////////////////////////////////////////////////////////
-		  ////// reference state storage
-		  
-		  _state_generate_interpo(0,_walkdtime1) = PelvisPos(0);
-		  _state_generate_interpo(1,_walkdtime1) = PelvisPos(1);
-		  _state_generate_interpo(2,_walkdtime1) = PelvisPos(2);
-		  _state_generate_interpo(3,_walkdtime1) = body_thetax(0);
-		  _state_generate_interpo(4,_walkdtime1) = body_thetax(1);
-		  _state_generate_interpo(5,_walkdtime1) = body_thetax(2);
-		  _state_generate_interpo(6,_walkdtime1) = LeftFootPosx(0);
-		  _state_generate_interpo(7,_walkdtime1) = LeftFootPosx(1);
-		  _state_generate_interpo(8,_walkdtime1) = LeftFootPosx(2);
-		  _state_generate_interpo(9,_walkdtime1) = RightFootPosx(0);
-		  _state_generate_interpo(10,_walkdtime1) = RightFootPosx(1);
-		  _state_generate_interpo(11,_walkdtime1) = RightFootPosx(2);	    
-			  
-		  
+		  _FootR_IN(2,_walkdtime1) = RightFootPosx(2);		  	    
+					  
 		  ////// simulator: CoM pelvis_position && velocity:
 		  /////////// can be replaced by HipPos;:
 		  const RobotStateClass& irobot = _WBS.getRobotState();
@@ -707,88 +577,12 @@ void MpcRTControlClass::WalkingReactStepping()
   // 		}
   // 		
 
-		  
-		  t_finish = clock();
-
-		  
-		  
-		  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		  // actual state storagee
-		  _estimated_state_global(0,_walkdtime1) = _estimated_state(0,0);  
-		  _estimated_state_global(1,_walkdtime1) = _estimated_state(1,0);
-		  _estimated_state_global(2,_walkdtime1) = _estimated_state(2,0);	    
-		  
-		  _estimated_state_global(3,_walkdtime1) = _estimated_state(3,0);
-		  _estimated_state_global(4,_walkdtime1) = _estimated_state(4,0);
-		  _estimated_state_global(5,_walkdtime1) = _estimated_state(5,0);	    
-		  _estimated_state_global(6,_walkdtime1) = _estimated_state(6,0);
-		  _estimated_state_global(7,_walkdtime1) = _estimated_state(7,0);
-		  _estimated_state_global(8,_walkdtime1) = _estimated_state(8,0);
-		  
-		  _estimated_state_global(9,_walkdtime1) = _estimated_state(9,0);
-		  _estimated_state_global(10,_walkdtime1) = _estimated_state(10,0);
-		  _estimated_state_global(11,_walkdtime1) = _estimated_state(11,0);
-		  
-		  _estimated_state_global(12,_walkdtime1) = _estimated_state(12,0);
-		  _estimated_state_global(13,_walkdtime1) = _estimated_state(13,0);	   
-		  _estimated_state_global(14,_walkdtime1) = _estimated_state(14,0);	    
-		  
-		  _estimated_state_global(15,_walkdtime1) = _estimated_state(15,0);
-		  _estimated_state_global(16,_walkdtime1) = _estimated_state(16,0);	   
-		  _estimated_state_global(17,_walkdtime1) = _estimated_state(17,0);	
-
-		  // time cost:
-		  if (_t_int >=1)
-		  {
-		    if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
-		    {
-		      _estimated_state_global(18,_walkdtime1) = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	      
-		    }	 
-		  }
 		  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      	      
 		}
 		else
 		{
 		  _t_walkdtime_restart_flag = walkdtime;
-		  
-  /*		if (_walkdtime1 == _wal_max)
-		  {
-		    _t_walkdtime_restart_flag = walkdtime;
-		  //////=============////data-save==================================
-		    mpc.File_wl(); 
-		    
-		    std::string fileName2 = "C++_NMPC2018_3robut3_CoM feedback.txt" ;
-		    std::ofstream outfile2( fileName2.c_str() ) ; // file name and the operation type.        
-		    
-		    for(int i=0; i<_estimated_state_global.rows(); i++){
-			for(int j=0; j<_estimated_state_global.cols(); j++){
-			      outfile2 << (double) _estimated_state_global(i,j) << " " ; 
-			}
-			outfile2 << std::endl;       // a   newline
-		    }
-		    outfile2.close();	
-		    
-		    
-		    std::string fileName1 = "C++_NMPC2018_3robut3_optimal_trajectory_interpo.txt" ;
-		    std::ofstream outfile1( fileName1.c_str() ) ; // file name and the operation type.    
-		    
-		    for(int i=0; i<_state_generate_interpo.rows(); i++){
-			for(int j=0; j<_state_generate_interpo.cols(); j++){
-			      outfile1 << (double) _state_generate_interpo(i,j) << " " ; 
-			}
-			outfile1 << std::endl;       // a   newline
-		    }
-		    outfile1.close();  
-
-		  DPRINTF("=========Stop walking!!!!!!!!!!!!!!!!. =============\n");
-		  DPRINTF("=========Data saving!!!!!!!!!!!!!!!!. =============\n");		
-		  }
-		  else
-		  {
-		    _t_walkdtime_restart_flag = walkdtime;
-  // 		  cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;
-		  }		
-	  */	
+		  	
 		}		      
 	      } 
 	      else
@@ -801,10 +595,8 @@ void MpcRTControlClass::WalkingReactStepping()
 	    {
   // 	    cout <<"_walkdtime1:"<<_walkdtime1<<endl;
 		if(_walkdtime1 < _walkdtime_max)
-		{
-		  _t_walkdtime_flag = _walkdtime1;	  		
+		{	  		
 		  _t_int = floor(_walkdtime1 * _dtx / dt_mpc);		
-		  t_start = clock();
 		  
 		  if (_t_int >=1)
 		  {
@@ -888,22 +680,7 @@ void MpcRTControlClass::WalkingReactStepping()
 		  _FootR_IN(0,_walkdtime1) = RightFootPosx(0);
 		  _FootR_IN(1,_walkdtime1) = RightFootPosx(1);
 		  _FootR_IN(2,_walkdtime1) = RightFootPosx(2);
-		  
-		  ///////////////////////////////////////////////////////////////////////
-		  ////// reference state storage
-		  
-		  _state_generate_interpo(0,_walkdtime1) = PelvisPos(0);
-		  _state_generate_interpo(1,_walkdtime1) = PelvisPos(1);
-		  _state_generate_interpo(2,_walkdtime1) = PelvisPos(2);
-		  _state_generate_interpo(3,_walkdtime1) = body_thetax(0);
-		  _state_generate_interpo(4,_walkdtime1) = body_thetax(1);
-		  _state_generate_interpo(5,_walkdtime1) = body_thetax(2);
-		  _state_generate_interpo(6,_walkdtime1) = LeftFootPosx(0);
-		  _state_generate_interpo(7,_walkdtime1) = LeftFootPosx(1);
-		  _state_generate_interpo(8,_walkdtime1) = LeftFootPosx(2);
-		  _state_generate_interpo(9,_walkdtime1) = RightFootPosx(0);
-		  _state_generate_interpo(10,_walkdtime1) = RightFootPosx(1);
-		  _state_generate_interpo(11,_walkdtime1) = RightFootPosx(2);	    
+		  	    
 			  
 		  
 		  ////// simulator: CoM pelvis_position && velocity:
@@ -988,101 +765,12 @@ void MpcRTControlClass::WalkingReactStepping()
   // 		  HipO_Turn = Rz(body_thetax[1])*Ry(body_thetax[1])*Rx(body_thetax[0]);		    
   // 		}
   // 		
-
-		  
-		  t_finish = clock();
-
-		  
-		  
-		  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		  // actual state storagee
-		  _estimated_state_global(0,_walkdtime1) = _estimated_state(0,0);  
-		  _estimated_state_global(1,_walkdtime1) = _estimated_state(1,0);
-		  _estimated_state_global(2,_walkdtime1) = _estimated_state(2,0);	    
-		  
-		  _estimated_state_global(3,_walkdtime1) = _estimated_state(3,0);
-		  _estimated_state_global(4,_walkdtime1) = _estimated_state(4,0);
-		  _estimated_state_global(5,_walkdtime1) = _estimated_state(5,0);	    
-		  _estimated_state_global(6,_walkdtime1) = _estimated_state(6,0);
-		  _estimated_state_global(7,_walkdtime1) = _estimated_state(7,0);
-		  _estimated_state_global(8,_walkdtime1) = _estimated_state(8,0);
-		  
-		  _estimated_state_global(9,_walkdtime1) = _estimated_state(9,0);
-		  _estimated_state_global(10,_walkdtime1) = _estimated_state(10,0);
-		  _estimated_state_global(11,_walkdtime1) = _estimated_state(11,0);
-		  
-		  _estimated_state_global(12,_walkdtime1) = _estimated_state(12,0);
-		  _estimated_state_global(13,_walkdtime1) = _estimated_state(13,0);	   
-		  _estimated_state_global(14,_walkdtime1) = _estimated_state(14,0);	    
-		  
-		  _estimated_state_global(15,_walkdtime1) = _estimated_state(15,0);
-		  _estimated_state_global(16,_walkdtime1) = _estimated_state(16,0);	   
-		  _estimated_state_global(17,_walkdtime1) = _estimated_state(17,0);	
-
-		  // time cost:
-		  if (_t_int >=1)
-		  {
-		    if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
-		    {
-		      _estimated_state_global(18,_walkdtime1) = (double)(t_finish - t_start)/CLOCKS_PER_SEC ;	      
-		    }	 
-		  }
-		  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		
 		
 		}
 		else  //walking beyond time counter
 		{
-		  _t_walkdtime_restart_flag = walkdtime;
-		  
-		  IsStartWalk = false;
-  // 		_t_walkdtime_restart_flag = walkdtime;
-		  
-		  
-		  _t_walkdtime_restart_flag = walkdtime;
-		  
-		  if (_walkdtime1 == _walkdtime_max)
-		  {
-		  //////=============////data-save==================================
-		    mpc.File_wl(); 
-		    
-		    std::string fileName2 = "NMPC2018_CoM feedback.txt" ;
-		    std::ofstream outfile2( fileName2.c_str() ) ; // file name and the operation type.        
-		    
-		    for(int i=0; i<_estimated_state_global.rows(); i++){
-			for(int j=0; j<_estimated_state_global.cols(); j++){
-			      outfile2 << (double) _estimated_state_global(i,j) << " " ; 
-			}
-			outfile2 << std::endl;       // a   newline
-		    }
-		    outfile2.close();	
-		    
-		    
-		    std::string fileName1 = "NMPC2018_optimal_trajectory_interpo.txt" ;
-		    std::ofstream outfile1( fileName1.c_str() ) ; // file name and the operation type.    
-		    
-		    for(int i=0; i<_state_generate_interpo.rows(); i++){
-			for(int j=0; j<_state_generate_interpo.cols(); j++){
-			      outfile1 << (double) _state_generate_interpo(i,j) << " " ; 
-			}
-			outfile1 << std::endl;       // a   newline
-		    }
-		    outfile1.close();  
-
-		    DPRINTF("========= Finish normal walking. =============\n");
-		    DPRINTF("========= data saving. =============\n");
-		    
-		  }
-		  
-		  else
-		  {
-
-		    int _t_walkdtime_restart_flagxxx = walkdtime;
-//		    cout<< "_t_walkdtime_restart_flag"<<_t_walkdtime_restart_flag<<endl;		  
-		  }
-
-		  
-		  
+		  _t_walkdtime_restart_flag = walkdtime;	  
+		  IsStartWalk = false; 
 		}	    	    
 	    }    
 	    
@@ -1122,11 +810,11 @@ void MpcRTControlClass::StartWalking()
   if (_stop_walking)
   {
     _start_walking_again = true;
-    DPRINTF("========= start walking again. =============\n");     
+ //   DPRINTF("========= start walking again. =============\n");     
   }
   else
   {
-    DPRINTF("========= start walking-first time =============\n");   
+ //   DPRINTF("========= start walking-first time =============\n");   
   }
    _stop_walking = false;
   
@@ -1147,7 +835,7 @@ void MpcRTControlClass::StopWalking()
       
       IsStartWalk = true;
       _stop_walking = true;  
-      DPRINTF("========= stop walking enable=============\n");          
+//      DPRINTF("========= stop walking enable=============\n");          
     }
       
   
