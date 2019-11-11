@@ -19,7 +19,7 @@ Description:	Header file of MpcRTControlClass
 #include <time.h>
 
 const double dt_mpc = 0.1;   // definition of sampling time of MPC solover
- const double _height_offsetx = 0.05;  
+const double _height_offsetx = 0.05;  
 const double _height_offset_time = 2;  
 
 using namespace Eigen;

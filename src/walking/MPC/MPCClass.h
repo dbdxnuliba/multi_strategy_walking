@@ -140,9 +140,6 @@ private:
 	Eigen::Matrix<double,_nh, 1> _Hcom;
 	Eigen::Matrix<double,1,1> _ggg;	
 	
-	////result CoM_foot_trajection_generation
-	Eigen::Matrix<double,3,_nsum> _CoM_position_optimal, _torso_angle_optimal, _L_foot_optition_optimal, _R_foot_optition_optimal;
-	Eigen::Matrix<double,3,_footstepsnumber> _foot_location_optimal;
 		
 	// CoM+angular momentum state and contro input
 	Eigen::Matrix<double,3,_nsum> _xk,_yk,_zk,_thetaxk,_thetayk;

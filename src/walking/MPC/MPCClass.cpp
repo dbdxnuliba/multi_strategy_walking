@@ -219,11 +219,6 @@ void MPCClass::Initialize()
 // 	_L_foot_optition_optimal = Eigen::MatrixXd::Zero(3,_nsum);
 // 	_R_foot_optition_optimal = Eigen::MatrixXd::Zero(3,_nsum);
 // 	_foot_location_optimal = Eigen::MatrixXd::Zero(3,_footstepsnumber);
-	_CoM_position_optimal.setZero();
-	_torso_angle_optimal.setZero();
-	_L_foot_optition_optimal.setZero();
-	_R_foot_optition_optimal.setZero();
-	_foot_location_optimal.setZero();
 	
 	//// state variable for mpc
 // 	_xk = Eigen::MatrixXd::Zero(3,_nsum); 
@@ -2752,9 +2747,6 @@ int MPCClass::Get_maximal_number(double dtx)
 Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
   //reference com position
-        _CoM_position_optimal.row(0) = _comx;
-	_CoM_position_optimal.row(1) = _comy;
-	_CoM_position_optimal.row(2) = _comz;
 	_comz(0) = RobotParaClass::Z_C()-_height_offset;
 	_comz(1) = RobotParaClass::Z_C()-_height_offset;
 	_comz(2) = RobotParaClass::Z_C()-_height_offset;
@@ -2849,9 +2841,6 @@ Vector3d MPCClass::XGetSolution_CoM_position(int walktime, double dt_sample, Eig
 Vector3d MPCClass::XGetSolution_body_inclination(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
   //reference com position
-        _torso_angle_optimal.row(0) = _thetax;
-	_torso_angle_optimal.row(1) = _thetay;
-	_torso_angle_optimal.row(2) = _thetaz;
 		
 	Vector3d com_inte(0,0,0);		
 	if (walktime>=2)
@@ -2927,10 +2916,6 @@ Vector3d MPCClass::XGetSolution_body_inclination(int walktime, double dt_sample,
 Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
 	
-        _R_foot_optition_optimal.row(0) = _Rfootx;
-	_R_foot_optition_optimal.row(1) = _Rfooty;
-	_R_foot_optition_optimal.row(2) = _Rfootz;
-	
 	Vector3d com_inte(0,0,0);	
 	
 	if (walktime>=2)
@@ -2966,9 +2951,6 @@ Vector3d MPCClass::XGetSolution_Foot_positionR(int walktime, double dt_sample, E
 
 Vector3d MPCClass::XGetSolution_Foot_positionL(int walktime, double dt_sample, Eigen::Vector3d body_in1, Eigen::Vector3d body_in2, Eigen::Vector3d body_in3)
 {
-        _L_foot_optition_optimal.row(0) = _Lfootx;
-	_L_foot_optition_optimal.row(1) = _Lfooty;
-	_L_foot_optition_optimal.row(2) = _Lfootz;
 	
 	Vector3d com_inte(0,0,0);	
 	
