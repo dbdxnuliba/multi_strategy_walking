@@ -33,7 +33,7 @@ using namespace arma;
 const int _footstepsnumber = 15;       //  number of _footstepnumber
 const double _dt = 0.05;                //sampling time
 const int _nh = 30;                    /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
-const double _tstep = 2;              ///step period
+const double _tstep = 1.5;              ///step period
 const int _nT = round(_tstep/_dt);      /// _tstep/_dt)  the number of one step cycle
 const int _nstep = 2;                   /// maximal footstep locations where the predictive windwo covers
 const int _Nt = 5*_nh + 3*_nstep;       /// _Nt = 5*_nh + 3*_nstep;  the number of the variable of the optimization problem
@@ -72,7 +72,9 @@ public:
 	/// for step timing optimization
         void step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_state, Eigen::Vector3d _Rfoot_location_feedback, Eigen::Vector3d _Lfoot_location_feedback,double lamda, bool _stopwalking);
         int Indexfind(double goalvari, int xyz);
-	void solve_stepping_timing(); 		
+	void solve_stepping_timing_twosteps();
+	void solve_stepping_timing_onestep();
+	void solve_stepping_timing_non();	
 
 	
 	/// for height +angular momentum + step optimization
@@ -108,7 +110,7 @@ public:
 	double _robot_mass;
 	double _lift_height;	
 
-	int _method_flag;
+	int _method_flag_nlp;
 	
 	int _n_end_walking;
 	
@@ -245,10 +247,22 @@ private:
 	Eigen::Matrix<double,8,1> _det_trx;
 	
 	// tr1 & tr2: equation constraints
+	////// time duration: hyperbolic function 
 	Eigen::Matrix<double,1,8> _trx12, _trx121;	
 	Eigen::Matrix<double,1,1> _det_trx12, _det_trx121;		
 	Eigen::Matrix<double,2,8> _trxx;
-	Eigen::Matrix<double,2,1> _det_trxx;	
+	Eigen::Matrix<double,2,1> _det_trxx;
+        
+	//// step location & step duration of current and next steps
+	Eigen::Matrix<double,1,8> _Lxx_ref1_e,  _Lyy_ref1_e,  _tr1_ref1_e,  _tr2_ref1_e,  _Lxx_ref_e,  _Lyy_ref_e,  _tr1_ref_e,  _tr2_ref_e;	
+	Eigen::Matrix<double,1,1> _Lxx_ref1_eq, _Lyy_ref1_eq, _tr1_ref1_eq, _tr2_ref1_eq, _Lxx_ref_eq, _Lyy_ref_eq, _tr1_ref_eq, _tr2_ref_eq;
+
+
+
+
+
+
+	
 	
 	///foot location constraints 
 	double _footx_max, _footx_min,_footy_max,_footy_min;	

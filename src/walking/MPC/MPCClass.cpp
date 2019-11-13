@@ -27,7 +27,7 @@ MPCClass::MPCClass()                    ///declaration function
 	, _robot_name("")
 	, _robot_mass(0.0)
 	, _lift_height(0.0)
-	, _method_flag(0)
+	, _method_flag_nlp(0)
 	,_n_end_walking(1)
 	,_j_period(0)
 	,_F_R(0,0,0)
@@ -488,7 +488,16 @@ void MPCClass::Initialize()
 	//// tr1&tr2:equation constraints
 	_trx12.setZero();     _trx121.setZero();	
 	_det_trx12.setZero(); _det_trx121.setZero();		
-	_trxx.setZero();      _det_trxx.setZero();	
+	_trxx.setZero();      _det_trxx.setZero();
+
+	 _Lxx_ref1_e.setZero();  _Lyy_ref1_e.setZero();  _tr1_ref1_e.setZero();  _tr2_ref1_e.setZero();  
+	 _Lxx_ref_e.setZero();   _Lyy_ref_e.setZero();   _tr1_ref_e.setZero();   _tr2_ref_e.setZero();	
+	 _Lxx_ref1_eq.setZero(); _Lyy_ref1_eq.setZero(); _tr1_ref1_eq.setZero(); _tr2_ref1_eq.setZero();
+	 _Lxx_ref_eq.setZero(); _Lyy_ref_eq.setZero();   _tr1_ref_eq.setZero();  _tr2_ref_eq.setZero();
+
+
+
+	
 	
 
 	
@@ -566,7 +575,42 @@ void MPCClass::Initialize()
 	_Lfootvx_kmp_old.setZero(); _Lfootvy_kmp_old.setZero();                 _Lfootvz_kmp_old.setZero(); 
 
 	_Rfootx_kmp_old.setZero();  _Rfooty_kmp_old.setConstant(-_stepwidth(0));_Rfootz_kmp_old.setZero(); 
-	_Rfootvx_kmp_old.setZero(); _Rfootvy_kmp_old.setZero();                 _Rfootvz_kmp_old.setZero(); 	
+	_Rfootvx_kmp_old.setZero(); _Rfootvy_kmp_old.setZero();                 _Rfootvz_kmp_old.setZero(); 
+
+
+	///// generated CoM final position
+	if (_method_flag_nlp==2)
+	{
+	  ////number of inequality constraints: 8+8+8+4+4+4
+	  int nVars = 8;
+	  int nEqCon = 2;
+	  int nIneqCon = 24 + 12;
+	  resizeQP(nVars, nEqCon, nIneqCon);  
+	  
+	}
+	else
+	{
+	  if (_method_flag_nlp==1)
+	  {	    
+	    int nVars = 8;
+	    int nEqCon = 6;
+	    int nIneqCon = 24 + 12;
+	    resizeQP(nVars, nEqCon, nIneqCon);  	    
+	    
+	  }
+	  else
+	  {
+	    int nVars = 8;
+	    int nEqCon = 10;
+	    int nIneqCon = 24 + 12;
+	    resizeQP(nVars, nEqCon, nIneqCon);  	    
+	    
+	  }
+	  
+	}
+
+
+	
 
 	cout << "finish!!!!!!!!!!! initial for nlp_KMP parameters"<<endl;
 
@@ -1080,8 +1124,27 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
     step_timing_constraints(i);
     
     ///// generated CoM final position
-    ////number of inequality constraints: 8+8+8+4+4+4
-    solve_stepping_timing();
+    if (_method_flag_nlp==2)
+    {
+      ////number of inequality constraints: 8+8+8+4+4+4
+      solve_stepping_timing_twosteps();      
+      
+    }
+    else
+    {
+      if (_method_flag_nlp==1)
+      {
+	solve_stepping_timing_onestep();
+      }
+      else
+      {	
+	solve_stepping_timing_non();
+      }
+      
+    }
+
+    
+
     
     if (_X.rows() == 8)
     {
@@ -1464,6 +1527,35 @@ void MPCClass::step_timing_constraints(int i)
     _det_trxx.row(0) = _det_trx12; _det_trxx.row(1) = _det_trx121;    
 
      
+//  step location and step duration equality constraints 
+    _Lxx_ref1_e = _SS5;     _Lyy_ref1_e = _SS6;  _tr1_ref1_e = _SS7;  _tr2_ref1_e = _SS8;  
+     _Lxx_ref_e = _SS1;      _Lyy_ref_e = _SS2;   _tr1_ref_e = _SS3;   _tr2_ref_e = _SS4;	
+    
+    _Lxx_ref1_eq = -(_SS5*_vari_ini);   
+    _Lyy_ref1_eq = -(_SS6*_vari_ini); 
+    _tr1_ref1_eq = -(_SS7*_vari_ini);
+    _tr2_ref1_eq = -(_SS8*_vari_ini);
+    
+    _Lxx_ref_eq = -(_SS1*_vari_ini);   
+    _Lyy_ref_eq = -(_SS2*_vari_ini); 
+    _tr1_ref_eq = -(_SS3*_vari_ini);
+    _tr2_ref_eq = -(_SS4*_vari_ini);    
+    
+    
+    _Lxx_ref1_eq(0,0) += _Lxx_refx1;  
+    _Lyy_ref1_eq(0,0) +=_Lyy_refy1; 
+    _tr1_ref1_eq(0,0) +=_tr1_ref1; 
+    _tr2_ref1_eq(0,0) += _tr2_ref1;
+    
+    
+     _Lxx_ref_eq(0,0) += _Lxx_refx;   
+     _Lyy_ref_eq(0,0) +=_Lyy_refy;   
+     _tr1_ref_eq(0,0) +=_tr1_ref;   
+     _tr2_ref_eq(0,0) += _tr2_ref;    
+
+
+    
+    
 
 //  foot location constraints      
     if (_periond_i % 2 == 0)
@@ -1734,12 +1826,12 @@ Eigen::MatrixXd MPCClass::Matrix_pu(Eigen::MatrixXd a, Eigen::MatrixXd b, int nh
 
 
 
-void MPCClass::solve_stepping_timing()
+void MPCClass::solve_stepping_timing_twosteps()
 {
-  int nVars = 8;
+/*  int nVars = 8;
   int nEqCon = 2;
   int nIneqCon = 24 + 12;
-  resizeQP(nVars, nEqCon, nIneqCon);	    
+  resizeQP(nVars, nEqCon, nIneqCon);*/	    
 
   _G = _SQ_goal3;
   _g0 = _Sq_goal3;
@@ -1772,6 +1864,119 @@ void MPCClass::solve_stepping_timing()
   Solve();  
 
 }
+
+
+void MPCClass::solve_stepping_timing_onestep()
+{
+/*  int nVars = 8;
+  int nEqCon = 2;
+  int nIneqCon = 24 + 12;
+  resizeQP(nVars, nEqCon, nIneqCon);*/	    
+
+  _G = _SQ_goal3;
+  _g0 = _Sq_goal3;
+  _X = _vari_ini;
+
+// min 0.5 * x G x + g0 x
+// _s.t.
+// 		CE^T x + ce0 = 0   ///// equality constraints
+// 		CI^T x + ci0 >= 0  //// inequality constraints
+  _CI.block<8,8>(0,0) = _trx.transpose() * (-1);
+  _CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
+  _CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
+  _CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
+  _CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
+  _CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
+  
+  _ci0.block<8,1>(0, 0) = _det_trx;
+  _ci0.block<8,1>(8, 0) = _det_h_lx_upx;
+  _ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
+  _ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
+  _ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
+  _ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
+
+  
+  _CE.block<8,2>(0, 0) = _trxx.transpose()*(-1);
+  _CE.block<8,1>(0, 2) = _Lxx_ref1_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 3) = _Lyy_ref1_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 4) = _tr1_ref1_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 5) = _tr2_ref1_e.transpose()*(-1);    
+  
+  
+  _ce0.block<2,1>(0, 0) = _det_trxx;
+  _ce0.block<1,1>(2, 0) = _Lxx_ref1_eq; 
+  _ce0.block<1,1>(3, 0) = _Lyy_ref1_eq;
+  _ce0.block<1,1>(4, 0) = _tr1_ref1_eq;
+  _ce0.block<1,1>(5, 0) = _tr2_ref1_eq;  
+
+ 
+  Solve();  
+
+}
+
+
+void MPCClass::solve_stepping_timing_non()
+{    
+
+  _G = _SQ_goal3;
+  _g0 = _Sq_goal3;
+  _X = _vari_ini;
+
+// min 0.5 * x G x + g0 x
+// _s.t.
+// 		CE^T x + ce0 = 0   ///// equality constraints
+// 		CI^T x + ci0 >= 0  //// inequality constraints
+  _CI.block<8,8>(0,0) = _trx.transpose() * (-1);
+  _CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
+  _CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
+  _CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
+  _CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
+  _CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
+  
+  _ci0.block<8,1>(0, 0) = _det_trx;
+  _ci0.block<8,1>(8, 0) = _det_h_lx_upx;
+  _ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
+  _ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
+  _ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
+  _ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
+
+  
+//   _CE = _trxx.transpose()*(-1);
+//   _ce0 = _det_trxx;
+ 
+  _CE.block<8,2>(0, 0) = _trxx.transpose()*(-1);
+  _CE.block<8,1>(0, 2) = _Lxx_ref1_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 3) = _Lyy_ref1_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 4) = _tr1_ref1_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 5) = _tr2_ref1_e.transpose()*(-1);    
+  _CE.block<8,1>(0, 6) = _Lxx_ref_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 7) = _Lyy_ref_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 8) = _tr1_ref_e.transpose()*(-1);  
+  _CE.block<8,1>(0, 9) = _tr2_ref_e.transpose()*(-1);   
+  
+  _ce0.block<2,1>(0, 0) = _det_trxx;
+  _ce0.block<1,1>(2, 0) = _Lxx_ref1_eq; 
+  _ce0.block<1,1>(3, 0) = _Lyy_ref1_eq;
+  _ce0.block<1,1>(4, 0) = _tr1_ref1_eq;
+  _ce0.block<1,1>(5, 0) = _tr2_ref1_eq;  
+  _ce0.block<1,1>(6, 0) = _Lxx_ref_eq; 
+  _ce0.block<1,1>(7, 0) = _Lyy_ref_eq;
+  _ce0.block<1,1>(8, 0) = _tr1_ref_eq;
+  _ce0.block<1,1>(9, 0) = _tr2_ref_eq;  
+  
+  
+  
+  Solve();  
+
+}
+
+
+
+
+
+
+
+
 
 void MPCClass::Solve()
 {
