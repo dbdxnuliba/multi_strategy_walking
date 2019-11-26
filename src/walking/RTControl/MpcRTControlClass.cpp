@@ -33,7 +33,7 @@ MpcRTControlClass::MpcRTControlClass()
 #endif
 	
   
-  mpc._method_flag = 2;//for height opt:strategy: 0: reactive step; 1: reactive step+ body inclination; 2: reactive step+ body inclination+height variation;	
+  mpc._method_flag_nlp = 0;//for non_optimizatio: 0: one step; 1: two steps; 2;	
 
 	
   mpc._robot_name = RobotPara().name;
