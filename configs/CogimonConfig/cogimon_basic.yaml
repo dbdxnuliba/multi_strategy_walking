@@ -28,7 +28,7 @@ TransmissionPlugins:
   
 WebServer:
   enable: "true"
-  address: "127.0.0.1"
+  address: "10.24.5.100"
   port: "8081"
 
 SimulationOptions:
