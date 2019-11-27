@@ -387,7 +387,7 @@ void XBotRTControlClass::Run()
 			
 		}
 		else {		  
-			WalkingReactStepping();
+		//	WalkingReactStepping();
 			
 		}
 

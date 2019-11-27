@@ -22,7 +22,7 @@ using namespace std;
 
 
 /// constant variable defintion
-const int _footstepsnumber = 15;        //  number of _footstepnumber
+const int _footstepsnumber = 12;        //  number of _footstepnumber
 const double _dt = 0.1;                 //sampling time
 const int _nh = 12;                     /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
 const double _tstep = 0.7;              ///step period
@@ -292,12 +292,16 @@ private:
 	Eigen::RowVector2d _Sfoot;
 
 // 	int xxx_vector=30;
-	vector <Eigen::Matrix<double,_Nt, _Nt>> ZMPx_constraints_offfline;
+ 	vector <Eigen::Matrix<double,_Nt, _Nt>> ZMPx_constraints_offfline;
+//        vector <Eigen::Matrix<double,_Nt, _Nt>> ZMPx_constraints_offfline(_nh);
 	vector <Eigen::Matrix<double,_Nt, _Nt>> ZMPy_constraints_offfline;
 	vector <Eigen::Matrix<double,_Nt, _Nt>> _phi_i_x_up_est, _phi_i_y_up_est;	
 
 	vector <Eigen::Matrix<double,_nh, _Nt>> ZMPx_constraints_half;
 	vector <Eigen::Matrix<double,_nh, _Nt>> ZMPy_constraints_half;
+        
+        Eigen::Matrix<double,_Nt, _Nt> _x_offline1_va;
+        
 
 	
 	double _Footx_global_relative,_Footy_global_relative;

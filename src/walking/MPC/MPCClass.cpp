@@ -147,6 +147,7 @@ void MPCClass::Initialize()
 
 
 //// desired motion///
+        std::cout << "MPC_initialization00X...\n";
 	_steplength(5) = -0.03;
 	_steplength(6) = -0.1;
 	_steplength(7) = 0.00;
@@ -187,7 +188,7 @@ void MPCClass::Initialize()
 	_Hcom.setConstant(_hcom);                             /// for comz reference during the predictive window: matrix operations: height variance between support feet and body center	
 	_ggg.setConstant(RobotParaClass::G());                                            //// acceleration of gravity: 1*1 matrix: matrix operations
 
-	
+         cout<<"start mpc initialization1x"<<endl; 	
 // 	_nh = round(RobotParaClass::PreviewT()/_dt);	                      	          //// number of sampling time predictive window: <= 2*_nT;
 // 	_Nt = 5*_nh + 3*_nstep;       /// the number of the variable of the optimization problem
 	
@@ -269,7 +270,7 @@ void MPCClass::Initialize()
 	_pvu_2 = _pvu.transpose()*_pvu;
 	_ppu_2 = _ppu.transpose()*_ppu;
 	
-	
+        cout<<"start mpc initialization2x"<<endl; 	
 	xyz1 = 0;  //flag for Indexfind function: 
 	xyz2 = 1;
 	_j_period = 0; // the number for step cycle indefind
@@ -530,6 +531,9 @@ void MPCClass::Initialize()
         } 
 	else
 	{DPRINTF("Errorrrrrrrr for IK\n");}
+	
+        cout<<"start mpc initialization3x"<<endl; 	
+	
 	// time cost consumption======================mark
 	_tcpu.setZero(_nsum);
 
@@ -588,7 +592,7 @@ void MPCClass::Initialize()
       
 	_Q_goal1 = 2 * _Q_goal;	
       
-      
+        cout<<"start mpc initialization4x"<<endl;       
 	// constraints
 	_Sjx.setZero();
 	_Sjy.setZero();
@@ -759,28 +763,45 @@ void MPCClass::Initialize()
 	_comy_matrix_inv.setZero();	
 	
 	
-	
+        cout<<"start mpc initialization5x"<<endl; 
+               
+        
+        
 	//// offline calculated matrices
 	
 	_ppu_T = _ppu.transpose();
-	_pvupvs = _pvu.transpose() * _pvs;	
-        _ppupps = _ppu.transpose() * _pps;
+        std::cout << "MPC_initialization1X...\n"; 
+        
+	_pvupvs = (_pvu.transpose()) * _pvs;
+        std::cout << "MPC_initialization2X...\n";         
+        _ppupps = (_ppu_T) * _pps;
 	
-	
+	std::cout << "MPC_initialization3X...\n"; 
+        
+        
 	// offline calulated the ZMP constraints coefficient==================================
 	  //////////initiallize vector
 	vector <Eigen::Matrix<double,_Nt, _Nt>> x_offline1(_nh)  ;
-	for (int j=0;j<_nh; j++)
+
+        _x_offline1_va.setZero();
+        
+        std::cout << "local vector x_offline1...\n";         
+/*	for (int j=0;j<_nh; j++)
 	{
-	  x_offline1[j]= Eigen::Matrix<double,_Nt, _Nt>::Zero();
+ //           ZMPx_constraints_offfline[j] = Eigen::Matrix<double,_Nt, _Nt>::Zero();
+	  x_offline1[j]= x_offline1_va;
 	}
 
+        std::cout << "local vector declaration...\n"; 
+	
 	ZMPx_constraints_offfline = x_offline1;
 	ZMPy_constraints_offfline = x_offline1;		
 	_phi_i_x_up_est = x_offline1;
 	_phi_i_y_up_est = x_offline1;
 	
 	vector <Eigen::Matrix<double,_nh, _Nt>> x_offline2(_nh)  ;
+        
+        std::cout << "local vector x_offline2...\n"; 
 	for (int j=0;j<_nh; j++)
 	{
 	  x_offline2[j]= Eigen::Matrix<double,_nh, _Nt>::Zero();
@@ -850,6 +871,9 @@ void MPCClass::Initialize()
 	_pauSjthetay = _j_ini * _pau * _Sjthetay;
 	_pauSjthetax.setZero();
 	_pauSjthetax = _j_ini * _pau * _Sjthetax;
+        
+        
+
 
 	vector <Eigen::Matrix3d> xxx_offline1(_nh);
 	for (int j=0;j<_nh; j++)
@@ -862,7 +886,7 @@ void MPCClass::Initialize()
 	{
 	  _xkzk_constraints[jxx-1] = (_pps.row(jxx-1)).transpose() *_pas.row(jxx-1) - (_pas.row(jxx-1)).transpose() *_pps.row(jxx-1);
 // 	  cout << _xkzk_constraints[jxx-1]<<endl;
-	}	
+	}*/	
 	
 	_gzmpxub = _ggg *_zmpx_ub;
 	_gzmpxlb = _ggg *_zmpx_lb;	

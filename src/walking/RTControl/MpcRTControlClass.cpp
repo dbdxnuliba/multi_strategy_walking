@@ -31,7 +31,6 @@ MpcRTControlClass::MpcRTControlClass()
 	xbot_logger->createVectorVariable("mpc_Ml_ref", 3, interleave, buffer_size);		
 #endif
 	
-
   mpc._method_flag = 2;//strategy: 0: reactive step; 1: reactive step+ body inclination; 2: reactive step+ body inclination+height variation;	
 
 // default	
@@ -64,6 +63,8 @@ MpcRTControlClass::MpcRTControlClass()
   mpc.FootStepInputs(stepwidthinput, steplengthinput, stepheightinput);
   
   // offline initialization
+        
+  cout<<"start mpc initialization"<<endl;  
   mpc.Initialize();
     
   
