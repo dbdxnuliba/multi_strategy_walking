@@ -782,51 +782,94 @@ void MPCClass::Initialize()
 	// offline calulated the ZMP constraints coefficient==================================
 	  //////////initiallize vector
 	vector <Eigen::Matrix<double,_Nt, _Nt>> x_offline1(_nh)  ;
-
-        _x_offline1_va.setZero();
-        
-        std::cout << "local vector x_offline1...\n";         
-/*	for (int j=0;j<_nh; j++)
+        _x_offline1_va.setZero();               
+	for (int j=0;j<_nh; j++)
 	{
  //           ZMPx_constraints_offfline[j] = Eigen::Matrix<double,_Nt, _Nt>::Zero();
-	  x_offline1[j]= x_offline1_va;
+	  x_offline1[j]= _x_offline1_va;
 	}
-
-        std::cout << "local vector declaration...\n"; 
-	
 	ZMPx_constraints_offfline = x_offline1;
 	ZMPy_constraints_offfline = x_offline1;		
 	_phi_i_x_up_est = x_offline1;
 	_phi_i_y_up_est = x_offline1;
-	
-	vector <Eigen::Matrix<double,_nh, _Nt>> x_offline2(_nh)  ;
+
         
-        std::cout << "local vector x_offline2...\n"; 
+	vector <Eigen::Matrix<double,_nh, _Nt>> x_offline2(_nh)  ;
+        _x_offline2_va.setZero();              
 	for (int j=0;j<_nh; j++)
 	{
-	  x_offline2[j]= Eigen::Matrix<double,_nh, _Nt>::Zero();
+	  x_offline2[j]= _x_offline2_va;
 	}	
-
 	ZMPx_constraints_half = x_offline2;	
 	ZMPy_constraints_half = x_offline2;
+         
+        
+        vector <Eigen::Matrix<double,1, _Nt>> x_offline2x(_nh)  ;
+        _x_offline4_vax.setZero();              
+        for (int j=0;j<_nh; j++)
+        {
+          x_offline2x[j]= _x_offline4_vax;
+        }        
+        ZMPx_constraints_halfxxx1 = x_offline2x; 
+        ZMPx_constraints_halfxxx2 = x_offline2x;  
+        
+        
+        vector <Eigen::Matrix<double,_Nt,1 >> x_offline2y(_nh)  ;
+        _x_offline4_vay.setZero();             
+        for (int j=0;j<_nh; j++)
+        {
+          x_offline2y[j]= _x_offline4_vay;
+        }        
+        ZMPx_constraints_halfyyy1 = x_offline2y; 
+        ZMPx_constraints_halfyyy2 = x_offline2y;          
+        ZMPx_constraints_halfyyy3 = x_offline2y; 
+        ZMPx_constraints_halfyyy4 = x_offline2y;         
+        
+        
+        std::cout << "local vector x_offline...\n";         
 		
 	for(int jxx=1; jxx<=_nh; jxx++)
 	{
 	  _Si.setZero();
 	  _Si(0,jxx-1) = 1;
 	  // ZMP constraints	      		 
-         ZMPx_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjx).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjx).transpose() * _Si * _ppu * _Sjz;
+/*//          ZMPx_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjx).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjx).transpose() * _Si * _ppu * _Sjz;
 	 ZMPx_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
 	  	  
-         ZMPy_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjy).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjy).transpose() * _Si * _ppu * _Sjz;
-	 ZMPy_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;	      
-	}	
+//          ZMPy_constraints_offfline[jxx-1] = (_Si * _ppu * _Sjy).transpose() * _Si * _pau * _Sjz - (_Si * _pau * _Sjy).transpose() * _Si * _ppu * _Sjz;
+	 ZMPy_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;*/
 
 
-	vector <Eigen::Matrix<double,3, _Nt>> xx_offline1(_nh)  ;
+
+ 
+         ZMPx_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
+         ZMPy_constraints_half[jxx-1] = ZMPx_constraints_half[jxx-1];
+         
+         ZMPx_constraints_halfxxx1[jxx-1] = _Si * _pau * _Sjz;
+         ZMPx_constraints_halfxxx2[jxx-1] = _Si * _ppu * _Sjz;
+         ZMPx_constraints_halfyyy1[jxx-1] = (_Si * _ppu * _Sjx).transpose();
+         ZMPx_constraints_halfyyy2[jxx-1] = (_Si * _pau * _Sjx).transpose();         
+         ZMPx_constraints_halfyyy3[jxx-1] = (_Si * _ppu * _Sjy).transpose();
+         ZMPx_constraints_halfyyy4[jxx-1] = (_Si * _pau * _Sjy).transpose();          
+         
+         /// write a function to deal with the matrix multiply
+         _x_offline1_va = _x_offline4_vay*_x_offline4_vax;
+//         ZMPx_constraints_offfline[jxx-1] = _x_offline1_va;
+         
+//          ZMPx_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy1[jxx-1] * ZMPx_constraints_halfxxx1[jxx-1] - ZMPx_constraints_halfyyy2[jxx-1] * ZMPx_constraints_halfxxx2[jxx-1];                  
+//          ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3[jxx-1] * ZMPx_constraints_halfxxx1[jxx-1] - ZMPx_constraints_halfyyy4[jxx-1] * ZMPx_constraints_halfxxx2[jxx-1];
+
+	}
+
+	
+
+
+	vector <Eigen::Matrix<double,3, _Nt>> xx_offline1(_nh);
+        _x_offline3_va.setZero();
+        
 	for (int j=0;j<_nh; j++)
 	{
-	  xx_offline1[j]= Eigen::Matrix<double,3, _Nt>::Zero();
+	  xx_offline1[j]= _x_offline3_va;
 	}
 
 	_xkZMPx_constraints = xx_offline1;
@@ -837,10 +880,10 @@ void MPCClass::Initialize()
 	
 	for(int jxx=1; jxx<=_nh; jxx++)
 	{
-	  _xkZMPx_constraints[jxx-1] = (_pps.row(jxx-1)).transpose()*_pau.row(jxx-1)*_Sjz - (_pas.row(jxx-1)).transpose()* _ppu.row(jxx-1)*_Sjz;
-	  _zkZMPx_constraints[jxx-1] = (_pas.row(jxx-1)).transpose()*_ppu.row(jxx-1)*_Sjx - (_pps.row(jxx-1)).transpose() *_pau.row(jxx-1)*_Sjx;
-	  _zkZMPy_constraints[jxx-1] = (_pas.row(jxx-1)).transpose()*_ppu.row(jxx-1)*_Sjy - (_pps.row(jxx-1)).transpose() *_pau.row(jxx-1)*_Sjy;	  
-	  
+ 	  _xkZMPx_constraints[jxx-1] = (_pps.row(jxx-1)).transpose()*_pau.row(jxx-1)*_Sjz - (_pas.row(jxx-1)).transpose()* _ppu.row(jxx-1)*_Sjz;
+ 	  _zkZMPx_constraints[jxx-1] = (_pas.row(jxx-1)).transpose()*_ppu.row(jxx-1)*_Sjx - (_pps.row(jxx-1)).transpose() *_pau.row(jxx-1)*_Sjx;
+ 	  _zkZMPy_constraints[jxx-1] = (_pas.row(jxx-1)).transpose()*_ppu.row(jxx-1)*_Sjy - (_pps.row(jxx-1)).transpose() *_pau.row(jxx-1)*_Sjy;	  
+ 	  
 	}
 	_ykZMPy_constraints = _xkZMPx_constraints;
 	
@@ -876,17 +919,18 @@ void MPCClass::Initialize()
 
 
 	vector <Eigen::Matrix3d> xxx_offline1(_nh);
+        _x_offline4_va.setZero();
 	for (int j=0;j<_nh; j++)
 	{
-	  xxx_offline1[j]= Eigen::Matrix3d::Zero();
+	  xxx_offline1[j]= _x_offline4_va;
 	}
 	_xkzk_constraints = xxx_offline1;
 
 	for(int jxx=1; jxx<=_nh; jxx++)
 	{
 	  _xkzk_constraints[jxx-1] = (_pps.row(jxx-1)).transpose() *_pas.row(jxx-1) - (_pas.row(jxx-1)).transpose() *_pps.row(jxx-1);
-// 	  cout << _xkzk_constraints[jxx-1]<<endl;
-	}*/	
+
+	}	
 	
 	_gzmpxub = _ggg *_zmpx_ub;
 	_gzmpxlb = _ggg *_zmpx_lb;	

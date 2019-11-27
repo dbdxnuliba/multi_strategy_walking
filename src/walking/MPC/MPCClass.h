@@ -301,8 +301,22 @@ private:
 	vector <Eigen::Matrix<double,_nh, _Nt>> ZMPy_constraints_half;
         
         Eigen::Matrix<double,_Nt, _Nt> _x_offline1_va;
+        Eigen::Matrix<double,_nh, _Nt> _x_offline2_va;
+        Eigen::Matrix<double,3, _Nt> _x_offline3_va;
+        Eigen::Matrix<double,3, 3> _x_offline4_va;    
         
-
+        
+        vector <Eigen::Matrix<double,1, _Nt>> ZMPx_constraints_halfxxx1,ZMPx_constraints_halfxxx2;
+        
+        Eigen::Matrix<double,1, _Nt> _x_offline4_vax;
+        
+        vector <Eigen::Matrix<double,_Nt,1>> ZMPx_constraints_halfyyy1,ZMPx_constraints_halfyyy2,ZMPx_constraints_halfyyy3,ZMPx_constraints_halfyyy4;
+        
+        Eigen::Matrix<double,_Nt,1> _x_offline4_vay;        
+        
+        
+        
+        
 	
 	double _Footx_global_relative,_Footy_global_relative;
 	
