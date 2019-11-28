@@ -401,8 +401,10 @@ void XBotRTControlClass::Run()
 //	  Admittance_controller();
 	}
 
- 	SolveIK();    ///lead to real-time unsafety;
+// 	SolveIK();    ///lead to real-time unsafety in dummy mode;
 
+        
+        
 #ifdef USE_XBOT_LOGGER
 	addToLog();
 #endif

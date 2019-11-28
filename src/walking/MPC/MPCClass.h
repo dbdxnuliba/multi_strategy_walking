@@ -24,8 +24,8 @@ using namespace std;
 /// constant variable defintion
 const int _footstepsnumber = 12;        //  number of _footstepnumber
 const double _dt = 0.1;                 //sampling time
-const int _nh = 12;                     /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
-const double _tstep = 0.7;              ///step period
+const int _nh = 10;                     /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
+const double _tstep = 0.6;              ///step period
 const int _nT = round(_tstep/_dt);      /// _tstep/_dt)  the number of one step cycle
 const int _nstep = 2;                   /// maximal footstep locations where the predictive windwo covers
 const int _Nt = 5*_nh + 3*_nstep;       /// _Nt = 5*_nh + 3*_nstep;  the number of the variable of the optimization problem
@@ -330,6 +330,10 @@ private:
 	
 	Eigen::Matrix<double,_Nt, _nh> _ZMPx_constraints_half2, _ZMPy_constraints_half2;
 	Eigen::Matrix<double,_Nt, _Nt> _phi_i_x_up1, _phi_i_y_up1;
+        
+        Eigen::Matrix<double,_nh, _Nt> _ZMPx_constraints_half_va,_ZMPy_constraints_half_va;
+        
+        
 	
 	Eigen::Matrix<double,28,_nsum> CoMMM_ZMP_foot;
 	

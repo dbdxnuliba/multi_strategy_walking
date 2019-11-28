@@ -820,7 +820,9 @@ void MPCClass::Initialize()
         ZMPx_constraints_halfyyy4.setZero();         
         
         _matrix_large1.setZero();
-        _matrix_large2.setZero();	
+        _matrix_large2.setZero();
+        _ZMPx_constraints_half_va.setZero();
+        _ZMPy_constraints_half_va.setZero();
 	
         std::cout << "local vector x_offline...\n";         
 		
@@ -848,14 +850,19 @@ void MPCClass::Initialize()
          ZMPx_constraints_halfyyy3 = (_Si * _ppu * _Sjy).transpose();
          ZMPx_constraints_halfyyy4 = (_Si * _pau * _Sjy).transpose();          
          
-         /// write a function to deal with the matrix multiply
- //        _x_offline1_va = _x_offline4_vay*_x_offline4_vax;
-	 
+         /// write a function to deal with the matrix multiply	 
 	 Matrix_large(1);        
 	 ZMPx_constraints_offfline[jxx-1] = _matrix_large1 - _matrix_large2; 	 
+         _matrix_large1.setZero();
+         _matrix_large2.setZero();
+         
 
+         
+         
          Matrix_large(2);	  
-	 ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy4 * ZMPx_constraints_halfxxx2;
+	 ZMPy_constraints_offfline[jxx-1] = _matrix_large1 - _matrix_large2;
+         _matrix_large1.setZero();
+         _matrix_large2.setZero();
 //	  ZMPx_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy1 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy2 * ZMPx_constraints_halfxxx2;                  
 // 	  ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy4 * ZMPx_constraints_halfxxx2;
 
@@ -1022,12 +1029,9 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 	      _detfooty  = _footy_max - _footy_min; 
 	  }
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-  // 	================ iterative calulcation: predictive control_tracking with time-varying height+angular momentum	  
-	    clock_t t_start,t_finish;	  	    
+  // 	================ iterative calulcation: predictive control_tracking with time-varying height+angular momentum	    	    
 	    /// run once
-	    ///////////////////////////////////////////////////////
-	    ////////////////////////////////////// time_clock0////////////////////////
-	    t_start = clock();		    
+	    ///////////////////////////////////////////////////////	    
 
 	    Indexfind((i-1)*_dt,xyz1);	  	      //// step cycle number when (i-1)*dt fall into      
 	    _bjxx_1 = _j_period+1;
@@ -1265,39 +1269,29 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 		
 		
 		//angle range constraints
-/*		_q_upx.row(jxx-1) = _ppu.row(jxx-1)* _Sjthetax;
-		_q_lowx.row(jxx-1) = -_q_upx.row(jxx-1);*/	         
+	         
                 ////// attention : don't forger to test on the robot pC: if  _qq1_upx = _pps* _thetaxk.col(i-1) can run in the real time!!!!!!
 		_qq1_upx.row(jxx-1) = _pps.row(jxx-1)* _thetaxk.col(i-1);
 		_qq1_upx(jxx-1,0) = _qq1_upx(jxx-1,0)-_thetax_max;
-		
-/*		_q_upy.row(jxx-1) = _ppu.row(jxx-1)* _Sjthetay;
-		_q_lowy.row(jxx-1) = -_q_upy.row(jxx-1);*/	
+			
 		
 		_qq1_upy.row(jxx-1) = _pps.row(jxx-1)* _thetayk.col(i-1);
 		_qq1_upy(jxx-1,0) = _qq1_upy(jxx-1,0)-_thetay_max;    
 
 		//torque range constraints
-// 		_t_upx.row(jxx-1) = _pau.row(jxx-1)* _Sjthetax;
-// 		_t_lowx.row(jxx-1) = -_t_upx.row(jxx-1);
 		
 		_tt1_upx.row(jxx-1) = _pas.row(jxx-1)* _thetaxk.col(i-1);
 		_tt1_upx(jxx-1,0) = _tt1_upx(jxx-1,0)-_torquex_max;
-		
-/*		_t_upy.row(jxx-1) = _pau.row(jxx-1)* _Sjthetay;
-		_t_lowy.row(jxx-1) = -_t_upy.row(jxx-1);*/	 
+			 
 		
 		_tt1_upy.row(jxx-1) = _pas.row(jxx-1)* _thetayk.col(i-1);
 		_tt1_upy(jxx-1,0) = _tt1_upy(jxx-1,0)-_torquey_max;		
 		
-		// body height constraints
-/*		_H_h_upz.row(jxx-1) = _ppu.row(jxx-1)* _Sjz;
-		_H_h_lowz.row(jxx-1) = -_H_h_upz.row(jxx-1);*/   	
+		// body height constraints 	
 		_delta_footz_up.row(jxx-1) = _pps.row(jxx-1)*_zk.col(i-1) - _comz_center_ref.row(jxx-1) ;
 		_delta_footz_up(jxx-1,0) = _delta_footz_up(jxx-1,0) - _z_max;
 		
 		// body height acceleration constraints	      
-// 		_H_hacc_lowz.row(jxx-1) = -_pau.row(jxx-1)* _Sjz;   
 		_delta_footzacc_up.row(jxx-1) = _pas.row(jxx-1)*_zk.col(i-1) + _ggg;
 	      }
 
@@ -1309,12 +1303,28 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 	    {
 	      // ZMP constraints
 	      // x-ZMP upper boundary
-	      _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];	      
-	      _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
+//	      _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];	      
+//	      _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
     
 	      // y-ZMP upper boundary
-	      _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];
-	      _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2;   
+//	      _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];
+//	      _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2;   
+              
+ //           _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];   
+//            _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];   
+                
+                _ZMPx_constraints_half_va = ZMPx_constraints_half[jxx-1];
+                _ZMPy_constraints_half_va = ZMPy_constraints_half[jxx-1];
+
+                Matrix_large(3);
+                _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] +_matrix_large1;
+                _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] +_matrix_large1; 
+
+                _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
+                _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2; 
+                
+                _matrix_large1.setZero();
+                _matrix_large2.setZero();
 	    }
     
 	    // constraints:Swing+Foot velocity: 
@@ -1368,26 +1378,21 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 
 		
 		//angle range constraints
-		_qq_upx.row(jxx-1) = -(_q_upx.row(jxx-1)* _V_ini + _qq1_upx.row(jxx-1));
-/*		_qq_lowx.row(jxx-1) = - _qq_upx.row(jxx-1);*/	 
+		_qq_upx.row(jxx-1) = -(_q_upx.row(jxx-1)* _V_ini + _qq1_upx.row(jxx-1));	 
 		_qq_lowx(jxx-1,0) = _detthetax - _qq_upx(jxx-1,0);	 
 				
 		_qq_upy.row(jxx-1) = -(_q_upy.row(jxx-1)* _V_ini + _qq1_upy.row(jxx-1));
-// 		_qq_lowy.row(jxx-1) = - _qq_upy.row(jxx-1);
 		_qq_lowy(jxx-1,0) = _detthetay - _qq_upy(jxx-1,0);
 
 		//torque range constraints	      
 		_tt_upx.row(jxx-1) = -(_t_upx.row(jxx-1)* _V_ini +  _tt1_upx.row(jxx-1));
-/*		_tt_lowx.row(jxx-1) = - _tt_upx.row(jxx-1);*/	
 		_tt_lowx(jxx-1,0) = _dettorquex - _tt_upx(jxx-1,0);	
 		
-		_tt_upy.row(jxx-1) = -(_t_upy.row(jxx-1)* _V_ini +  _tt1_upy.row(jxx-1));
-/*		_tt_lowy.row(jxx-1) = - _tt_upy.row(jxx-1);*/		      
+		_tt_upy.row(jxx-1) = -(_t_upy.row(jxx-1)* _V_ini +  _tt1_upy.row(jxx-1));	      
 		_tt_lowy(jxx-1,0) = _dettorquey - _tt_upy(jxx-1,0);	
 		
 		// body height constraints	      
-		_F_h_upz.row(jxx-1) = -(_H_h_upz.row(jxx-1)*_V_ini + _delta_footz_up.row(jxx-1));
-/*		_F_h_lowz.row(jxx-1) = -_F_h_upz.row(jxx-1);*/	      
+		_F_h_upz.row(jxx-1) = -(_H_h_upz.row(jxx-1)*_V_ini + _delta_footz_up.row(jxx-1));      
 		_F_h_lowz(jxx-1,0) = _detzb - _F_h_upz(jxx-1,0);
 		
 		// body height acceleration constraints	      
@@ -1413,8 +1418,7 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
 		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy - _footy_min; 
 		  
-		  _H_q_footy_low.row(0) = -_Sfy.row(0);
-/*		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini);*/	
+		  _H_q_footy_low.row(0) = -_Sfy.row(0);	
 		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0) +_detfooty;	
 		}
 		else
@@ -1462,7 +1466,6 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 		_F_foot_upx(1,0) = _F_foot_upx(1,0) +_footx_max; 
 		
 		_H_q_footx_low.row(1) = -_Sfoot* _Sfx;
-/*		_F_foot_lowx.row(1) = (_H_q_footx_up.row(1) * _V_ini)*/;
 		_F_foot_lowx(1,0) = -_F_foot_upx(1,0)+_detfootx;
 		
 		// footy location constraints
@@ -1532,7 +1535,7 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 	    _a_hxx = _a_hx * _V_ini + _pps * _thetaxk.col(i-1);
 	    _a_hyy = _a_hy * _V_ini + _pps * _thetayk.col(i-1);		    	      
   //////////////////////////////===========////////////////////////////////////////////////////	    
-  // 	    // quadratic program GetSolution
+  	    // quadratic program GetSolution
 	      
 	      if (_method_flag ==0)
 	      {
@@ -1552,7 +1555,16 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 
 	    }
 
-  /////////////////////////////////////////////////////////
+	    
+	    
+
+	    
+	    
+	    
+	    
+	    
+	    
+  ////////////////////////////////results postprocessed////////////
   /////////===================================================%%%%%	  
 	  // results postprocessed:	  
 	    if (_n_vis == 1)
@@ -1677,12 +1689,12 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 	    
   ////////////////===============================================================================================	  
 	  /// next two sample time:	actually the preictive value is not reliable  
-/*	    _comx(0,i+1) = _comx(0,i) + _dt * _comvx(0,i); 	  	  
-	    _comy(0,i+1) = _comy(0,i) + _dt * _comvy(0,i); 	 
-	    _comz(0,i+1) = _comz(0,i) + _dt * _comvz(0,i); 	 
-	    _thetax(0,i+1) = _thetax(0,i)+ _dt * _thetavx(0,i); 	
-	    _thetay(0,i+1) = _thetay(0,i)+ _dt * _thetavy(0,i); */	
-	    
+// 	    _comx(0,i+1) = _comx(0,i) + _dt * _comvx(0,i); 	  	  
+// 	    _comy(0,i+1) = _comy(0,i) + _dt * _comvy(0,i); 	 
+// 	    _comz(0,i+1) = _comz(0,i) + _dt * _comvz(0,i); 	 
+// 	    _thetax(0,i+1) = _thetax(0,i)+ _dt * _thetavx(0,i); 	
+// 	    _thetay(0,i+1) = _thetay(0,i)+ _dt * _thetavy(0,i); 	
+// 	    
 	    
 	    _torquex_real.col(i) = _j_ini * _thetaax.col(i);
 	    _torquey_real.col(i) = _j_ini * _thetaay.col(i);
@@ -1754,8 +1766,7 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 	    _comz(0) = _comz(1);	  
 	  }	 
  
-	    t_finish = clock();
-	    _tcpu(0,i-1) = (double)(t_finish - t_start)/CLOCKS_PER_SEC ; 
+	    _tcpu(0,i-1) = 0; 
  
  
       }
@@ -1763,138 +1774,138 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
        {
 	 if(i <= _n_end_walking+round(_tstep/_dt/2)){
 	   
-	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
-	    _bjxx = _j_period+1;  //coincidence with matlab 
-	    _j_period = 0;		   
-	   
-	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
-	    
-	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
-	    _bjx1 = _j_period+1;
-	    _j_period = 0;
-	    
-	   Eigen::Matrix<double, 4, 1> _comy_temp;
-	   _comy_temp.setZero();
-	   _comy_temp(0) = _comy(0,_n_end_walking-2);
-	   _comy_temp(1) = _comy(0,_n_end_walking-1);
-	   _comy_temp(2) = 0;
-	   _comy_temp(3) = 0;
-
-	   
-	   Eigen::Matrix<double, 4, 4> _comy_matrix;
-	   
-	   int ix_temp1 = -1;
-	   int ix_temp2 = 0;	   
-	   int ix_temp3 = round(_tstep/_dt)/2+1;
-	   
-	  
-	  Eigen::Matrix4d AAA_inv;
-	  
-	  double abx1, abx2, abx3, abx4;
-	  abx1 = ((ix_temp1 - ix_temp2)*pow(ix_temp1 - ix_temp3, 2));
-	  abx2 = ((ix_temp1 - ix_temp2)*pow(ix_temp2 - ix_temp3, 2));
-	  abx3 =(pow(ix_temp1 - ix_temp3, 2)*pow(ix_temp2 - ix_temp3, 2));
-	  abx4 = ((ix_temp1 - ix_temp3)*(ix_temp2 - ix_temp3));
-	  
-
-	  AAA_inv(0,0) = 1/ abx1;
-	  AAA_inv(0,1) =  -1/ abx2;
-	  AAA_inv(0,2) = (ix_temp1 + ix_temp2 - 2*ix_temp3)/ abx3;
-	  AAA_inv(0,3) = 1/ abx4;
-	  
-	  AAA_inv(1,0) = -(ix_temp2 + 2*ix_temp3)/ abx1;
-	  AAA_inv(1,1) = (ix_temp1 + 2*ix_temp3)/ abx2;
-	  AAA_inv(1,2) = -(pow(ix_temp1, 2) + ix_temp1*ix_temp2 + pow(ix_temp2, 2) - 3*pow(ix_temp3, 2))/ abx3;
-	  AAA_inv(1,3) = -(ix_temp1 + ix_temp2 + ix_temp3)/ abx4;
-	  
-	  AAA_inv(2,0) = (ix_temp3*(2*ix_temp2 + ix_temp3))/ abx1;
-	  AAA_inv(2,1) = -(ix_temp3*(2*ix_temp1 + ix_temp3))/ abx2;
-	  AAA_inv(2,2) = (ix_temp3*(2*pow(ix_temp1, 2) + 2*ix_temp1*ix_temp2 - 3*ix_temp3*ix_temp1 + 2*pow(ix_temp2, 2) - 3*ix_temp3*ix_temp2))/ abx3;
-	  AAA_inv(2,3) = (ix_temp1*ix_temp2 + ix_temp1*ix_temp3 + ix_temp2*ix_temp3)/ abx4;
-	  
-	  AAA_inv(3,0) = -(ix_temp2*pow(ix_temp3, 2))/ abx1;
-	  AAA_inv(3,1) = (ix_temp1*pow(ix_temp3, 2))/ abx2;
-	  AAA_inv(3,2) = (ix_temp1*ix_temp2*(ix_temp1*ix_temp2 - 2*ix_temp1*ix_temp3 - 2*ix_temp2*ix_temp3 + 3*pow(ix_temp3, 2)))/ abx3;
-	  AAA_inv(3,3) = -(ix_temp1*ix_temp2*ix_temp3)/ abx4;
-	   
-	   _comy_matrix_inv = AAA_inv * _comy_temp;
-
-
-	    /////  generate the trajectory during the double support phase'
-	    _nTdx = round(_ts(1)/_dt);
-// 	    cout <<"nTdx:"<<_nTdx<<endl;
-	    for (int jxx=1; jxx <=_nTdx; jxx++)
-	    {
-	      
-	      if (i+jxx-1 <= _n_end_walking+round(_tstep/_dt/2))
-	      {
-		Eigen::Matrix<double, 1, 4> _t_temp;
-		
-		_t_temp(0) = pow(i+jxx-1-_n_end_walking+1, 3);
-		_t_temp(1) = pow(i+jxx-1-_n_end_walking+1, 2);
-		_t_temp(2) = pow(i+jxx-1-_n_end_walking+1, 1);
-		_t_temp(3) = pow(i+jxx-1-_n_end_walking+1, 0);	
-		
-		_comy.col(i+jxx-1) = _t_temp* _comy_matrix_inv;
-		
-		Eigen::Matrix<double, 1, 4> _t_tempv;
-		
-		_t_tempv(0) = 3*pow(i+jxx-1-_n_end_walking+1, 2);
-		_t_tempv(1) = 2*pow(i+jxx-1-_n_end_walking+1, 1);
-		_t_tempv(2) = 1;
-		_t_tempv(3) = 0;	
-		
-		_comvy.col(i+jxx-1) = _t_tempv* _comy_matrix_inv;
-
-		Eigen::Matrix<double, 1, 4> _t_tempa;
-		
-		_t_tempa(0) = 6*pow(i+jxx-1-_n_end_walking+1, 1);
-		_t_tempa(1) = 2;
-		_t_tempa(2) = 0;
-		_t_tempa(3) = 0;	
-		
-		_comay.col(i+jxx-1) = _t_tempa* _comy_matrix_inv;				
-	      }
-	      else
-	      {
-               _comy(0,i+jxx-1)=_comy(0,i+jxx-2); _comvy(0,i+jxx-1) = 0; _comay(0,i+jxx-1)= 0;		
-	      }
-	      
-	      _comx(0,i+jxx-1)=_comx(0,_n_end_walking-1); _comvx(0,i+jxx-1) = 0; _comax(0,i+jxx-1)= 0; 	  
-	       	     	      
-	      _comz(0,i+jxx-1)=_comz(0,_n_end_walking-1); _comvz(0,i+jxx-1) = 0; _comaz(0,i+jxx-1)= 0; 
-
-	      _thetax(0,i+jxx-1) = _thetax(0,_n_end_walking-1); _thetavx(0,i+jxx-1) = 0; _thetaax(0,i+jxx-1)= 0; 	
-
-	      _thetay(0,i+jxx-1) = _thetay(0,_n_end_walking-1); _thetavy(0,i+jxx-1) = 0; _thetaay(0,i+jxx-1)= 0; 		      
-	   
-	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
-	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
-	      
-	      _zmpx_real(0,i+jxx-1) = _comx(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comax(0,i+jxx-1) - _j_ini * _thetaay(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
-	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
-	      
-	    }	    
-	   
-	  _footx_real_next.row(i+_nT -1)=_footx_real_next.row(_n_end_walking-1+_nT -1)	;
-	  _footy_real_next.row(i+_nT -1)=_footy_real_next.row(_n_end_walking-1-_nT -1)	;	   
-	   
-	   for (int jxxx = _bjxx+1; jxxx<_footstepsnumber; jxxx++){
-	   	    _footx_real(jxxx) = _footx_real(_bjxx) ;
-	   	    _footy_real(jxxx) = _footy_real(_bjxx-1);		     
-	     
-	  }
-	    _footxyz_real.row(0) = _footx_real.transpose();
-	    _footxyz_real.row(1) = _footy_real.transpose();	  
-	    _footxyz_real.row(2) = _footz_real.transpose();
-// 	    cout<<"_footy_real:"<<_footy_real<<endl;
+// 	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
+// 	    _bjxx = _j_period+1;  //coincidence with matlab 
+// 	    _j_period = 0;		   
+// 	   
+// 	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
+// 	    
+// 	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
+// 	    _bjx1 = _j_period+1;
+// 	    _j_period = 0;
+// 	    
+// 	   Eigen::Matrix<double, 4, 1> _comy_temp;
+// 	   _comy_temp.setZero();
+// 	   _comy_temp(0) = _comy(0,_n_end_walking-2);
+// 	   _comy_temp(1) = _comy(0,_n_end_walking-1);
+// 	   _comy_temp(2) = 0;
+// 	   _comy_temp(3) = 0;
+// 
+// 	   
+// 	   Eigen::Matrix<double, 4, 4> _comy_matrix;
+// 	   
+// 	   int ix_temp1 = -1;
+// 	   int ix_temp2 = 0;	   
+// 	   int ix_temp3 = round(_tstep/_dt)/2+1;
+// 	   
+// 	  
+// 	  Eigen::Matrix4d AAA_inv;
+// 	  
+// 	  double abx1, abx2, abx3, abx4;
+// 	  abx1 = ((ix_temp1 - ix_temp2)*pow(ix_temp1 - ix_temp3, 2));
+// 	  abx2 = ((ix_temp1 - ix_temp2)*pow(ix_temp2 - ix_temp3, 2));
+// 	  abx3 =(pow(ix_temp1 - ix_temp3, 2)*pow(ix_temp2 - ix_temp3, 2));
+// 	  abx4 = ((ix_temp1 - ix_temp3)*(ix_temp2 - ix_temp3));
+// 	  
+// 
+// 	  AAA_inv(0,0) = 1/ abx1;
+// 	  AAA_inv(0,1) =  -1/ abx2;
+// 	  AAA_inv(0,2) = (ix_temp1 + ix_temp2 - 2*ix_temp3)/ abx3;
+// 	  AAA_inv(0,3) = 1/ abx4;
+// 	  
+// 	  AAA_inv(1,0) = -(ix_temp2 + 2*ix_temp3)/ abx1;
+// 	  AAA_inv(1,1) = (ix_temp1 + 2*ix_temp3)/ abx2;
+// 	  AAA_inv(1,2) = -(pow(ix_temp1, 2) + ix_temp1*ix_temp2 + pow(ix_temp2, 2) - 3*pow(ix_temp3, 2))/ abx3;
+// 	  AAA_inv(1,3) = -(ix_temp1 + ix_temp2 + ix_temp3)/ abx4;
+// 	  
+// 	  AAA_inv(2,0) = (ix_temp3*(2*ix_temp2 + ix_temp3))/ abx1;
+// 	  AAA_inv(2,1) = -(ix_temp3*(2*ix_temp1 + ix_temp3))/ abx2;
+// 	  AAA_inv(2,2) = (ix_temp3*(2*pow(ix_temp1, 2) + 2*ix_temp1*ix_temp2 - 3*ix_temp3*ix_temp1 + 2*pow(ix_temp2, 2) - 3*ix_temp3*ix_temp2))/ abx3;
+// 	  AAA_inv(2,3) = (ix_temp1*ix_temp2 + ix_temp1*ix_temp3 + ix_temp2*ix_temp3)/ abx4;
+// 	  
+// 	  AAA_inv(3,0) = -(ix_temp2*pow(ix_temp3, 2))/ abx1;
+// 	  AAA_inv(3,1) = (ix_temp1*pow(ix_temp3, 2))/ abx2;
+// 	  AAA_inv(3,2) = (ix_temp1*ix_temp2*(ix_temp1*ix_temp2 - 2*ix_temp1*ix_temp3 - 2*ix_temp2*ix_temp3 + 3*pow(ix_temp3, 2)))/ abx3;
+// 	  AAA_inv(3,3) = -(ix_temp1*ix_temp2*ix_temp3)/ abx4;
+// 	   
+// 	   _comy_matrix_inv = AAA_inv * _comy_temp;
+// 
+// 
+// 	    /////  generate the trajectory during the double support phase'
+// 	    _nTdx = round(_ts(1)/_dt);
+// // 	    cout <<"nTdx:"<<_nTdx<<endl;
+// 	    for (int jxx=1; jxx <=_nTdx; jxx++)
+// 	    {
+// 	      
+// 	      if (i+jxx-1 <= _n_end_walking+round(_tstep/_dt/2))
+// 	      {
+// 		Eigen::Matrix<double, 1, 4> _t_temp;
+// 		
+// 		_t_temp(0) = pow(i+jxx-1-_n_end_walking+1, 3);
+// 		_t_temp(1) = pow(i+jxx-1-_n_end_walking+1, 2);
+// 		_t_temp(2) = pow(i+jxx-1-_n_end_walking+1, 1);
+// 		_t_temp(3) = pow(i+jxx-1-_n_end_walking+1, 0);	
+// 		
+// 		_comy.col(i+jxx-1) = _t_temp* _comy_matrix_inv;
+// 		
+// 		Eigen::Matrix<double, 1, 4> _t_tempv;
+// 		
+// 		_t_tempv(0) = 3*pow(i+jxx-1-_n_end_walking+1, 2);
+// 		_t_tempv(1) = 2*pow(i+jxx-1-_n_end_walking+1, 1);
+// 		_t_tempv(2) = 1;
+// 		_t_tempv(3) = 0;	
+// 		
+// 		_comvy.col(i+jxx-1) = _t_tempv* _comy_matrix_inv;
+// 
+// 		Eigen::Matrix<double, 1, 4> _t_tempa;
+// 		
+// 		_t_tempa(0) = 6*pow(i+jxx-1-_n_end_walking+1, 1);
+// 		_t_tempa(1) = 2;
+// 		_t_tempa(2) = 0;
+// 		_t_tempa(3) = 0;	
+// 		
+// 		_comay.col(i+jxx-1) = _t_tempa* _comy_matrix_inv;				
+// 	      }
+// 	      else
+// 	      {
+//                _comy(0,i+jxx-1)=_comy(0,i+jxx-2); _comvy(0,i+jxx-1) = 0; _comay(0,i+jxx-1)= 0;		
+// 	      }
+// 	      
+// 	      _comx(0,i+jxx-1)=_comx(0,_n_end_walking-1); _comvx(0,i+jxx-1) = 0; _comax(0,i+jxx-1)= 0; 	  
+// 	       	     	      
+// 	      _comz(0,i+jxx-1)=_comz(0,_n_end_walking-1); _comvz(0,i+jxx-1) = 0; _comaz(0,i+jxx-1)= 0; 
+// 
+// 	      _thetax(0,i+jxx-1) = _thetax(0,_n_end_walking-1); _thetavx(0,i+jxx-1) = 0; _thetaax(0,i+jxx-1)= 0; 	
+// 
+// 	      _thetay(0,i+jxx-1) = _thetay(0,_n_end_walking-1); _thetavy(0,i+jxx-1) = 0; _thetaay(0,i+jxx-1)= 0; 		      
+// 	   
+// 	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
+// 	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
+// 	      
+// 	      _zmpx_real(0,i+jxx-1) = _comx(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comax(0,i+jxx-1) - _j_ini * _thetaay(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
+// 	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
+// 	      
+// 	    }	    
+// 	   
+// 	  _footx_real_next.row(i+_nT -1)=_footx_real_next.row(_n_end_walking-1+_nT -1)	;
+// 	  _footy_real_next.row(i+_nT -1)=_footy_real_next.row(_n_end_walking-1-_nT -1)	;	   
+// 	   
+// 	   for (int jxxx = _bjxx+1; jxxx<_footstepsnumber; jxxx++){
+// 	   	    _footx_real(jxxx) = _footx_real(_bjxx) ;
+// 	   	    _footy_real(jxxx) = _footy_real(_bjxx-1);		     
+// 	     
+// 	  }
+// 	    _footxyz_real.row(0) = _footx_real.transpose();
+// 	    _footxyz_real.row(1) = _footy_real.transpose();	  
+// 	    _footxyz_real.row(2) = _footz_real.transpose();
+// // 	    cout<<"_footy_real:"<<_footy_real<<endl;
   
 	   
 	}
 	 else
 	 {
 	   
-	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
+/*	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
 	    _bjxx = _j_period+1;  //coincidence with matlab 
 	    _j_period = 0;	
 	    
@@ -1948,7 +1959,7 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 	  }
 	    _footxyz_real.row(0) = _footx_real.transpose();
 	    _footxyz_real.row(1) = _footy_real.transpose();	  
-	    _footxyz_real.row(2) = _footz_real.transpose();  
+	    _footxyz_real.row(2) = _footz_real.transpose();*/  
 	}
 	 
 	 
@@ -2063,9 +2074,9 @@ void MPCClass::Matrix_large(int i_f)
   {
     for(int jxx=1; jxx<=_Nt; jxx++)
     {
-      _matrix_large1.row(jxx) = ZMPx_constraints_halfyyy1.row(jxx) * ZMPx_constraints_halfxxx1;
+      _matrix_large1.row(jxx-1) = ZMPx_constraints_halfyyy1.row(jxx-1) * ZMPx_constraints_halfxxx1;
       
-      _matrix_large2.row(jxx) = ZMPx_constraints_halfyyy2.row(jxx) * ZMPx_constraints_halfxxx2;
+      _matrix_large2.row(jxx-1) = ZMPx_constraints_halfyyy2.row(jxx-1) * ZMPx_constraints_halfxxx2;
     }
          
   }
@@ -2075,13 +2086,32 @@ void MPCClass::Matrix_large(int i_f)
     {    
       for(int jxx=1; jxx<=_Nt; jxx++)
       {      
-	_matrix_large1.row(jxx) = ZMPx_constraints_halfyyy3.row(jxx) * ZMPx_constraints_halfxxx1;
+	_matrix_large1.row(jxx-1) = ZMPx_constraints_halfyyy3.row(jxx-1) * ZMPx_constraints_halfxxx1;
 	
-	_matrix_large2.row(jxx) = ZMPx_constraints_halfyyy4.row(jxx) * ZMPx_constraints_halfxxx2;  
+	_matrix_large2.row(jxx-1) = ZMPx_constraints_halfyyy4.row(jxx-1) * ZMPx_constraints_halfxxx2;  
       }
     }
     else
-    {
+    {             
+        if (i_f ==3)
+        {    
+            for(int jxx=1; jxx<=_Nt; jxx++)
+            {      
+                
+ //           _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];   
+//            _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];                 
+                 _matrix_large1.row(jxx-1) = _ZMPx_constraints_half2.row(jxx-1)*_ZMPx_constraints_half_va;
+                 _matrix_large2.row(jxx-1) = _ZMPy_constraints_half2.row(jxx-1)*_ZMPy_constraints_half_va;
+ 
+            }
+        }
+        else
+        {
+            
+        }
+        
+        
+        
       
     }  
   }
@@ -2167,11 +2197,7 @@ void MPCClass::File_wl()
 
 ///// three model MPC solution :modified================================================================
 void MPCClass::solve_reactive_step()
-{
-/*  int nVars = _Nt;
-  int nEqCon = 1+3*_nh;
-  int nIneqCon = 5*_nh + 4*_nstep+4;  
-  resizeQP(nVars, nEqCon, nIneqCon);	*/    
+{ 
 
   _G = _Q_goal1;
   _g0 = _q_goal1;
@@ -2231,11 +2257,7 @@ void MPCClass::solve_reactive_step()
 }
 
 void MPCClass::solve_reactive_step_body_inclination()
-{
-/*  int nVars = _Nt;
-  int nEqCon = 1+_nh;
-  int nIneqCon = 13*_nh + 4*_nstep +4;
-  resizeQP(nVars, nEqCon, nIneqCon);*/	    
+{    
 
   _G = _Q_goal1;
   _g0 = _q_goal1;
@@ -2306,11 +2328,7 @@ void MPCClass::solve_reactive_step_body_inclination()
 }
 
 void MPCClass::solve_reactive_step_body_inclination_CoMz()
-{
-/*  int nVars = _Nt;
-  int nEqCon = 1;
-  int nIneqCon = 15*_nh + 4*_nstep +4;
-  resizeQP(nVars, nEqCon, nIneqCon);	*/    
+{  
 
   _G = _Q_goal1;
   _g0 = _q_goal1;
@@ -2390,7 +2408,7 @@ void MPCClass::solve_reactive_step_body_inclination_CoMz()
   
   
   
-  Solve();  
+   Solve();  
 
 }
 

@@ -40,7 +40,7 @@ public:
 
 protected:
 	static const int MAX_ROWS = 300;
-	static const int MAX_VARS = 60;
+	static const int MAX_VARS = 70;
 	static const int MAX_N_INEQ = 300;
 
 	int _nVars;

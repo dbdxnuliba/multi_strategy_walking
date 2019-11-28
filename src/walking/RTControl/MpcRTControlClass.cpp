@@ -145,7 +145,7 @@ void MpcRTControlClass::WalkingReactStepping()
 // 	    cout <<"_walkdtime1:"<<_walkdtime1<<endl;
 	    if (_walkdtime1*_dtx<=_height_offset_time)
 	    {
-	      DPRINTF("height reduction\n");
+//	      DPRINTF("height reduction\n");
 
 		
 		PelvisPos = mpc.X_CoM_position_squat(_walkdtime1, _dtx);              
@@ -172,7 +172,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	    }
 	    else
 	    {
-	      DPRINTF("normal walking\n");
+//	      DPRINTF("normal walking\n");
 	      _walkdtime1 -= (int)_height_offset_time/_dtx;
 	      if(_walkdtime1 < _walkdtime_max)
 	      {	  		
@@ -186,8 +186,12 @@ void MpcRTControlClass::WalkingReactStepping()
 		  if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
 		  {		
     // 		mpc.CoM_foot_trajection_generation(_t_int, _estimated_state, _methx);
-		    mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);		
+                      
+                      // debug for real-time safety:
+ 		    mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);		
 		    mpc.Foot_trajectory_solve(_t_int, _stop_walking);	
+                    
+                    
       // 	      cout << "walking ref generation"<<endl;	      
 		  }
 		}
@@ -411,7 +415,6 @@ void MpcRTControlClass::WalkingReactStepping()
 		    
 		    if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
 		    {		
-      // 		mpc.CoM_foot_trajection_generation(_t_int, _estimated_state, _methx);
 		      mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);		
 		      mpc.Foot_trajectory_solve(_t_int, _stop_walking);	
 	// 	      cout << "walking ref generation"<<endl;	      

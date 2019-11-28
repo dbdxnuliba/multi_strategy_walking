@@ -153,7 +153,6 @@ void multi_strategy_walking::control_loop(double time, double period)
 	else {
 /* 	        DPRINTF("=========  RUN rt_control_loop. =============\n");*/ 
 		RTControl.Run();
-// 		RTControl.JointRefToXBot(_q);
 		RTControl.JointRefToXBot(_q_tmp);
 		//// interpolation of stabilizer angle
 		if ( (time - _first_loop_time -_homing_time)  <= 2){
@@ -176,8 +175,8 @@ void multi_strategy_walking::control_loop(double time, double period)
 // 	
 // 	// _q[_q.size()-1] = _q_home[_q.size()-1];
 // // 	cout<<"_q:"<< _q.transpose()<<endl; 
-  	_robot->setPositionReference(_q);
-  	_robot->move();    /// lead to real time unsafety;
+ // 	_robot->setPositionReference(_q);
+ // 	_robot->move();    /// lead to real time unsafety;
     
 }
 
