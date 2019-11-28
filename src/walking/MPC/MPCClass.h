@@ -46,6 +46,11 @@ public:
 	
 	void Initialize();
 	
+	void Matrix_large(int i_f);
+	
+	Eigen::Matrix<double,_Nt,_Nt> _matrix_large1,_matrix_large2;
+	
+	
 	void CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,18,1> estimated_state, Eigen::Vector3d _Rfoot_location_feedback, Eigen::Vector3d _Lfoot_location_feedback,double lamda,bool _ISwalking);
 	
 	void solve_reactive_step_body_inclination_CoMz(); 
@@ -306,12 +311,14 @@ private:
         Eigen::Matrix<double,3, 3> _x_offline4_va;    
         
         
-        vector <Eigen::Matrix<double,1, _Nt>> ZMPx_constraints_halfxxx1,ZMPx_constraints_halfxxx2;
+        Eigen::Matrix<double,1, _Nt> ZMPx_constraints_halfxxx1,ZMPx_constraints_halfxxx2;
         
-        Eigen::Matrix<double,1, _Nt> _x_offline4_vax;
+
         
-        vector <Eigen::Matrix<double,_Nt,1>> ZMPx_constraints_halfyyy1,ZMPx_constraints_halfyyy2,ZMPx_constraints_halfyyy3,ZMPx_constraints_halfyyy4;
-        
+        Eigen::Matrix<double,_Nt,1> ZMPx_constraints_halfyyy1,ZMPx_constraints_halfyyy2,ZMPx_constraints_halfyyy3,ZMPx_constraints_halfyyy4;
+	
+	
+        Eigen::Matrix<double,1, _Nt> _x_offline4_vax;       
         Eigen::Matrix<double,_Nt,1> _x_offline4_vay;        
         
         

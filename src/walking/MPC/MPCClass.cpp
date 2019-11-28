@@ -804,28 +804,24 @@ void MPCClass::Initialize()
 	ZMPy_constraints_half = x_offline2;
          
         
-        vector <Eigen::Matrix<double,1, _Nt>> x_offline2x(_nh)  ;
-        _x_offline4_vax.setZero();              
-        for (int j=0;j<_nh; j++)
-        {
-          x_offline2x[j]= _x_offline4_vax;
-        }        
-        ZMPx_constraints_halfxxx1 = x_offline2x; 
-        ZMPx_constraints_halfxxx2 = x_offline2x;  
+
+    
+        ZMPx_constraints_halfxxx1.setZero(); 
+        ZMPx_constraints_halfxxx2.setZero();  
         
         
-        vector <Eigen::Matrix<double,_Nt,1 >> x_offline2y(_nh)  ;
-        _x_offline4_vay.setZero();             
-        for (int j=0;j<_nh; j++)
-        {
-          x_offline2y[j]= _x_offline4_vay;
-        }        
-        ZMPx_constraints_halfyyy1 = x_offline2y; 
-        ZMPx_constraints_halfyyy2 = x_offline2y;          
-        ZMPx_constraints_halfyyy3 = x_offline2y; 
-        ZMPx_constraints_halfyyy4 = x_offline2y;         
+        _x_offline4_vax.setZero();   	
+        _x_offline4_vay.setZero();  
+
+       
+        ZMPx_constraints_halfyyy1.setZero(); 
+        ZMPx_constraints_halfyyy2.setZero();          
+        ZMPx_constraints_halfyyy3.setZero(); 
+        ZMPx_constraints_halfyyy4.setZero();         
         
-        
+        _matrix_large1.setZero();
+        _matrix_large2.setZero();	
+	
         std::cout << "local vector x_offline...\n";         
 		
 	for(int jxx=1; jxx<=_nh; jxx++)
@@ -845,19 +841,23 @@ void MPCClass::Initialize()
          ZMPx_constraints_half[jxx-1] = - (_Si).transpose() * _Si * _pau * _Sjz;
          ZMPy_constraints_half[jxx-1] = ZMPx_constraints_half[jxx-1];
          
-         ZMPx_constraints_halfxxx1[jxx-1] = _Si * _pau * _Sjz;
-         ZMPx_constraints_halfxxx2[jxx-1] = _Si * _ppu * _Sjz;
-         ZMPx_constraints_halfyyy1[jxx-1] = (_Si * _ppu * _Sjx).transpose();
-         ZMPx_constraints_halfyyy2[jxx-1] = (_Si * _pau * _Sjx).transpose();         
-         ZMPx_constraints_halfyyy3[jxx-1] = (_Si * _ppu * _Sjy).transpose();
-         ZMPx_constraints_halfyyy4[jxx-1] = (_Si * _pau * _Sjy).transpose();          
+         ZMPx_constraints_halfxxx1 = _Si * _pau * _Sjz;
+         ZMPx_constraints_halfxxx2 = _Si * _ppu * _Sjz;
+         ZMPx_constraints_halfyyy1 = (_Si * _ppu * _Sjx).transpose();
+         ZMPx_constraints_halfyyy2 = (_Si * _pau * _Sjx).transpose();         
+         ZMPx_constraints_halfyyy3 = (_Si * _ppu * _Sjy).transpose();
+         ZMPx_constraints_halfyyy4 = (_Si * _pau * _Sjy).transpose();          
          
          /// write a function to deal with the matrix multiply
-         _x_offline1_va = _x_offline4_vay*_x_offline4_vax;
-//         ZMPx_constraints_offfline[jxx-1] = _x_offline1_va;
-         
-//          ZMPx_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy1[jxx-1] * ZMPx_constraints_halfxxx1[jxx-1] - ZMPx_constraints_halfyyy2[jxx-1] * ZMPx_constraints_halfxxx2[jxx-1];                  
-//          ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3[jxx-1] * ZMPx_constraints_halfxxx1[jxx-1] - ZMPx_constraints_halfyyy4[jxx-1] * ZMPx_constraints_halfxxx2[jxx-1];
+ //        _x_offline1_va = _x_offline4_vay*_x_offline4_vax;
+	 
+	 Matrix_large(1);        
+	 ZMPx_constraints_offfline[jxx-1] = _matrix_large1 - _matrix_large2; 	 
+
+         Matrix_large(2);	  
+	 ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy4 * ZMPx_constraints_halfxxx2;
+//	  ZMPx_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy1 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy2 * ZMPx_constraints_halfxxx2;                  
+// 	  ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy4 * ZMPx_constraints_halfxxx2;
 
 	}
 
@@ -2055,6 +2055,44 @@ Eigen::MatrixXd MPCClass::Matrix_pu(Eigen::Matrix<double,3,3> a, Eigen::Matrix<d
     
   return matrixpu;  
 }
+
+
+void MPCClass::Matrix_large(int i_f)
+{
+  if (i_f == 1)
+  {
+    for(int jxx=1; jxx<=_Nt; jxx++)
+    {
+      _matrix_large1.row(jxx) = ZMPx_constraints_halfyyy1.row(jxx) * ZMPx_constraints_halfxxx1;
+      
+      _matrix_large2.row(jxx) = ZMPx_constraints_halfyyy2.row(jxx) * ZMPx_constraints_halfxxx2;
+    }
+         
+  }
+  else
+  {
+    if (i_f ==2)
+    {    
+      for(int jxx=1; jxx<=_Nt; jxx++)
+      {      
+	_matrix_large1.row(jxx) = ZMPx_constraints_halfyyy3.row(jxx) * ZMPx_constraints_halfxxx1;
+	
+	_matrix_large2.row(jxx) = ZMPx_constraints_halfyyy4.row(jxx) * ZMPx_constraints_halfxxx2;  
+      }
+    }
+    else
+    {
+      
+    }  
+  }
+  
+  
+}
+
+
+
+
+
 
 ///DATA SAVING:modified=========================================================
 void MPCClass::File_wl()
