@@ -17,7 +17,7 @@ MasterCommunicationInterface:
   framework_name: "ROS"
 
 XBotRTPlugins:
-  plugins: ["HomingExample","multi_strategy_walking"] #multi_strategy_walking
+  plugins: ["HomingExample"] #multi_strategy_walking
   io_plugins: []
   
 NRTPlugins:
