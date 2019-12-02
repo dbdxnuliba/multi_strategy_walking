@@ -1,95 +1,54 @@
 RobotName: "cogimon"
 
 GazeboXBotPlugin:
-  control_rate: 0.005
+  control_rate: 0.001
   gains:
-###chengxu para
-#    RShSag:        {p: 4000, d: 10}
-#    RShLat:        {p: 3000, d: 10}
-#    RShYaw:        {p: 3000, d: 10}
-#    RElbj:         {p: 3000, d: 10}
-#    RForearmPlate: {p: 1500, d: 10}
-#    RWrj1:         {p: 1500, d: 10}
-#    RWrj2:         {p: 1500, d: 10}
-#    LShSag:        {p: 4000, d: 10}
-#    LShLat:        {p: 3000, d: 10}
-#    LShYaw:        {p: 3000, d: 10}
-#    LElbj:         {p: 3000, d: 10}
-#    LForearmPlate: {p: 1500, d: 10}
-#    LWrj1:         {p: 1500, d: 10}
-#    LWrj2:         {p: 1500, d: 10}
-#    WaistYaw:      {p: 8000, d: 30}
-#    WaistLat: {p: 3000, d: 1}
-#    LHipLat: {p: 3000, d: 1}
-#    LHipSag: {p: 3000, d: 1}
-#    LHipYaw: {p: 3000, d: 1}
-#    LKneePitch: {p: 3000, d: 1}
-#    LAnklePitch: {p: 3000, d: 1}
-#    LAnkleRoll: {p: 3000, d: 1}
-#    RHipLat: {p: 3000, d: 1}
-#    RHipSag: {p: 3000, d: 1}
-#    RHipYaw: {p: 3000, d: 1}
-#    RKneePitch: {p: 3000, d: 1}
-#    RAnklePitch: {p: 3000, d: 1}
-#    RAnkleRoll: {p: 3000, d: 1}
-###francesco para
     RShSag:        {p: 4000, d: 10}
     RShLat:        {p: 3000, d: 10}
     RShYaw:        {p: 3000, d: 10}
     RElbj:         {p: 3000, d: 10}
     RForearmPlate: {p: 1500, d: 10}
-    RWrj1:         {p: 1000, d: 1} #ok
-    RWrj2:         {p: 1000, d: 1} #ok
+    RWrj1:         {p: 1500, d: 10}
+    RWrj2:         {p: 1500, d: 10}
     LShSag:        {p: 4000, d: 10}
     LShLat:        {p: 3000, d: 10}
     LShYaw:        {p: 3000, d: 10}
     LElbj:         {p: 3000, d: 10}
     LForearmPlate: {p: 1500, d: 10}
-    LWrj1:         {p: 1000, d: 1} #ok
-    LWrj2:         {p: 1000, d: 1} #ok
+    LWrj1:         {p: 1500, d: 10}
+    LWrj2:         {p: 1500, d: 10}
     WaistYaw:      {p: 8000, d: 30}
-    WaistLat: {p: 8000, d: 30}
-    LHipLat: {p: 8000, d: 30}
-    LHipSag: {p: 8000, d: 30}
+    WaistLat: {p: 1000, d: 1}
+    LHipLat: {p: 1000, d: 1}
+    LHipSag: {p: 1000, d: 1}
     LHipYaw: {p: 1000, d: 1}
-    LKneePitch: {p: 8000, d: 30} #~~
-    LAnklePitch: {p: 2000, d: 20} #ok
-    LAnkleRoll: {p: 2000, d: 10} #ok
-    RHipLat: {p: 8000, d: 30}
-    RHipSag: {p: 8000, d: 30}
+    LKneePitch: {p: 1000, d: 1}
+    LAnklePitch: {p: 1000, d: 1}
+    LAnkleRoll: {p: 1000, d: 1}
+    RHipLat: {p: 1000, d: 1}
+    RHipSag: {p: 1000, d: 1}
     RHipYaw: {p: 1000, d: 1}
-    RKneePitch: {p: 8000, d: 30} #~~
-    RAnklePitch: {p: 2000, d: 20} #ok
-    RAnkleRoll: {p: 2000, d: 10} #ok
+    RKneePitch: {p: 1000, d: 1}
+    RAnklePitch: {p: 1000, d: 1}
+    RAnkleRoll: {p: 1000, d: 1}
 
-
-
-####jiatao para
-#    WaistYaw: {p: 10000, d: 20}
-#    WaistLat: {p: 10000, d: 20}
-#    LHipLat: {p: 500000, d: 5000}
-#    LHipSag: {p: 10000, d: 20}
-#    LHipYaw: {p: 10000, d: 20}
-#    LKneePitch: {p: 10000, d: 20}
-#    LAnklePitch: {p: 10000, d: 20}
-#    LAnkleRoll: {p: 500000, d: 20}
-#    RHipLat: {p: 500000, d: 5000}
-#    RHipSag: {p: 10000, d: 20}
-#    RHipYaw: {p: 10000, d: 20}
-#    RKneePitch: {p: 10000, d: 20}
-#    RAnklePitch: {p: 10000, d: 20}
-#    RAnkleRoll: {p: 500000, d: 20}
-
-
+defaults:
+ - &small_imp [250, 10, 1.0, 0.003, 0.95]
+ - &medium_imp [500, 10, 1.0, 0.003, 0.95]
+ - &high_imp [1500, 20, 1.0, 0.003, 0.95]    
+    
 HALInterface:
   lib_file: "libXBotEcat"
   lib_name: "ETHERCAT"
   IJoint: "libXBotEcat_Joint"
   IEndEffectors:
-   - [[19,29] , "libXBotEcat_SoftHand"]
+   #- [[19,29] , "libXBotEcat_SoftHand"]
   ISensors:
-   - [[18,28,147,157], "libXBotEcat_FT"]
+   #- [[18,28,147,157], "libXBotEcat_FT"]
+   - [[147,157], "libXBotEcat_FT"]
+   - [[148,158], "libXBotEcat_FPS"]
    - [[91], "libXBotEcat_IMU"]
+   #- [[91,111], "libXBotEcat_IMU"]
   
 x_bot_ecat:
   name: XBotCore
@@ -101,8 +60,8 @@ ec_board_ctrl:
   #eth_iface: eth1
   #sync_cycle_time_ns: 500000
   #sync_cycle_time_ns: 1000000
-  #sync_cycle_time_ns: 2000000
-  sync_cycle_time_ns: 5000000
+  sync_cycle_time_ns: 2000000
+  #sync_cycle_time_ns: 5000000
   #sync_cycle_time_ns: 10000000
   #sync_cycle_time_ns: 0
   sync_cycle_offset_ns: 1000000000
@@ -115,6 +74,7 @@ ec_boards_base:
   urdf_config_file : ../configs/cogimon_urdf.yaml
   joints_poses_file : ../configs/cogimon_poses.yaml
   use_pipes: false
+  fault_power_off: false
 
 firmware_update:
   #
@@ -152,7 +112,7 @@ HpESC_X:
   pos_offset: 0
 
 CentAcESC_X:
-  control_mode: pos_3b
+  control_mode: idle
   sign: 1
   pos_offset: 0
   max_current_A: 15.0
@@ -186,7 +146,7 @@ CentAcESC_41:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [0.0, 0.0, 1.0, 0.002, 0.0] 
 
@@ -198,7 +158,7 @@ CentAcESC_42:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [0.0, 0.0, 1.0, 0.002, 0.0]
     
@@ -210,21 +170,21 @@ CentAcESC_43:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [0.0, 0.0, 1.0, 0.002, 0.0]    
 
 CentAcESC_44:
-  control_mode: pos_3b
-  sign: -1
-  pos_offset: 0
-  max_current_A: 40.0
-  enable_sandbox: false
-  enable_pos_filter: false
-  pid :
-    position: [5000.0 , 0.0 , 30.0]
-    #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]
+ control_mode: pos_3b
+ sign: -1
+ pos_offset: 0
+ max_current_A: 40.0
+ enable_sandbox: false
+ enable_pos_filter: false
+ pid :
+   position: [2500.0 , 0.0 , 30.0]
+   #  .... tor_K divided by 10000 to respect the int range [0..65536]
+   impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]  
 
 CentAcESC_45:
   control_mode: pos_3b
@@ -234,7 +194,7 @@ CentAcESC_45:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position:   [5000.0 , 0.0 , 20.0]
+    position:   [1500.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]
@@ -247,7 +207,7 @@ CentAcESC_46:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position:   [5000.0 , 0.0 , 20.0]
+    position:   [1500.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]
@@ -263,7 +223,7 @@ CentAcESC_51:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [0.0, 0.0, 1.0, 0.002, 0.0] 
     
@@ -275,7 +235,7 @@ CentAcESC_52:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [0.0, 0.0, 1.0, 0.002, 0.0]    
 
@@ -288,7 +248,7 @@ CentAcESC_53:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [0.0, 0.0, 1.0, 0.002, 0.0] 
     
@@ -300,7 +260,7 @@ CentAcESC_54:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position: [5000.0 , 0.0 , 30.0]
+    position: [2500.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]    
 
@@ -312,7 +272,7 @@ CentAcESC_55:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position:   [5000.0 , 0.0 , 20.0]
+    position:   [1500.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]
@@ -325,7 +285,7 @@ CentAcESC_56:
   enable_sandbox: false
   enable_pos_filter: false
   pid :
-    position:   [5000.0 , 0.0 , 20.0]
+    position:   [1500.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
     impedance:  [1000.0, 50.0, 6.0, 0.002, 1.0]
