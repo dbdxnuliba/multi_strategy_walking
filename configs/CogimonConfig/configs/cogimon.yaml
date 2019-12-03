@@ -48,7 +48,6 @@ HALInterface:
    - [[147,157], "libXBotEcat_FT"]
    - [[148,158], "libXBotEcat_FPS"]
    - [[91], "libXBotEcat_IMU"]
-   #- [[91,111], "libXBotEcat_IMU"]
   
 x_bot_ecat:
   name: XBotCore
@@ -60,8 +59,8 @@ ec_board_ctrl:
   #eth_iface: eth1
   #sync_cycle_time_ns: 500000
   #sync_cycle_time_ns: 1000000
-  sync_cycle_time_ns: 2000000
-  #sync_cycle_time_ns: 5000000
+  #sync_cycle_time_ns: 2000000
+  sync_cycle_time_ns: 5000000
   #sync_cycle_time_ns: 10000000
   #sync_cycle_time_ns: 0
   sync_cycle_offset_ns: 1000000000
@@ -300,7 +299,7 @@ CentAcESC_11:
   pos_offset: -45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -312,7 +311,7 @@ CentAcESC_12:
   pos_offset: -45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -324,7 +323,7 @@ CentAcESC_13:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -336,7 +335,7 @@ CentAcESC_14:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -348,7 +347,7 @@ CentAcESC_15:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -360,7 +359,7 @@ CentAcESC_16:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -372,7 +371,7 @@ CentAcESC_17:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -398,7 +397,7 @@ CentAcESC_21:
   pos_offset: -45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -410,7 +409,7 @@ CentAcESC_22:
   pos_offset: 45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -422,7 +421,7 @@ CentAcESC_23:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]    
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -434,7 +433,7 @@ CentAcESC_24:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]    
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -446,7 +445,7 @@ CentAcESC_25:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -458,7 +457,7 @@ CentAcESC_26:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -470,7 +469,7 @@ CentAcESC_27:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -494,7 +493,7 @@ CentAcESC_31:
   pos_offset: 0
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [3000.0 , 0.0 , 20.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
@@ -506,7 +505,7 @@ CentAcESC_32:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [3000.0 , 0.0 , 20.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]

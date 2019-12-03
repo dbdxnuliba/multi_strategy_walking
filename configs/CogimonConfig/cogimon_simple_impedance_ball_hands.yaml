@@ -1,5 +1,5 @@
 XBotCore:
-  config_path: "configs/CogimonConfig/configs/cogimon_impedance.yaml"
+  config_path: "/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/configs/CogimonConfig/configs/cogimon_impedance.yaml" #"configs/CogimonConfig/configs/cogimon_impedance.yaml"
 
 XBotInterface:
   urdf_path: "configs/CogimonConfig/urdf/ball_hands/cogimon.urdf"

@@ -370,13 +370,20 @@ void XBotRTControlClass::Run()
   ////// then run ./xddp_console, to keyboard input the c/s to start or stop the real-time loop
 	const RobotStateClass& irobot = _WBS.getRobotState();
 
-// 	char cmd;
-// 	user_input(cmd);
+        
+        
+        
+//  	char cmd;
+//  	user_input(cmd);
+        
+//         DPRINTF("========= run funtion. =============\n");
+//         cout<<"dtime:"<<dtime<<endl;
 
 	realtime = dtime * dt;
 	MoveToInitialPosition();
         
-	if (IsInit && IsStartWalk) {
+        
+	if (IsInit && IsStartWalk && (realtime>10)) {
 		if (walkdtime == 0) {
 			walkstarttime = dt * dtime;
 		}
@@ -388,11 +395,13 @@ void XBotRTControlClass::Run()
 		}
 		else {		  
 			WalkingReactStepping();
+//                          DPRINTF("========= WalkingReactStepping. =============\n");
 			
 		}
 
 		COMTrajGen();
 		walkdtime++;
+//                 cout<<"walkdtime:"<<walkdtime<<endl;
 		
 	}
 
@@ -425,7 +434,7 @@ void XBotRTControlClass::KeyBoardControl(char cmd)
 	{
 	case 'c':
 	{	  
-//		StartWalking();
+		StartWalking();
 	}
 	break;
 

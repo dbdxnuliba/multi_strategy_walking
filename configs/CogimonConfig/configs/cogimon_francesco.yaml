@@ -45,14 +45,23 @@ GazeboXBotPlugin:
 #    RAnklePitch: {p: 4000, d: 10} #ok   ////p 4000~6000, d smaller
 #    RAnkleRoll: {p: 2500, d: 12} #ok    ////p 2000-3000, d 10-20
 
+defaults:
+ - &small_imp [250, 10, 1.0, 0.003, 0.95]
+ - &medium_imp [500, 10, 1.0, 0.003, 0.95]
+ - &high_imp [1500, 20, 1.0, 0.003, 0.95] 
+
+
 HALInterface:
   lib_file: "libXBotEcat"
   lib_name: "ETHERCAT"
   IJoint: "libXBotEcat_Joint"
   IEndEffectors:
-   - [[19,29] , "libXBotEcat_SoftHand"]
+   #- [[19,29] , "libXBotEcat_SoftHand"]
   ISensors:
-   - [[18,28,147,157], "libXBotEcat_FT"]
+#   - [[18,28,147,157], "libXBotEcat_FT"]
+#   - [[91], "libXBotEcat_IMU"]
+   - [[147,157], "libXBotEcat_FT"]
+   - [[148,158], "libXBotEcat_FPS"]
    - [[91], "libXBotEcat_IMU"]
   
 x_bot_ecat:

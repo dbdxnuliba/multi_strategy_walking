@@ -1,5 +1,7 @@
 XBotCore:
   config_path: "/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/configs/CogimonConfig/configs/cogimon.yaml"
+#"configs/CogimonConfig/configs/cogimon.yaml"
+#"/home/embedded/jiatao_catkin_ws/src/multi_strategy_walking/configs/CogimonConfig/configs/cogimon_francesco.yaml" # 
 
 XBotInterface:
   urdf_path: "configs/CogimonConfig/urdf/cogimon.urdf"

@@ -32,11 +32,21 @@ GazeboXBotPlugin:
     RAnklePitch: {p: 1000, d: 1}
     RAnkleRoll: {p: 1000, d: 1}
 
+defaults:
+ - &small_imp 	[250, 10, 1.0, 0.003, 0.4]
+ - &medium_imp	[500, 10, 1.0, 0.003, 0.4]
+ - &high_imp 	[1500, 10, 1.0, 0.003, 0.4]
+ - &tibia_imp 	[2000, 100, 1.0, 0.005, 0.4]
 
 HALInterface:
   lib_file: "libXBotEcat"
   lib_name: "ETHERCAT"
-
+  IJoint: "libXBotEcat_Joint"
+  IEndEffectors:
+  # - [[19,29] , "libXBotEcat_SoftHand"]
+  ISensors:
+   - [[147,157], "libXBotEcat_FT"]
+   - [[91], "libXBotEcat_IMU"]
 
 x_bot_ecat:
   name: XBotCore
@@ -47,9 +57,9 @@ ec_board_ctrl:
   eth_iface: rteth0
   #eth_iface: eth1
   #sync_cycle_time_ns: 500000
-  sync_cycle_time_ns: 1000000
+  #sync_cycle_time_ns: 1000000
   #sync_cycle_time_ns: 2000000
-  #sync_cycle_time_ns: 5000000
+  sync_cycle_time_ns:  5000000
   #sync_cycle_time_ns: 10000000
   #sync_cycle_time_ns: 0
   sync_cycle_offset_ns: 1000000000
@@ -61,6 +71,8 @@ ec_boards_base:
   robot_name : cogimon
   urdf_config_file : ../configs/cogimon_urdf.yaml
   joints_poses_file : ../configs/cogimon_poses.yaml
+  use_pipes: false
+  fault_power_off: false
 
 firmware_update:
   #
@@ -134,7 +146,7 @@ CentAcESC_41:
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *high_imp
 
 CentAcESC_42:
   control_mode: impedance_d4
@@ -146,19 +158,19 @@ CentAcESC_42:
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *high_imp
     
 CentAcESC_43:
   control_mode: impedance_d4
   sign: -1
   pos_offset: 0
-  max_current_A: 20.0
+  max_current_A: 40.0
   enable_sandbox: false
   enable_pos_filter: false
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]   
+    impedance:  *high_imp
 
 CentAcESC_44:
   control_mode: impedance_d4
@@ -170,7 +182,7 @@ CentAcESC_44:
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *high_imp
 
 CentAcESC_45:
   control_mode: impedance_d4
@@ -183,7 +195,7 @@ CentAcESC_45:
     position:   [5000.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *tibia_imp
 
 CentAcESC_46:
   control_mode: impedance_d4
@@ -196,7 +208,7 @@ CentAcESC_46:
     position:   [5000.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *tibia_imp
 
 #############################
 # Left tibia
@@ -211,7 +223,7 @@ CentAcESC_51:
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0] 
+    impedance:  *high_imp
     
 CentAcESC_52:
   control_mode: impedance_d4
@@ -223,20 +235,20 @@ CentAcESC_52:
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]    
+    impedance:  *high_imp   
 
 
 CentAcESC_53:
   control_mode: impedance_d4
   sign: -1
   pos_offset: 0
-  max_current_A: 20.0
+  max_current_A: 40.0
   enable_sandbox: false
   enable_pos_filter: false
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0] 
+    impedance:  *high_imp 
     
 CentAcESC_54:
   control_mode: impedance_d4
@@ -248,7 +260,7 @@ CentAcESC_54:
   pid :
     position: [5000.0 , 0.0 , 30.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]    
+    impedance:  *high_imp  
 
 CentAcESC_55:
   control_mode: impedance_d4
@@ -261,7 +273,7 @@ CentAcESC_55:
     position:   [5000.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *tibia_imp
 
 CentAcESC_56:
   control_mode: impedance_d4
@@ -274,7 +286,7 @@ CentAcESC_56:
     position:   [5000.0 , 0.0 , 20.0]
     # pos_Kp pos_Kd tor_Kp tor_Kd tor_Ki
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [500.0, 10.0, 6.0, 0.002, 1.0]
+    impedance:  *tibia_imp
 
 ##############################
 # RIGHT ARM
@@ -286,11 +298,11 @@ CentAcESC_11:
   pos_offset: -45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
 
 CentAcESC_12:
   control_mode: impedance_d4
@@ -298,11 +310,11 @@ CentAcESC_12:
   pos_offset: -45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
 
 CentAcESC_13:
   control_mode: impedance_d4
@@ -310,11 +322,11 @@ CentAcESC_13:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
 
 CentAcESC_14:
   control_mode: impedance_d4
@@ -322,11 +334,13 @@ CentAcESC_14:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
+  upd_params:
+    torqueFixedOffset: 46.08	
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
 
 CentAcESC_15:
   control_mode: impedance_d4
@@ -334,11 +348,11 @@ CentAcESC_15:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *small_imp
 
 CentAcESC_16:
   control_mode: impedance_d4
@@ -346,11 +360,11 @@ CentAcESC_16:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *small_imp
 
 CentAcESC_17:
   control_mode: impedance_d4
@@ -358,11 +372,11 @@ CentAcESC_17:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *small_imp
     
 # RA_HA = 19
 LpESC_19:
@@ -384,11 +398,11 @@ CentAcESC_21:
   pos_offset: -45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
 
 CentAcESC_22:
   control_mode: impedance_d4
@@ -396,11 +410,11 @@ CentAcESC_22:
   pos_offset: 45
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
 
 CentAcESC_23:
   control_mode: impedance_d4
@@ -408,11 +422,11 @@ CentAcESC_23:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]    
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
     
 CentAcESC_24:
   control_mode: impedance_d4
@@ -420,11 +434,11 @@ CentAcESC_24:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [500.0 , 0.0 , 10.0]    
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 1.0, 5.0, 0.003, 1.0]
+    impedance:  *medium_imp
     
 CentAcESC_25:
   control_mode: impedance_d4
@@ -432,11 +446,11 @@ CentAcESC_25:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *small_imp
 
 CentAcESC_26:
   control_mode: impedance_d4
@@ -444,11 +458,11 @@ CentAcESC_26:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *small_imp
 
 CentAcESC_27:
   control_mode: impedance_d4
@@ -456,11 +470,11 @@ CentAcESC_27:
   pos_offset: 0
   max_current_A: 10.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [150.0 , 0.0 , 5.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *small_imp
     
 # LA_HA = 29
 LpESC_29:
@@ -480,11 +494,11 @@ CentAcESC_31:
   pos_offset: 0
   max_current_A: 30.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [3000.0 , 0.0 , 20.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *high_imp
 
 CentAcESC_32:
   control_mode: impedance_d4
@@ -492,11 +506,11 @@ CentAcESC_32:
   pos_offset: 0
   max_current_A: 20.0
   enable_sandbox: false
-  enable_pos_filter: true
+  enable_pos_filter: false
   pid :
     position: [3000.0 , 0.0 , 20.0]
     #  .... tor_K divided by 10000 to respect the int range [0..65536]
-    impedance:  [100.0, 3.0, 1.0, 0.001, 0.0]
+    impedance:  *high_imp
 
 
 
