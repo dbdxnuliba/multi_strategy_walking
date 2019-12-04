@@ -772,7 +772,7 @@ void XBotRTControlClass::COMTrajGen()
 
 
 // 	PelvisPos[1] *= Ksway;
-  	PelvisPos[1] *= 1;
+  	PelvisPos[1] *= 0.96;
 }
 
 void XBotRTControlClass::savedata()

@@ -38,7 +38,7 @@ MpcRTControlClass::MpcRTControlClass()
 	
   mpc._robot_name = RobotPara().name;
   mpc._robot_mass = RobotPara().totalmass;
-  mpc._lift_height = 0.05;
+  mpc._lift_height = 0.06;
 //  mpc._tstep = RobotPara().Tstep;
   
   // initialization
@@ -55,7 +55,7 @@ MpcRTControlClass::MpcRTControlClass()
   }
   else if (RobotPara().name == "cogimon")
    {
-    steplengthinput = 0.0;
+    steplengthinput = 0.05;
   } 
   else
   {DPRINTF("Errorrrrrrrr for IK\n");}
@@ -258,6 +258,7 @@ void MpcRTControlClass::WalkingReactStepping()
  //         DPRINTF("=========Finish body inclination generation=============\n"); 
  		LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
  		RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
+                LeftFootPosx(2)-=0.003; RightFootPosx(2)-=0.003;
   
 	/// for hardware test: avoidance self_collision	
 	  if (LeftFootPosx(0)-PelvisPos(0)>0.4)
