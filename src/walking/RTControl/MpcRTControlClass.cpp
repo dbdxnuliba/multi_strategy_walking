@@ -33,7 +33,7 @@ MpcRTControlClass::MpcRTControlClass()
 #endif
 	
   
-  mpc._method_flag_nlp = 0;//for non_optimizatio: 0: one step; 1: two steps; 2;	
+  mpc._method_flag_nlp = 2;//for non_optimizatio: 0: one step; 1: two steps; 2;	
 
 	
   mpc._robot_name = RobotPara().name;
@@ -55,7 +55,7 @@ MpcRTControlClass::MpcRTControlClass()
   }
   else if (RobotPara().name == "cogimon")
    {
-    steplengthinput = 0.05;
+    steplengthinput = 0.1;
   } 
   else
   {DPRINTF("Errorrrrrrrr for IK\n");}

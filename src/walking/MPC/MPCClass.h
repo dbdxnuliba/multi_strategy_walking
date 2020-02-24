@@ -31,7 +31,7 @@ using namespace arma;
 
 /// constant variable defintion
 const int _footstepsnumber = 15;       //  number of _footstepnumber
-const double _dt = 0.05;                //sampling time
+const double _dt = 0.01;                //sampling time
 const int _nh = 30;                    /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
 const double _tstep = 0.7;              ///step period
 const int _nT = round(_tstep/_dt);      /// _tstep/_dt)  the number of one step cycle

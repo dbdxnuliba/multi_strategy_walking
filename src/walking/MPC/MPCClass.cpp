@@ -350,7 +350,7 @@ void MPCClass::Initialize()
 	  _rad = 0.2; 	 
 	  
 	//step timing constraints:
-	_t_min = 0.4; _t_max = 2;
+	_t_min = 0.5; _t_max = 1.2;
 	
 	// swing foot velocity constraints	
 	_footx_vmax = 3;
@@ -391,8 +391,8 @@ void MPCClass::Initialize()
 	  _zmpy_lb=(-RobotParaClass::FOOT_WIDTH()/2*_ZMP_ratio);*/
 
         //  foot location constraints 
-	_footx_max=0.35;
-	_footx_min=-0.15;
+	_footx_max=0.25;
+	_footx_min=-0.1;
 // 	_footy_max=2*RobotParaClass::HALF_HIP_WIDTH() + 0.2; 
 // 	_footy_min=RobotParaClass::HALF_HIP_WIDTH() - 0.03; 
 	  
@@ -1123,33 +1123,51 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 // // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
     step_timing_constraints(i);
     
-    ///// generated CoM final position
-    if (_method_flag_nlp==2)
-    {
-      ////number of inequality constraints: 8+8+8+4+4+4
-      solve_stepping_timing_twosteps();      
-      
+    
+    if (_Tk<0.1*_ts(_periond_i-1))
+    {     
+      _vari_ini << _Lxx_refx,
+		  _Lyy_refy,
+		  _tr1_ref,
+		  _tr2_ref,
+		  _Lxx_refx1,
+		  _Lyy_refy1,
+		  _tr1_ref1,
+		  _tr2_ref1;      
     }
     else
-    {
-      if (_method_flag_nlp==1)
+    {     
+      ///// generated CoM final position
+      if (_method_flag_nlp==2)
       {
-	solve_stepping_timing_onestep();
+	////number of inequality constraints: 8+8+8+4+4+4
+	solve_stepping_timing_twosteps();      
+	
       }
       else
-      {	
-	solve_stepping_timing_non();
+      {
+	if (_method_flag_nlp==1)
+	{
+	  solve_stepping_timing_onestep();
+	}
+	else
+	{	
+	  solve_stepping_timing_non();
+	}
+	
       }
+
+      if (_X.rows() == 8)
+      {
+	_vari_ini += _X;
+      }     
+      
       
     }
-
     
 
     
-    if (_X.rows() == 8)
-    {
-      _vari_ini += _X;
-    }   
+  
     
     
   }
@@ -1164,66 +1182,77 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
   
   
 // update the optimal parameter in the real-time: at the result, the effect of optimization reduced gradually
-  /// exception catch: for 
-  if(_robot_name == "coman")
+//////post procession//////////////////////
+  if (_vari_ini(0,0)>_footx_max)
   {
-    if (_vari_ini(1)>=0.2)
-    {
-      _vari_ini(1) =0.2;
-    }  
-    else
-    {
-      if (_vari_ini(1)<=-0.2)
-      {
-	_vari_ini(1) =-0.2;
-      }    
-      
-    }
-    
-    if (_vari_ini(0)>=0.35)
-    {
-      _vari_ini(0) =0.35;
-    }  
-    else
-    {
-      if (_vari_ini(0)<=-0.05)
-      {
-	_vari_ini(0) =-0.05;
-      }    
-      
-    }    
-    
+   _vari_ini(0,0)  = _footx_max;
   }
   else
   {
-    if (_vari_ini(1)>=0.28)
+    if (_vari_ini(0,0)<_footx_min)
     {
-      _vari_ini(1) =0.28;
-    }  
-    else
-    {
-      if (_vari_ini(1)<=-0.28)
-      {
-	_vari_ini(1) =-0.28;
-      }    
-      
-    }
+    _vari_ini(0,0)  = _footx_min;
+    }    
     
-    if (_vari_ini(0)>=0.35)
-    {
-      _vari_ini(0) =0.35;
-    }  
-    else
-    {
-      if (_vari_ini(0)<=-0.1)
-      {
-	_vari_ini(0) =-0.1;
-      }    
-      
-    }     
+  }
+
+  if ((abs(_vari_ini(0,0)-_Lxx_refx)>0.005)&&((_vari_ini(0,0)-_Lxx_refx)*_comvx_feed(i-1)<0))
+  {
+    _vari_ini(0,0) *= (-1);
   }
   
   
+  if (_vari_ini(1,0)>_footy_max)
+  {
+   _vari_ini(1,0)  = _footy_max;
+  }
+  else
+  {
+    if (_vari_ini(1,0)<_footy_min)
+    {
+    _vari_ini(1,0)  = _footy_min;
+    }    
+    
+  }  
+  
+
+  if (_vari_ini(2,0)>_tr1_max)
+  {
+   _vari_ini(2,0)  = _tr1_max;
+   _vari_ini(3,0)  = _tr2_max;
+  }
+  else
+  {
+    if (_vari_ini(2,0)<_tr1_min)
+    {
+      _vari_ini(2,0)  = _tr1_min;
+      _vari_ini(3,0)  = _tr2_min;
+    }    
+    
+  }  
+  
+  if (_vari_ini(3,0)>_tr2_max)
+  {
+   _vari_ini(2,0)  = _tr1_max;
+   _vari_ini(3,0)  = _tr2_max;
+  }
+  else
+  {
+    if (_vari_ini(3,0)<_tr2_min)
+    {
+      _vari_ini(2,0)  = _tr1_min;
+      _vari_ini(3,0)  = _tr2_min;
+    }
+  }
+  
+  
+  
+  
+  
+  
+  
+    
+    
     
   
   _Lxx_ref(_periond_i-1) = _SS1*_vari_ini;
