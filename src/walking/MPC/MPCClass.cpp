@@ -22,9 +22,10 @@ using namespace arma;
 // using namespace std;
 
 
+// MPCClass::MPCClass()                    ///declaration function
+// 	: QPBaseClass()
 MPCClass::MPCClass()                    ///declaration function
-	: QPBaseClass()
-	, _robot_name("")
+	: _robot_name("")
 	, _robot_mass(0.0)
 	, _lift_height(0.0)
 	, _method_flag_nlp(0)
@@ -585,7 +586,7 @@ void MPCClass::Initialize()
 	  int nVars = 8;
 	  int nEqCon = 2;
 	  int nIneqCon = 24 + 12;
-	  resizeQP(nVars, nEqCon, nIneqCon);  
+	  QPsolver1_nlp.resizeQP(nVars, nEqCon, nIneqCon);  
 	  
 	}
 	else
@@ -595,7 +596,7 @@ void MPCClass::Initialize()
 	    int nVars = 8;
 	    int nEqCon = 6;
 	    int nIneqCon = 24 + 12;
-	    resizeQP(nVars, nEqCon, nIneqCon);  	    
+	    QPsolver1_nlp.resizeQP(nVars, nEqCon, nIneqCon);  	    
 	    
 	  }
 	  else
@@ -603,7 +604,7 @@ void MPCClass::Initialize()
 	    int nVars = 8;
 	    int nEqCon = 10;
 	    int nIneqCon = 24 + 12;
-	    resizeQP(nVars, nEqCon, nIneqCon);  	    
+	    QPsolver1_nlp.resizeQP(nVars, nEqCon, nIneqCon);  	    
 	    
 	  }
 	  
@@ -1015,29 +1016,29 @@ void MPCClass::Initialize()
 	//// data saving
 	CoMMM_ZMP_foot.setZero();
 	
-/*	///QP size initiallize
+	///MPC_QP size initiallize
 	if (_method_flag ==0)
 	{
 	  
 	  int nVars = _Nt;
 	  int nEqCon = 1+3*_nh;
 	  int nIneqCon = 5*_nh + 4*_nstep+4;  
-	  resizeQP(nVars, nEqCon, nIneqCon);		   
+	  QPsolver2_nmpc.resizeQP(nVars, nEqCon, nIneqCon);		   
         }
 	else if (_method_flag ==1)
 	{
 	  int nVars = _Nt;
 	  int nEqCon = 1+_nh;
 	  int nIneqCon = 13*_nh + 4*_nstep +4;
-	  resizeQP(nVars, nEqCon, nIneqCon);	   
+	  QPsolver2_nmpc.resizeQP(nVars, nEqCon, nIneqCon);	   
 	}
 	else
 	{
 	  int nVars = _Nt;
 	  int nEqCon = 1;
 	  int nIneqCon = 15*_nh + 4*_nstep +4;
-	  resizeQP(nVars, nEqCon, nIneqCon);		   
-	}*/	
+	  QPsolver2_nmpc.resizeQP(nVars, nEqCon, nIneqCon);		   
+	}	
 	
 	_t_end_walking = _tx(_footstepsnumber-1)- 9*_tstep/4;  // ending time when normal walking ends	
 	_n_end_walking = round(_t_end_walking/_dt);	
@@ -1467,10 +1468,8 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 	
       }
 
-      if (_X.rows() == 8)
-      {
-	_vari_ini += _X;
-      }     
+
+	_vari_ini += QPsolver1_nlp._X;   
       
       
     }
@@ -1719,929 +1718,867 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 
 
 /////////////////////// local coordinate CoM solution---modified---------------------------------
-// void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,18,1> estimated_state, Eigen::Vector3d _Rfoot_location_feedback, Eigen::Vector3d _Lfoot_location_feedback,double lamda, bool _stopwalking)
-// {
-//  
-//        if (i<_n_end_walking)   ///////normal walking
-//        {
-// 	  /// modified the footy_min
-// 	  if (i==(round(2*_ts(1)/_dt))+1) ///update the footy_limit
-// 	  {
-// 	      _footy_min = RobotParaClass::FOOT_WIDTH()+0.01;
-// 	      _detfooty  = _footy_max - _footy_min; 
-// 	  }
-//   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-//   // 	================ iterative calulcation: predictive control_tracking with time-varying height+angular momentum	    	    
-// 	    /// run once
-// 	    ///////////////////////////////////////////////////////	    
-// 
-// 	    Indexfind((i-1)*_dt,xyz1);	  	      //// step cycle number when (i-1)*dt fall into      
-// 	    _bjxx_1 = _j_period+1;
-// 	    _j_period = 0;
+void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,18,1> estimated_state, Eigen::Vector3d _Rfoot_location_feedback, Eigen::Vector3d _Lfoot_location_feedback,double lamda, bool _stopwalking)
+{
+ 
+       if (i<_n_end_walking)   ///////normal walking
+       {
+	  /// modified the footy_min
+	  if (i==(round(2*_ts(1)/_dt))+1) ///update the footy_limit
+	  {
+	      _footy_min = RobotParaClass::FOOT_WIDTH()+0.01;
+	      _detfooty  = _footy_max - _footy_min; 
+	  }
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+  // 	================ iterative calulcation: predictive control_tracking with time-varying height+angular momentum	    	    
+	    /// run once
+	    ///////////////////////////////////////////////////////	    
+
+	    Indexfind((i-1)*_dt,xyz1);	  	      //// step cycle number when (i-1)*dt fall into      
+	    _bjxx_1 = _j_period+1;
+	    _j_period = 0;
+	    
+	    
+	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
+	    _bjxx = _j_period+1;  //coincidence with matlab 
+	    _j_period = 0;	  
+	    
+	    // com_center_ref = ZMP_center_ref = v_i*f + V_i*L_ref
+	    //solve the following steps: 1.5s may couve 2 or three  steps, so  one/two following steps	    
+	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
+	    
+	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
+	    _bjx1 = _j_period+1;
+	    _j_period = 0;
+	    
+	    Indexfind(_t_f(_nh-1),xyz1);           /// step cycle number when (i+_nh)*dt fall into : current sampling time
+	    _bjx2 = _j_period+1;
+	    _j_period = 0;	  
+	    	    
+	    ////================================================================
+	    /// judge if stop walking enable: if (from _bjx1 step, reference step length and step height will be set to be zero)
+	    if(_stopwalking)  
+	    {    
+	      for (int i_t = _bjx1; i_t < _footstepsnumber; i_t++) {
+		_steplength(i_t) = 0;	
+		_footx_ref(i_t) = _footx_ref(i_t-1) + _steplength(i_t-1); 	      
+	      }	  
+	    }
+	    
+	    _mx = _bjx2 - _bjx1 +1;
+            /// find out the relative postion of start-time of predictive step cycles to the predictive window 	    
+	    for (int j=1;j<_mx; j++)
+	    {
+	      Indexfind(_tx(_bjx1+j-1),xyz2);
+	      _tnx(j-1) = _j_period; 
+	      _j_period = 0;	      
+	    }
+
+	    _v_i.setZero();
+	    _VV_i.setZero();
+	    xxx = _tnx(0);
+	    // be careful that the position is from 0;;;;;         
+	    if (fabs(_tnx(0) - _nT) <=0.00001)
+	    {
+	      _n_vis =2;
+	      for (int jjj = 1; jjj <= _mx; jjj++)
+	      {
+		
+		if (jjj == 1)
+		{
+		  _VV_i.block(0, 0, xxx, 1).setOnes();   ///dynamic size 
+		}
+		else
+		{	
+		  xxx1 = _nh-_tnx(0);
+		  _VV_i.block(xxx, 1, xxx1, 1).setOnes();		
+		}
+	      }	    
+	    }
+	    else
+	    {	
+	      _v_i.head(xxx).setOnes();	      
+/*	      _v_i.segment(0, xxx).setOnes();*/	      
+	      if (abs(_mx - 2) <=0.00001)
+	      {
+		_n_vis = 1;
+		_VV_i.block(xxx, 0, _nh -xxx, 1).setOnes();
+	      }
+	      else
+	      {
+		_n_vis = 2;
+		xxx2 = _nh -_tnx(1);
+		_VV_i.block<_nT, 1>(xxx, 0).setOnes();
+		_VV_i.block(_tnx(1), 1, xxx2, 1).setOnes();	      	      
+	      }
+	    }
+	     
+	    _flag(i-1,0)= _n_vis;	  ////_n_vis flag: for judging if there is a switch between current support leg for i-1 and i sampling time    
+	    _flag_global(i-1,0) = _bjxx;  // walking cycle of current sampling time
+	    _flag_global(i,0) = _bjx1;	  // walking cycle of next one sampling time 
+  
+  //================cuttent state switch to the current support; ====================//	    
+	    ///// pass the actual state into the control loop:
+	    /// output _Footx_global_relative and _Footy_global_relative are the global xk(0) and yk(0)
+	    if (i>1)
+	    {
+	      _Footx_global_relative = _xk(0,i-1) + _fxx_global;    ///_fxx_global is the old one: 
+	      _Footy_global_relative = _yk(0,i-1) + _fyy_global;	    
+	    }	     
+	    
+	    // current foot location
+	    _fx =0;
+	    _fy = 0;	  	    
+	    _fxx_global = _footx_real(_bjxx-1);      ////update the supporting foot
+	    _fyy_global = _footy_real(_bjxx-1);	     ////update the supporting foot
+
+  // 	      // relative state switch	: the output xk(0) and yk(0) is relative to the current foot location      
+	    if (i>1)
+	    {
+	      if (_flag_global(i-2,0) < _flag_global(i-1,0) )  //current and last support foot are not the same
+	      {
+		/// reference relative state switch
+		_xk(0,i-1) = _Footx_global_relative - _fxx_global; 
+		_yk(0,i-1) = _Footy_global_relative - _fyy_global;		
+	      }
+	    }
+	    
+    
+            /////adjust the reference step length and step width	    
+	    if (_n_vis ==1)
+	    {
+	      _Lx_ref(0) = _footx_ref(_bjx2-1) - _fxx_global;  //relative to the current location ///here, position tracking,thus, use the reference location postion:_footx_ref
+	      _Ly_ref(0) = _footy_ref(_bjx2-1) - _fyy_global;  // relative to the current location//here,position tracking, thus, use the reference location postion:_footx_ref
+	      _Lz_ref(0) = _footz_ref(_bjx2-1);
+	      _Lx_ref(1) = 0;
+	      _Ly_ref(1) = 0;
+	      _Lz_ref(1) = 0;	    
+	    }
+	    else
+	    {
+	      _Lx_ref(0) = _footx_ref(_bjx2-2) - _fxx_global;
+	      _Ly_ref(0) = _footy_ref(_bjx2-2) - _fyy_global;
+	      _Lz_ref(0) = _footz_ref(_bjx2-2);
+	      _Lx_ref(1) = _footx_ref(_bjx2-1) - _fxx_global;
+	      _Ly_ref(1) = _footy_ref(_bjx2-1) - _fyy_global;
+	      _Lz_ref(1) = _footz_ref(_bjx2-1);	    
+	    }	    
+	  // com_center_ref: set to be the center of supporting foot
+	    _comx_center_ref = _v_i*_fx + _VV_i*_Lx_ref;
+	    _comy_center_ref = _v_i*_fy + _VV_i*_Ly_ref;
+	    _comz_center_ref = _Zsc.segment<_nh>(i) + _Hcom;
+	    
+	    /// hot start:initilize _V_ini with last loop results
+	    if (i==1)
+	    {
+	      _V_ini(5*_nh) = _footx_ref(1);
+	      _V_ini(5*_nh+1) = _footy_ref(1);	    
+	    }
+	    else
+	    {
+	      _V_ini.topRows(5*_nh) = _V_optimal.block<5*_nh, 1>(0, i-2);
+	      if (_n_vis > _flag(i-2))
+	      { 
+		_V_ini(_Nt -1-1) = _V_optimal(5*_nh+6-1, i-2);
+		_V_ini(_Nt -3-1) = _V_optimal(5*_nh+6-2-1, i-2);
+		_V_ini(_Nt -5-1) = _V_optimal(5*_nh+6-4-1, i-2); 
+	      }
+	      else
+	      {
+		if (_n_vis < _flag(i-2))
+		{ 
+		  _V_ini(_Nt-1) = _V_optimal(5*_nh+6-1, i-2);
+		  _V_ini(_Nt -1-1) = _V_optimal(5*_nh+6-2-1, i-2);
+		  _V_ini(_Nt -2-1) = _V_optimal(5*_nh+6-4-1, i-2); 
+		}	   
+		else
+		{
+		  if (_n_vis ==1)
+		  { 
+		    _V_ini(_Nt-1) = _V_optimal(5*_nh+6-1, i-2);
+		    _V_ini(_Nt -1-1) = _V_optimal(5*_nh+6-2-1, i-2);
+		    _V_ini(_Nt -2-1) = _V_optimal(5*_nh+6-4-1, i-2); 
+		  }
+		  else
+		  {
+		    _V_ini.bottomRows(6) = _V_optimal.block<6, 1>(5*_nh+6-6, i-2);
+		  }
+		}
+	      }
+	    }
+	      	  
+	    // foot location constraints: be careful that the step number is change: so should be setZero in each whole loop
+	    _H_q_footx_up.setZero();
+	    _F_foot_upx.setZero();
+	    _H_q_footx_low.setZero();
+	    _F_foot_lowx.setZero();
+	    _H_q_footy_up.setZero();
+	    _F_foot_upy.setZero();
+	    _H_q_footy_low.setZero();
+	    _F_foot_lowy.setZero();	    
+
+	    // boundary initialzation: footx, footy,footz select matrix: 2*(5*_nh+3*_nstep)
+	    _Sfx.setZero();
+	    _Sfy.setZero();
+	    _Sfz.setZero();	    
+	    if (_n_vis ==1)
+	    {
+	      _Sfx(0,5*_nh) = 1;
+	      _Sfy(0,5*_nh+_nstep) = 1;
+	      _Sfz(0,5*_nh+2*_nstep) = 1;
+	    }  
+	    else
+	    {
+	      _Sfx(0,5*_nh) = 1;
+	      _Sfx(1,5*_nh+1) = 1;
+	      _Sfy(0,5*_nh+_nstep) = 1;
+	      _Sfy(1,5*_nh+_nstep+1) = 1;
+	      _Sfz(0,5*_nh+2*_nstep) = 1;	 
+	      _Sfz(1,5*_nh+2*_nstep+1) = 1;		      
+	    }
+
+	    //SQP MOdels	 
+	      _q_goal.block<_nh, 1>(0, 0) = (_alphax * _pvupvs + _beltax * _ppupps )* _xk.col(i-1) - _beltax * _ppu_T * _comx_center_ref;
+	      _q_goal.block<_nh, 1>(_nh, 0) = (_alphay * _pvupvs  + _beltay * _ppupps )* _yk.col(i-1) - _beltay * _ppu_T * _comy_center_ref;
+	      _q_goal.block<_nh, 1>(2*_nh, 0) = (_alphaz * _pvupvs + _beltaz * _ppupps )* _zk.col(i-1) - _beltaz * _ppu_T * _comz_center_ref;
+	      _q_goal.block<_nh, 1>(3*_nh, 0) = (_alphathetax * _pvupvs + _beltathetax * _ppupps )* _thetaxk.col(i-1) - _beltathetax * _ppu_T * _thetax_center_ref;
+	      _q_goal.block<_nh, 1>(4*_nh, 0) = (_alphathetay * _pvupvs + _beltathetay * _ppupps )* _thetayk.col(i-1) - _beltathetay * _ppu_T * _thetay_center_ref;
+	      _q_goal.block<_nstep, 1>(5*_nh, 0) = -_gamax * _Lx_ref;
+	      _q_goal.block<_nstep, 1>(5*_nh+_nstep, 0) = -_gamay * _Ly_ref;
+	      _q_goal.block<_nstep, 1>(5*_nh+2*_nstep, 0) = -_gamaz * _Lz_ref;
+	
+	    ///// the following code only run once in each loop:   
+	      for(int jxx=1; jxx<=_nh; jxx++)
+	      {
+		// ZMP constraints: merger the simliar item and calculated offline
+		// x-ZMP upper boundary                                      
+	        _p_i_x_t_up.row(jxx-1) = _mass * (  (_xk.col(i-1)).transpose() * _xkZMPx_constraints[jxx-1] + (_zk.col(i-1)).transpose()*_zkZMPx_constraints[jxx-1] + _ppuSjx.row(jxx-1) + _Zsc.row(i+jxx-1)*_pauSjx.row(jxx-1) - ( (_pas.row(jxx-1) * _zk.col(i-1)).transpose() *_VV_i.row(jxx-1)*_Sfx ) - _ggg*_VV_i.row(jxx-1)*_Sfx - _pauSjz1.row(jxx-1) ) - _pauSjthetay.row(jxx-1);		
+		_del_i_x_up.col(jxx-1) = _mass * ((_xk.col(i-1)).transpose()*_xkzk_constraints[jxx-1]*_zk.col(i-1) + _ggg*_pps.row(jxx-1) * _xk.col(i-1) + (_pas.row(jxx-1) * _xk.col(i-1)).transpose() *_Zsc.row(i+jxx-1) - _zmpx_ub*_pas.row(jxx-1)*_zk.col(i-1) - _gzmpxub) - _j_ini * _pas.row(jxx-1) * _thetayk.col(i-1);
+
+		// x-ZMP low boundary
+		_p_i_x_t_low.row(jxx-1) = _p_i_x_t_up.row(jxx-1) + _pauSjz2.row(jxx-1);	      
+		_del_i_x_low.col(jxx-1) = _del_i_x_up.col(jxx-1) +_mass*(_detzmppxb*_pas.row(jxx-1)*_zk.col(i-1)+  _gzmpxub- _gzmpxlb);
+		
+		// y-ZMP upper boundary
+		_p_i_y_t_up.row(jxx-1) = _mass * ( (_yk.col(i-1)).transpose() *_ykZMPy_constraints[jxx-1] + (_zk.col(i-1)).transpose()*_zkZMPy_constraints[jxx-1] + _ppuSjy.row(jxx-1) + _Zsc.row(i+jxx-1)*_pauSjy.row(jxx-1) - ((_pas.row(jxx-1) * _zk.col(i-1)).transpose() *_VV_i.row(jxx-1)*_Sfy ) - _ggg*_VV_i.row(jxx-1)*_Sfy - _pauSjz11.row(jxx-1)) + _pauSjthetax.row(jxx-1);
+		_del_i_y_up.col(jxx-1) = _mass * ( (_yk.col(i-1)).transpose() *_xkzk_constraints[jxx-1]*_zk.col(i-1) + _ggg*_pps.row(jxx-1) * _yk.col(i-1) + (_pas.row(jxx-1) * _yk.col(i-1)).transpose() *_Zsc.row(i+jxx-1) - _zmpy_ub*_pas.row(jxx-1)*_zk.col(i-1) - _gzmpyub) + _j_ini * _pas.row(jxx-1) * _thetaxk.col(i-1); 	      
+	
+		// y-ZMP low boundary
+		_p_i_y_t_low.row(jxx-1) = _p_i_y_t_up.row(jxx-1) + _pauSjz21.row(jxx-1);	      
+		_del_i_y_low.col(jxx-1) = _del_i_y_up.col(jxx-1) +_mass*(_detzmppyb*_pas.row(jxx-1)*_zk.col(i-1)+  _gzmpyub -_gzmpylb);	      	      	     
+
+		
+		
+		//angle range constraints
+	         
+                ////// attention : don't forger to test on the robot pC: if  _qq1_upx = _pps* _thetaxk.col(i-1) can run in the real time!!!!!!
+		_qq1_upx.row(jxx-1) = _pps.row(jxx-1)* _thetaxk.col(i-1);
+		_qq1_upx(jxx-1,0) = _qq1_upx(jxx-1,0)-_thetax_max;
+			
+		
+		_qq1_upy.row(jxx-1) = _pps.row(jxx-1)* _thetayk.col(i-1);
+		_qq1_upy(jxx-1,0) = _qq1_upy(jxx-1,0)-_thetay_max;    
+
+		//torque range constraints
+		
+		_tt1_upx.row(jxx-1) = _pas.row(jxx-1)* _thetaxk.col(i-1);
+		_tt1_upx(jxx-1,0) = _tt1_upx(jxx-1,0)-_torquex_max;
+			 
+		
+		_tt1_upy.row(jxx-1) = _pas.row(jxx-1)* _thetayk.col(i-1);
+		_tt1_upy(jxx-1,0) = _tt1_upy(jxx-1,0)-_torquey_max;		
+		
+		// body height constraints 	
+		_delta_footz_up.row(jxx-1) = _pps.row(jxx-1)*_zk.col(i-1) - _comz_center_ref.row(jxx-1) ;
+		_delta_footz_up(jxx-1,0) = _delta_footz_up(jxx-1,0) - _z_max;
+		
+		// body height acceleration constraints	      
+		_delta_footzacc_up.row(jxx-1) = _pas.row(jxx-1)*_zk.col(i-1) + _ggg;
+	      }
+
+  ///       only one-time caluation	  
+	    _ZMPx_constraints_half2 = (_VV_i* _Sfx).transpose();
+	    _ZMPy_constraints_half2 = (_VV_i* _Sfy).transpose();	    
+
+	    for(int jxx=1; jxx<=_nh; jxx++)
+	    {
+	      // ZMP constraints
+	      // x-ZMP upper boundary
+//	      _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];	      
+//	      _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
+    
+	      // y-ZMP upper boundary
+//	      _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];
+//	      _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2;   
+              
+ //           _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];   
+//            _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];   
+                
+                _ZMPx_constraints_half_va = ZMPx_constraints_half[jxx-1];
+                _ZMPy_constraints_half_va = ZMPy_constraints_half[jxx-1];
+
+                Matrix_large(3);
+                _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] +_matrix_large1;
+                _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] +_matrix_large1; 
+
+                _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
+                _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2; 
+                
+                _matrix_large1.setZero();
+                _matrix_large2.setZero();
+	    }
+    
+	    // constraints:Swing+Foot velocity: 
+	    _Footvx_max = _Sfx.row(0);
+	    _Footvx_min = -_Sfx.row(0);
+	    _Footvy_max = _Sfy.row(0);
+	    _Footvy_min = -_Sfy.row(0);	  		    
+	    
+	    //equality constraints: footz height constraints:
+	    _H_q_footz = _Sfz.row(0);	    
+// 	    _h_h = _ppu * _Sjz;
 // 	    
-// 	    
-// 	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
-// 	    _bjxx = _j_period+1;  //coincidence with matlab 
-// 	    _j_period = 0;	  
-// 	    
-// 	    // com_center_ref = ZMP_center_ref = v_i*f + V_i*L_ref
-// 	    //solve the following steps: 1.5s may couve 2 or three  steps, so  one/two following steps	    
-// 	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
-// 	    
-// 	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
-// 	    _bjx1 = _j_period+1;
-// 	    _j_period = 0;
-// 	    
-// 	    Indexfind(_t_f(_nh-1),xyz1);           /// step cycle number when (i+_nh)*dt fall into : current sampling time
-// 	    _bjx2 = _j_period+1;
-// 	    _j_period = 0;	  
-// 	    	    
-// 	    ////================================================================
-// 	    /// judge if stop walking enable: if (from _bjx1 step, reference step length and step height will be set to be zero)
-// 	    if(_stopwalking)  
-// 	    {    
-// 	      for (int i_t = _bjx1; i_t < _footstepsnumber; i_t++) {
-// 		_steplength(i_t) = 0;	
-// 		_footx_ref(i_t) = _footx_ref(i_t-1) + _steplength(i_t-1); 	      
-// 	      }	  
-// 	    }
-// 	    
-// 	    _mx = _bjx2 - _bjx1 +1;
-//             /// find out the relative postion of start-time of predictive step cycles to the predictive window 	    
-// 	    for (int j=1;j<_mx; j++)
-// 	    {
-// 	      Indexfind(_tx(_bjx1+j-1),xyz2);
-// 	      _tnx(j-1) = _j_period; 
-// 	      _j_period = 0;	      
-// 	    }
-// 
-// 	    _v_i.setZero();
-// 	    _VV_i.setZero();
-// 	    xxx = _tnx(0);
-// 	    // be careful that the position is from 0;;;;;         
-// 	    if (fabs(_tnx(0) - _nT) <=0.00001)
-// 	    {
-// 	      _n_vis =2;
-// 	      for (int jjj = 1; jjj <= _mx; jjj++)
-// 	      {
-// 		
-// 		if (jjj == 1)
-// 		{
-// 		  _VV_i.block(0, 0, xxx, 1).setOnes();   ///dynamic size 
-// 		}
-// 		else
-// 		{	
-// 		  xxx1 = _nh-_tnx(0);
-// 		  _VV_i.block(xxx, 1, xxx1, 1).setOnes();		
-// 		}
-// 	      }	    
-// 	    }
-// 	    else
-// 	    {	
-// 	      _v_i.head(xxx).setOnes();	      
-// /*	      _v_i.segment(0, xxx).setOnes();*/	      
-// 	      if (abs(_mx - 2) <=0.00001)
-// 	      {
-// 		_n_vis = 1;
-// 		_VV_i.block(xxx, 0, _nh -xxx, 1).setOnes();
-// 	      }
-// 	      else
-// 	      {
-// 		_n_vis = 2;
-// 		xxx2 = _nh -_tnx(1);
-// 		_VV_i.block<_nT, 1>(xxx, 0).setOnes();
-// 		_VV_i.block(_tnx(1), 1, xxx2, 1).setOnes();	      	      
-// 	      }
-// 	    }
-// 	     
-// 	    _flag(i-1,0)= _n_vis;	  ////_n_vis flag: for judging if there is a switch between current support leg for i-1 and i sampling time    
-// 	    _flag_global(i-1,0) = _bjxx;  // walking cycle of current sampling time
-// 	    _flag_global(i,0) = _bjx1;	  // walking cycle of next one sampling time 
-//   
-//   //================cuttent state switch to the current support; ====================//	    
-// 	    ///// pass the actual state into the control loop:
-// 	    /// output _Footx_global_relative and _Footy_global_relative are the global xk(0) and yk(0)
-// 	    if (i>1)
-// 	    {
-// 	      _Footx_global_relative = _xk(0,i-1) + _fxx_global;    ///_fxx_global is the old one: 
-// 	      _Footy_global_relative = _yk(0,i-1) + _fyy_global;	    
-// 	    }	     
-// 	    
-// 	    // current foot location
-// 	    _fx =0;
-// 	    _fy = 0;	  	    
-// 	    _fxx_global = _footx_real(_bjxx-1);      ////update the supporting foot
-// 	    _fyy_global = _footy_real(_bjxx-1);	     ////update the supporting foot
-// 
-//   // 	      // relative state switch	: the output xk(0) and yk(0) is relative to the current foot location      
-// 	    if (i>1)
-// 	    {
-// 	      if (_flag_global(i-2,0) < _flag_global(i-1,0) )  //current and last support foot are not the same
-// 	      {
-// 		/// reference relative state switch
-// 		_xk(0,i-1) = _Footx_global_relative - _fxx_global; 
-// 		_yk(0,i-1) = _Footy_global_relative - _fyy_global;		
-// 	      }
-// 	    }
-// 	    
-//     
-//             /////adjust the reference step length and step width	    
-// 	    if (_n_vis ==1)
-// 	    {
-// 	      _Lx_ref(0) = _footx_ref(_bjx2-1) - _fxx_global;  //relative to the current location ///here, position tracking,thus, use the reference location postion:_footx_ref
-// 	      _Ly_ref(0) = _footy_ref(_bjx2-1) - _fyy_global;  // relative to the current location//here,position tracking, thus, use the reference location postion:_footx_ref
-// 	      _Lz_ref(0) = _footz_ref(_bjx2-1);
-// 	      _Lx_ref(1) = 0;
-// 	      _Ly_ref(1) = 0;
-// 	      _Lz_ref(1) = 0;	    
-// 	    }
-// 	    else
-// 	    {
-// 	      _Lx_ref(0) = _footx_ref(_bjx2-2) - _fxx_global;
-// 	      _Ly_ref(0) = _footy_ref(_bjx2-2) - _fyy_global;
-// 	      _Lz_ref(0) = _footz_ref(_bjx2-2);
-// 	      _Lx_ref(1) = _footx_ref(_bjx2-1) - _fxx_global;
-// 	      _Ly_ref(1) = _footy_ref(_bjx2-1) - _fyy_global;
-// 	      _Lz_ref(1) = _footz_ref(_bjx2-1);	    
-// 	    }	    
-// 	  // com_center_ref: set to be the center of supporting foot
-// 	    _comx_center_ref = _v_i*_fx + _VV_i*_Lx_ref;
-// 	    _comy_center_ref = _v_i*_fy + _VV_i*_Ly_ref;
-// 	    _comz_center_ref = _Zsc.segment<_nh>(i) + _Hcom;
-// 	    
-// 	    /// hot start:initilize _V_ini with last loop results
-// 	    if (i==1)
-// 	    {
-// 	      _V_ini(5*_nh) = _footx_ref(1);
-// 	      _V_ini(5*_nh+1) = _footy_ref(1);	    
-// 	    }
-// 	    else
-// 	    {
-// 	      _V_ini.topRows(5*_nh) = _V_optimal.block<5*_nh, 1>(0, i-2);
-// 	      if (_n_vis > _flag(i-2))
-// 	      { 
-// 		_V_ini(_Nt -1-1) = _V_optimal(5*_nh+6-1, i-2);
-// 		_V_ini(_Nt -3-1) = _V_optimal(5*_nh+6-2-1, i-2);
-// 		_V_ini(_Nt -5-1) = _V_optimal(5*_nh+6-4-1, i-2); 
-// 	      }
-// 	      else
-// 	      {
-// 		if (_n_vis < _flag(i-2))
-// 		{ 
-// 		  _V_ini(_Nt-1) = _V_optimal(5*_nh+6-1, i-2);
-// 		  _V_ini(_Nt -1-1) = _V_optimal(5*_nh+6-2-1, i-2);
-// 		  _V_ini(_Nt -2-1) = _V_optimal(5*_nh+6-4-1, i-2); 
-// 		}	   
-// 		else
-// 		{
-// 		  if (_n_vis ==1)
-// 		  { 
-// 		    _V_ini(_Nt-1) = _V_optimal(5*_nh+6-1, i-2);
-// 		    _V_ini(_Nt -1-1) = _V_optimal(5*_nh+6-2-1, i-2);
-// 		    _V_ini(_Nt -2-1) = _V_optimal(5*_nh+6-4-1, i-2); 
-// 		  }
-// 		  else
-// 		  {
-// 		    _V_ini.bottomRows(6) = _V_optimal.block<6, 1>(5*_nh+6-6, i-2);
-// 		  }
-// 		}
-// 	      }
-// 	    }
-// 	      	  
-// 	    // foot location constraints: be careful that the step number is change: so should be setZero in each whole loop
-// 	    _H_q_footx_up.setZero();
-// 	    _F_foot_upx.setZero();
-// 	    _H_q_footx_low.setZero();
-// 	    _F_foot_lowx.setZero();
-// 	    _H_q_footy_up.setZero();
-// 	    _F_foot_upy.setZero();
-// 	    _H_q_footy_low.setZero();
-// 	    _F_foot_lowy.setZero();	    
-// 
-// 	    // boundary initialzation: footx, footy,footz select matrix: 2*(5*_nh+3*_nstep)
-// 	    _Sfx.setZero();
-// 	    _Sfy.setZero();
-// 	    _Sfz.setZero();	    
-// 	    if (_n_vis ==1)
-// 	    {
-// 	      _Sfx(0,5*_nh) = 1;
-// 	      _Sfy(0,5*_nh+_nstep) = 1;
-// 	      _Sfz(0,5*_nh+2*_nstep) = 1;
-// 	    }  
-// 	    else
-// 	    {
-// 	      _Sfx(0,5*_nh) = 1;
-// 	      _Sfx(1,5*_nh+1) = 1;
-// 	      _Sfy(0,5*_nh+_nstep) = 1;
-// 	      _Sfy(1,5*_nh+_nstep+1) = 1;
-// 	      _Sfz(0,5*_nh+2*_nstep) = 1;	 
-// 	      _Sfz(1,5*_nh+2*_nstep+1) = 1;		      
-// 	    }
-// 
-// 	    //SQP MOdels	 
-// 	      _q_goal.block<_nh, 1>(0, 0) = (_alphax * _pvupvs + _beltax * _ppupps )* _xk.col(i-1) - _beltax * _ppu_T * _comx_center_ref;
-// 	      _q_goal.block<_nh, 1>(_nh, 0) = (_alphay * _pvupvs  + _beltay * _ppupps )* _yk.col(i-1) - _beltay * _ppu_T * _comy_center_ref;
-// 	      _q_goal.block<_nh, 1>(2*_nh, 0) = (_alphaz * _pvupvs + _beltaz * _ppupps )* _zk.col(i-1) - _beltaz * _ppu_T * _comz_center_ref;
-// 	      _q_goal.block<_nh, 1>(3*_nh, 0) = (_alphathetax * _pvupvs + _beltathetax * _ppupps )* _thetaxk.col(i-1) - _beltathetax * _ppu_T * _thetax_center_ref;
-// 	      _q_goal.block<_nh, 1>(4*_nh, 0) = (_alphathetay * _pvupvs + _beltathetay * _ppupps )* _thetayk.col(i-1) - _beltathetay * _ppu_T * _thetay_center_ref;
-// 	      _q_goal.block<_nstep, 1>(5*_nh, 0) = -_gamax * _Lx_ref;
-// 	      _q_goal.block<_nstep, 1>(5*_nh+_nstep, 0) = -_gamay * _Ly_ref;
-// 	      _q_goal.block<_nstep, 1>(5*_nh+2*_nstep, 0) = -_gamaz * _Lz_ref;
-// 	
-// 	    ///// the following code only run once in each loop:   
-// 	      for(int jxx=1; jxx<=_nh; jxx++)
-// 	      {
-// 		// ZMP constraints: merger the simliar item and calculated offline
-// 		// x-ZMP upper boundary                                      
-// 	        _p_i_x_t_up.row(jxx-1) = _mass * (  (_xk.col(i-1)).transpose() * _xkZMPx_constraints[jxx-1] + (_zk.col(i-1)).transpose()*_zkZMPx_constraints[jxx-1] + _ppuSjx.row(jxx-1) + _Zsc.row(i+jxx-1)*_pauSjx.row(jxx-1) - ( (_pas.row(jxx-1) * _zk.col(i-1)).transpose() *_VV_i.row(jxx-1)*_Sfx ) - _ggg*_VV_i.row(jxx-1)*_Sfx - _pauSjz1.row(jxx-1) ) - _pauSjthetay.row(jxx-1);		
-// 		_del_i_x_up.col(jxx-1) = _mass * ((_xk.col(i-1)).transpose()*_xkzk_constraints[jxx-1]*_zk.col(i-1) + _ggg*_pps.row(jxx-1) * _xk.col(i-1) + (_pas.row(jxx-1) * _xk.col(i-1)).transpose() *_Zsc.row(i+jxx-1) - _zmpx_ub*_pas.row(jxx-1)*_zk.col(i-1) - _gzmpxub) - _j_ini * _pas.row(jxx-1) * _thetayk.col(i-1);
-// 
-// 		// x-ZMP low boundary
-// 		_p_i_x_t_low.row(jxx-1) = _p_i_x_t_up.row(jxx-1) + _pauSjz2.row(jxx-1);	      
-// 		_del_i_x_low.col(jxx-1) = _del_i_x_up.col(jxx-1) +_mass*(_detzmppxb*_pas.row(jxx-1)*_zk.col(i-1)+  _gzmpxub- _gzmpxlb);
-// 		
-// 		// y-ZMP upper boundary
-// 		_p_i_y_t_up.row(jxx-1) = _mass * ( (_yk.col(i-1)).transpose() *_ykZMPy_constraints[jxx-1] + (_zk.col(i-1)).transpose()*_zkZMPy_constraints[jxx-1] + _ppuSjy.row(jxx-1) + _Zsc.row(i+jxx-1)*_pauSjy.row(jxx-1) - ((_pas.row(jxx-1) * _zk.col(i-1)).transpose() *_VV_i.row(jxx-1)*_Sfy ) - _ggg*_VV_i.row(jxx-1)*_Sfy - _pauSjz11.row(jxx-1)) + _pauSjthetax.row(jxx-1);
-// 		_del_i_y_up.col(jxx-1) = _mass * ( (_yk.col(i-1)).transpose() *_xkzk_constraints[jxx-1]*_zk.col(i-1) + _ggg*_pps.row(jxx-1) * _yk.col(i-1) + (_pas.row(jxx-1) * _yk.col(i-1)).transpose() *_Zsc.row(i+jxx-1) - _zmpy_ub*_pas.row(jxx-1)*_zk.col(i-1) - _gzmpyub) + _j_ini * _pas.row(jxx-1) * _thetaxk.col(i-1); 	      
-// 	
-// 		// y-ZMP low boundary
-// 		_p_i_y_t_low.row(jxx-1) = _p_i_y_t_up.row(jxx-1) + _pauSjz21.row(jxx-1);	      
-// 		_del_i_y_low.col(jxx-1) = _del_i_y_up.col(jxx-1) +_mass*(_detzmppyb*_pas.row(jxx-1)*_zk.col(i-1)+  _gzmpyub -_gzmpylb);	      	      	     
-// 
-// 		
-// 		
-// 		//angle range constraints
-// 	         
-//                 ////// attention : don't forger to test on the robot pC: if  _qq1_upx = _pps* _thetaxk.col(i-1) can run in the real time!!!!!!
-// 		_qq1_upx.row(jxx-1) = _pps.row(jxx-1)* _thetaxk.col(i-1);
-// 		_qq1_upx(jxx-1,0) = _qq1_upx(jxx-1,0)-_thetax_max;
-// 			
-// 		
-// 		_qq1_upy.row(jxx-1) = _pps.row(jxx-1)* _thetayk.col(i-1);
-// 		_qq1_upy(jxx-1,0) = _qq1_upy(jxx-1,0)-_thetay_max;    
-// 
-// 		//torque range constraints
-// 		
-// 		_tt1_upx.row(jxx-1) = _pas.row(jxx-1)* _thetaxk.col(i-1);
-// 		_tt1_upx(jxx-1,0) = _tt1_upx(jxx-1,0)-_torquex_max;
-// 			 
-// 		
-// 		_tt1_upy.row(jxx-1) = _pas.row(jxx-1)* _thetayk.col(i-1);
-// 		_tt1_upy(jxx-1,0) = _tt1_upy(jxx-1,0)-_torquey_max;		
-// 		
-// 		// body height constraints 	
-// 		_delta_footz_up.row(jxx-1) = _pps.row(jxx-1)*_zk.col(i-1) - _comz_center_ref.row(jxx-1) ;
-// 		_delta_footz_up(jxx-1,0) = _delta_footz_up(jxx-1,0) - _z_max;
-// 		
-// 		// body height acceleration constraints	      
-// 		_delta_footzacc_up.row(jxx-1) = _pas.row(jxx-1)*_zk.col(i-1) + _ggg;
-// 	      }
-// 
-//   ///       only one-time caluation	  
-// 	    _ZMPx_constraints_half2 = (_VV_i* _Sfx).transpose();
-// 	    _ZMPy_constraints_half2 = (_VV_i* _Sfy).transpose();	    
-// 
-// 	    for(int jxx=1; jxx<=_nh; jxx++)
-// 	    {
-// 	      // ZMP constraints
-// 	      // x-ZMP upper boundary
-// //	      _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];	      
-// //	      _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
-//     
-// 	      // y-ZMP upper boundary
-// //	      _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];
-// //	      _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2;   
-//               
-//  //           _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] + _ZMPx_constraints_half2 * ZMPx_constraints_half[jxx-1];   
-// //            _phi_i_y_up1 = ZMPy_constraints_offfline[jxx-1] + _ZMPy_constraints_half2 * ZMPy_constraints_half[jxx-1];   
-//                 
-//                 _ZMPx_constraints_half_va = ZMPx_constraints_half[jxx-1];
-//                 _ZMPy_constraints_half_va = ZMPy_constraints_half[jxx-1];
-// 
-//                 Matrix_large(3);
-//                 _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] +_matrix_large1;
-//                 _phi_i_x_up1 = ZMPx_constraints_offfline[jxx-1] +_matrix_large1; 
-// 
-//                 _phi_i_x_up_est[jxx-1] = _mass * (_phi_i_x_up1 + _phi_i_x_up1.transpose())/2;
-//                 _phi_i_y_up_est[jxx-1] = _mass * (_phi_i_y_up1 + _phi_i_y_up1.transpose())/2; 
-//                 
-//                 _matrix_large1.setZero();
-//                 _matrix_large2.setZero();
-// 	    }
-//     
-// 	    // constraints:Swing+Foot velocity: 
-// 	    _Footvx_max = _Sfx.row(0);
-// 	    _Footvx_min = -_Sfx.row(0);
-// 	    _Footvy_max = _Sfy.row(0);
-// 	    _Footvy_min = -_Sfy.row(0);	  		    
-// 	    
-// 	    //equality constraints: footz height constraints:
-// 	    _H_q_footz = _Sfz.row(0);	    
-// // 	    _h_h = _ppu * _Sjz;
-// // 	    
-// // 	    _a_hx = _ppu * _Sjthetax;
-// // 	    _a_hy = _ppu * _Sjthetay;
-// 	   
-// 	    // SEQUENCE QUADARTIC PROGRAMMING: lOOP_until the maximal loops reaches		
-// 	  // calculated the control loop
-// 
-//             _det_del_i_x = _del_i_x_low -  _del_i_x_up;
-// 	    _det_del_i_y = _del_i_y_low -  _del_i_y_up;
-// 	    
-// 	    for (int xxxx=1; xxxx <= _loop; xxxx++)
-// 	    {	
-//               /// attention: V_ini would be updated in each loop.
-// 	      _q_goal1 = _Q_goal1 * _V_ini + _q_goal;	  
-// 		      
-// 	      
-// 	      /// time consuming process	    
-// 	      
-// 	      for(int jxx=1; jxx<=_nh; jxx++)
-// 	      {
-// 		// x-ZMP upper constraints
-// 		_phi_i_x_up = _V_ini.transpose() *_phi_i_x_up_est[jxx-1];
-// 		_H_q_upx.row(jxx-1) = 2*_phi_i_x_up + _p_i_x_t_up.row(jxx-1); 
-// 		_F_zmp_upx.row(jxx-1) = -((_phi_i_x_up + _p_i_x_t_up.row(jxx-1)) * _V_ini + _del_i_x_up.col(jxx-1)); 
-// 
-// 		// x-ZMP low boundary   	      
-// 		_H_q_lowx.row(jxx-1) = - _pauSjz2.row(jxx-1) - _H_q_upx.row(jxx-1);  
-// 		_F_zmp_lowx.row(jxx-1) = _pauSjz2.row(jxx-1) * _V_ini + _det_del_i_x.col(jxx-1)-_F_zmp_upx.row(jxx-1); 
-// 		
-// 		
-// 		// y-ZMP upper boundary	      
-// 		_phi_i_y_up = _V_ini.transpose()*_phi_i_y_up_est[jxx-1];	      
-// 		_H_q_upy.row(jxx-1) = 2*_phi_i_y_up + _p_i_y_t_up.row(jxx-1); 
-// 		_F_zmp_upy.row(jxx-1) = -((_phi_i_y_up + _p_i_y_t_up.row(jxx-1)) * _V_ini + _del_i_y_up.col(jxx-1)); 
-// 		
-// 		// y-ZMP low boundary	      	      
-// 		_H_q_lowy.row(jxx-1) = - _pauSjz21.row(jxx-1) - _H_q_upy.row(jxx-1); 
-// 		_F_zmp_lowy.row(jxx-1) = _pauSjz21.row(jxx-1) * _V_ini + _det_del_i_y.col(jxx-1)-_F_zmp_upy.row(jxx-1);      	      
-// 	    
-// 
-// 		
-// 		//angle range constraints
-// 		_qq_upx.row(jxx-1) = -(_q_upx.row(jxx-1)* _V_ini + _qq1_upx.row(jxx-1));	 
-// 		_qq_lowx(jxx-1,0) = _detthetax - _qq_upx(jxx-1,0);	 
-// 				
-// 		_qq_upy.row(jxx-1) = -(_q_upy.row(jxx-1)* _V_ini + _qq1_upy.row(jxx-1));
-// 		_qq_lowy(jxx-1,0) = _detthetay - _qq_upy(jxx-1,0);
-// 
-// 		//torque range constraints	      
-// 		_tt_upx.row(jxx-1) = -(_t_upx.row(jxx-1)* _V_ini +  _tt1_upx.row(jxx-1));
-// 		_tt_lowx(jxx-1,0) = _dettorquex - _tt_upx(jxx-1,0);	
-// 		
-// 		_tt_upy.row(jxx-1) = -(_t_upy.row(jxx-1)* _V_ini +  _tt1_upy.row(jxx-1));	      
-// 		_tt_lowy(jxx-1,0) = _dettorquey - _tt_upy(jxx-1,0);	
-// 		
-// 		// body height constraints	      
-// 		_F_h_upz.row(jxx-1) = -(_H_h_upz.row(jxx-1)*_V_ini + _delta_footz_up.row(jxx-1));      
-// 		_F_h_lowz(jxx-1,0) = _detzb - _F_h_upz(jxx-1,0);
-// 		
-// 		// body height acceleration constraints	      
-// 		_F_hacc_lowz.row(jxx-1) = (-_H_hacc_lowz.row(jxx-1)*_V_ini + _delta_footzacc_up.row(jxx-1));	      	      
-// 	      }
-// 	      
-// 	      // foot location constraints
-// 	      if (_n_vis == 1)  //one next steo
-// 	      {
-// 		_H_q_footx_up.row(0) = _Sfx.row(0);
-// 		_F_foot_upx.row(0) = -(_H_q_footx_up.row(0) * _V_ini); 
-// 		_F_foot_upx(0,0) = _F_foot_upx(0,0) +_fx + _footx_max; 
-// 		
-// 		_H_q_footx_low.row(0) = -_Sfx.row(0);
-// // 		_F_foot_lowx.row(0) = (_H_q_footx_up.row(0) * _V_ini);
-// 		_F_foot_lowx(0,0) = -_F_foot_upx(0,0)+_detfootx;
-// 		
-// 		
-// 		// footy location constraints
-// 		if (_bjxx % 2 == 0) //odd
-// 		{
-// 		  _H_q_footy_up.row(0) = _Sfy.row(0);
-// 		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
-// 		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy - _footy_min; 
-// 		  
-// 		  _H_q_footy_low.row(0) = -_Sfy.row(0);	
-// 		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0) +_detfooty;	
-// 		}
-// 		else
-// 		{
-// 		  _H_q_footy_up.row(0) = _Sfy.row(0);
-// 		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
-// 		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy + _footy_max; 
-// 		  _H_q_footy_low.row(0) = -_Sfy.row(0);
-// // 		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini );
-// 		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0)+ _detfooty;
-// 		}	 
-// 	      }
-// 	      else   //two next steps
-// 	      {
-// 		_H_q_footx_up.row(0) = _Sfx.row(0);
-// 		_F_foot_upx.row(0) = -(_H_q_footx_up.row(0) * _V_ini); 
-// 		_F_foot_upx(0,0) = _F_foot_upx(0,0) +_fx + _footx_max;
-// 		_H_q_footx_low.row(0) = -_Sfx.row(0);
-// // 		_F_foot_lowx.row(0) = (_H_q_footx_up.row(0) * _V_ini);
-// 		_F_foot_lowx(0,0) = -_F_foot_upx(0,0)+ _detfootx;
-// 		
-// 		// footy location constraints
-// 		if (_bjxx % 2 == 0) //odd
-// 		{
-// 		  _H_q_footy_up.row(0) = _Sfy.row(0);
-// 		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
-// 		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy - _footy_min;
-// 		  _H_q_footy_low.row(0) = -_Sfy.row(0);
-// // 		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini);
-// 		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0)+_detfooty;
-// 		}
-// 		else
-// 		{
-// 		  _H_q_footy_up.row(0) = _Sfy.row(0);
-// 		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
-// 		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy + _footy_max;
-// 		  _H_q_footy_low.row(0) = -_Sfy.row(0);
-// // 		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini);
-// 		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0)+ _detfooty;
-// 		}
-// 		
-// 		// the next two steps 
-// 		_H_q_footx_up.row(1) = _Sfoot* _Sfx;
-// 		_F_foot_upx.row(1) = -(_H_q_footx_up.row(1) * _V_ini); 	 
-// 		_F_foot_upx(1,0) = _F_foot_upx(1,0) +_footx_max; 
-// 		
-// 		_H_q_footx_low.row(1) = -_Sfoot* _Sfx;
-// 		_F_foot_lowx(1,0) = -_F_foot_upx(1,0)+_detfootx;
-// 		
-// 		// footy location constraints
-// 		if (_bjxx % 2 == 0) //odd
-// 		{
-// 		  _H_q_footy_up.row(1) = _Sfoot* _Sfy;
-// 		  _F_foot_upy.row(1) = -(_H_q_footy_up.row(1) * _V_ini); 
-// 		  _F_foot_upy(1,0) = _F_foot_upy(1,0) + _footy_max; 
-// 		  
-// 		  _H_q_footy_low.row(1) = -_H_q_footy_up.row(1);
-// // 		  _F_foot_lowy.row(1) = (_H_q_footy_up.row(1) * _V_ini);
-// 		  _F_foot_lowy(1,0) = -_F_foot_upy(1,0)+_detfooty;		  
-// 		}
-// 		else
-// 		{
-// 		  _H_q_footy_up.row(1) = _Sfoot* _Sfy;
-// 		  _F_foot_upy.row(1) = -(_H_q_footy_up.row(1) * _V_ini); 
-// 		  _F_foot_upy(1,0) = _F_foot_upy(1,0) - _footy_min; 
-// 		  
-// 		  _H_q_footy_low.row(1) = -_H_q_footy_up.row(1);
-// // 		  _F_foot_lowy.row(1) = (_H_q_footy_up.row(1) * _V_ini);
-// 		  _F_foot_lowy(1,0) = -_F_foot_upy(1,0)+_detfooty;		  
-// 		}	      	     	      
-// 	      }	      
-// 	      
-// 	      //swing foot veloctiy boundary
-// 	      if (i ==1)
-// 	      {
-// 		_footubxv = -(_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
-// 		_footubxv(0,0) = _footubxv(0,0)  + _footx_max;
-// 		
-// // 		_footlbxv = (_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
-// 		_footlbxv(0,0) = -_footubxv(0,0)+ _detfootx;		
-// 		
-// 		_footubyv = -(_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));
-// 		_footubyv(0,0) = _footubyv(0,0) +_footy_max;		
-// 		
-// // 		_footlbyv = (_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));
-// 		_footlbyv(0,0) = -_footubyv(0,0)+_detfooty;		
-// 		
-// 	      }
-// 	      else
-// 	      {
-// 		if (fabs(i*_dt - _tx(_bjxx-1))<=0.01)
-// 		{		
-// 		  _Footvx_max.setZero();  _Footvx_min.setZero();  _Footvy_max.setZero();  _Footvy_min.setZero();		  
-// 		  _footubxv.setZero(); _footlbxv.setZero(); _footubyv.setZero(); _footlbyv.setZero();			
-// 		}
-// 		else
-// 		{
-// 		  _footubxv = -(_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
-// 		  _footubxv(0,0) = _footubxv(0,0) + _footx_vmax*_dt;
-// // 		  _footlbxv = (_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
-// 		  _footlbxv(0,0) = -_footubxv(0,0) +_detfootvx*_dt;		  
-// 		  _footubyv = -(_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));
-// 		  _footubyv(0,0) = _footubyv(0,0) + _footy_vmax*_dt;		  
-// // 		  _footlbyv = (_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));	
-// 		  _footlbyv(0,0) = -_footubyv(0,0)+_detfootvy*_dt;		  
-// 		}
-// 	      }
-// 
-// 	    ///////////// equality equation	    
-// 	    //equality constraints
-// 	    _F_footz = _Sfz.row(0)*_V_ini - _Lz_ref.row(0);	    
-// 	    _hhhx = _h_h*_V_ini + _pps * _zk.col(i-1) - _Hcom;	
-// 
-// 	    _a_hxx = _a_hx * _V_ini + _pps * _thetaxk.col(i-1);
-// 	    _a_hyy = _a_hy * _V_ini + _pps * _thetayk.col(i-1);		    	      
-//   //////////////////////////////===========////////////////////////////////////////////////////	    
-//   	    // quadratic program GetSolution
-// 	      
-// 	      if (_method_flag ==0)
-// 	      {
-// 		solve_reactive_step(); ///merely the reactive steps
-// 	      }
-// 	      else
-// 	      {
-// 		if (_method_flag ==1)
-// 		{
-// 		  solve_reactive_step_body_inclination(); /// the reactive steps + body inclination
-// 		}
-// 		else
-// 		{
-// 		  solve_reactive_step_body_inclination_CoMz(); /// the reactive steps + body inclination + height variance
-// 		}
-// 	      }
-// 
-// 	    }
-// 
-// 	    
-// 	    
-// 
-// 	    
-// 	    
-// 	    
-// 	    
-// 	    
-// 	    
-//   ////////////////////////////////results postprocessed////////////
-//   /////////===================================================%%%%%	  
-// 	  // results postprocessed:	  
-// 	    if (_n_vis == 1)
-// 	    {
-// 	      _V_optimal.block< 5*_nh, 1>(0, i-1)  = _V_ini.topRows(5*_nh);
-// 	      _V_optimal.block< 2, 1>(5*_nh, i-1)  = _V_inix.setConstant(_V_ini(5*_nh,0));
-// 	      _V_optimal.block< 2, 1>(5*_nh+2, i-1)  = _V_inix.setConstant(_V_ini(5*_nh+1,0));
-// 	      _V_optimal.block< 2, 1>(5*_nh+4, i-1)  = _V_inix.setConstant(_V_ini(5*_nh+2,0));	      
-// 	    }
-// 	    else
-// 	    {
-// 	      _V_optimal.col(i-1) = _V_ini;
-// 	    }
-// 	    
-// 	    //next step location
-// 	    _x_vacc_k.col(i-1) = _V_ini.row(0);
-// 	    _footx_real.row(_bjxx) = _V_ini.row(5*_nh);
-// 	    _footx_real_next.row(i+_nT -1) = _V_ini.row(5*_nh);
-// 	    _xk.col(i) = _a * _xk.col(i-1)  + _b* _x_vacc_k.col(i-1);
-// 	    _comx(0,i)=_xk(0,i); _comvx(0,i) = _xk(1,i); _comax(0,i)=_xk(2,i); 	  
-// 	    
-// 	    _y_vacc_k.col(i-1) = _V_ini.row(0+_nh);
-// 	    _footy_real.row(_bjxx) = _V_ini.row(5*_nh + _nstep);
-// 	    _footy_real_next.row(i+_nT -1) = _V_ini.row(5*_nh + _nstep);
-// 	    _yk.col(i) = _a * _yk.col(i-1)  + _b* _y_vacc_k.col(i-1);
-// 	    _comy(0,i)=_yk(0,i); _comvy(0,i) = _yk(1,i); _comay(0,i)=_yk(2,i); 
-// 	    
-// 	    
-// 	    
-// 	    _comx(0,i) +=  _fxx_global;
-// 	    _comy(0,i) +=  _fyy_global;	  
-// 	    _footx_real(_bjxx) = _footx_real(_bjxx) + _fxx_global;
-// 	    _footy_real(_bjxx) = _footy_real(_bjxx) + _fyy_global;	  	  
-// 	    _footx_real_next1(i+_nT -1) = _footx_real_next(i+_nT -1) + _fxx_global;	  
-// 	    _footy_real_next1(i+_nT -1) = _footy_real_next(i+_nT -1) + _fyy_global;
-// 
-// 	    
-// 	    
-// 	    _z_vacc_k.col(i-1) = _V_ini.row(0+2*_nh);
-// 	    _footz_real.row(_bjxx) = _V_ini.row(5*_nh + 2*_nstep);
-// 	    _footz_real_next.row(i+_nT -1) = _V_ini.row(5*_nh + 2*_nstep);	  
-// 	    _zk.col(i) = _a * _zk.col(i-1)  + _b* _z_vacc_k.col(i-1);
-// 	    _comz(0,i)=_zk(0,i); _comvz(0,i) = _zk(1,i); _comaz(0,i)=_zk(2,i); 
-// 
-// 	    _thetax_vacc_k.col(i-1) = _V_ini.row(0+3*_nh);
-// 	    _thetaxk.col(i) = _a * _thetaxk.col(i-1)  + _b* _thetax_vacc_k.col(i-1);
-// 	    _thetax(0,i) = _thetaxk(0,i); _thetavx(0,i) = _thetaxk(1,i); _thetaax(0,i)=_thetaxk(2,i); 	
-// 
-// 
-// 	    _thetay_vacc_k.col(i-1) = _V_ini.row(0+4*_nh);
-// 	    _thetayk.col(i) = _a * _thetayk.col(i-1)  + _b* _thetay_vacc_k.col(i-1);
-// 	    _thetay(0,i) = _thetayk(0,i); _thetavy(0,i) = _thetayk(1,i); _thetaay(0,i)=_thetayk(2,i); 	
-// 	    
-// 	    
-// 	    // reference relative state    
-// 	    /// /// relative state to the actual foot lcoation: very good
-// 	    if (_bjxx % 2 == 0)  // odd : left support
-// 	    {
-// 	      estimated_state(0,0) =  estimated_state(0,0) - _Lfoot_location_feedback(0);
-// 	      estimated_state(3,0) =  estimated_state(3,0) - _Lfoot_location_feedback(1);	 	    
-// 	    }
-// 	    else
-// 	    {
-// 	      estimated_state(0,0) =  estimated_state(0,0) - _Rfoot_location_feedback(0);
-// 	      estimated_state(3,0) =  estimated_state(3,0) - _Rfoot_location_feedback(1);	  
-// 	    }
-//   //////============================================================================================================================	      
-//   ////////////////////////////// state modified:====================================================================================
-// 
-// 	    if (_method_flag <2)
-// 	    {
-// 	      estimated_state(6,0) =  _comz(0,i-1);  
-// 	      estimated_state(7,0) =  _comvz(0,i-1);  
-// 	      estimated_state(8,0) =  _comaz(0,i-1);
-// 	    }	  
-// 	  	    
-// 	    if (_method_flag <=0)
-// 	    {
-// 	      estimated_state(9,0) =  _thetax(0,i-1);  
-// 	      estimated_state(10,0) =  _thetavx(0,i-1);  
-// 	      estimated_state(11,0) =  _thetaax(0,i-1);	  
-// 	      estimated_state(12,0) =  _thetay(0,i-1);  
-// 	      estimated_state(13,0) =  _thetavy(0,i-1);  
-// 	      estimated_state(14,0) =  _thetaay(0,i-1);	    
-// 	    }
-// 	
-//   /*	  ///////////////================state feedback: determined by ratio parameter: lamda==============================////
-// 	    /// model0================COMX+COMY feedback
-// 
-// 	    _xk(0,i) = (estimated_state(0,0)+2*_xk(0,i))/3;             
-// 	    _xk(1,i) = (estimated_state(1,0)+2*_xk(1,i))/3; 
-// 	    _xk(2,i) = (estimated_state(2,0)+2*_xk(2,i))/3;
-// 	    
-// 
-// 	    if (i<round(2*_ts(1)/_dt))
-// 	    {
-// 		
-// 	    _yk(0,i) = (estimated_state(3,0)+24*_yk(0,i))/25; _yk(1,i) = (estimated_state(4,0)+24*_yk(1,i))/25;
-// 	    _yk(2,i) = (estimated_state(5,0)+24*_yk(2,i))/25;		    
-// 	      
-// 	    }
-// 	    else
-// 	    {
-// 		
-// 	    _yk(0,i) = (estimated_state(3,0)+2*_yk(0,i))/3; _yk(1,i) = (estimated_state(4,0)+2*_yk(1,i))/3;
-// 	    _yk(2,i) = (estimated_state(5,0)+2*_yk(2,i))/3;		    
-// 	    }
-// 
-// 	    ///model1===================COMX+COMY + thetax+ thetay feedback
-// 	    _thetaxk(0,i) = (estimated_state(9,0)+1*_thetaxk(0,i))/2;
-// 	    _thetaxk(1,i) = (estimated_state(10,0)+1*_thetaxk(1,i))/2; 
-// 	    _thetaxk(2,i) = (estimated_state(11,0)+1*_thetaxk(2,i))/2;	  
-// 	    _thetayk(0,i) = (estimated_state(12,0)+1*_thetayk(0,i))/2; 
-// 	    _thetayk(1,i) = (estimated_state(13,0)+1*_thetayk(1,i))/2; 
-// 	    _thetayk(2,i) = (estimated_state(14,0)+1*_thetayk(2,i))/2;	
-// 	    
-// 	    //model2====================COMX+COMY + thetax+ thetay + CoMz feedback
-// 	    _zk(0,i) = (estimated_state(6,0)+2*_zk(0,i))/3; 
-// 	    _zk(1,i) = (estimated_state(7,0)+2*_zk(1,i))/3; 
-// 	    _zk(2,i) = (estimated_state(8,0)+2*_zk(2,i))/3;*/	
-// 	    
-// 	    
-//   ////////////////===============================================================================================	  
-// 	  /// next two sample time:	actually the preictive value is not reliable  
-// // 	    _comx(0,i+1) = _comx(0,i) + _dt * _comvx(0,i); 	  	  
-// // 	    _comy(0,i+1) = _comy(0,i) + _dt * _comvy(0,i); 	 
-// // 	    _comz(0,i+1) = _comz(0,i) + _dt * _comvz(0,i); 	 
-// // 	    _thetax(0,i+1) = _thetax(0,i)+ _dt * _thetavx(0,i); 	
-// // 	    _thetay(0,i+1) = _thetay(0,i)+ _dt * _thetavy(0,i); 	
-// // 	    
-// 	    
-// 	    _torquex_real.col(i) = _j_ini * _thetaax.col(i);
-// 	    _torquey_real.col(i) = _j_ini * _thetaay.col(i);
-// 	    
-// 	    _zmpx_real(0,i) = _comx(0,i) - (_comz(0,i) - _Zsc(i))/(_comaz(0,i)+_ggg(0))*_comax(0,i) - _j_ini * _thetavy(0,i)/(_mass * (_ggg(0) + _comaz(0,i)));
-// 	    _zmpy_real(0,i) = _comy(0,i) - (_comz(0,i) - _Zsc(i))/(_comaz(0,i)+_ggg(0))*_comay(0,i) + _j_ini * _thetavx(0,i)/(_mass * (_ggg(0) + _comaz(0,i)));
-// 	    
-// 
-// 	    
-// 	    _footxyz_real.row(0) = _footx_real.transpose();
-// 	    _footxyz_real.row(1) = _footy_real.transpose();	  
-// 	    _footxyz_real.row(2) = _footz_real.transpose();
-// 
-// 	    
-// 	    
-// 	    
-// 	    /////  generate the trajectory during the double support phase'
-// 	    _nTdx = round(_td(1)/_dt)+2;
-//       // 	    cout <<"nTdx:"<<_nTdx<<endl;
-// 	    for (int jxx=2; jxx <=_nTdx; jxx++)
-// 	    {
-// 	      _x_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1);
-// 	      _xk.col(i+jxx-1) = _a * _xk.col(i+jxx-2)  + _b* _x_vacc_k.col(i+jxx-2);
-// 	      _comx(0,i+jxx-1)=_xk(0,i+jxx-1); _comvx(0,i+jxx-1) = _xk(1,i+jxx-1); _comax(0,i+jxx-1)=_xk(2,i+jxx-1); 	  
-// 	      
-// 	      _y_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+_nh);
-// 	      _yk.col(i+jxx-1) = _a * _yk.col(i+jxx-2)  + _b* _y_vacc_k.col(i+jxx-2);
-// 	      _comy(0,i+jxx-1)=_yk(0,i+jxx-1); _comvy(0,i+jxx-1) = _yk(1,i+jxx-1); _comay(0,i+jxx-1)=_yk(2,i+jxx-1); 	     	      
-// 	      
-// 	      _comx(0,i+jxx-1) +=  _fxx_global;
-// 	      _comy(0,i+jxx-1) +=  _fyy_global;	  	      
-// 	      
-// 	      _z_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+2*_nh);	  
-// 	      _zk.col(i+jxx-1) = _a * _zk.col(i+jxx-2)  + _b* _z_vacc_k.col(i+jxx-2);
-// 	      _comz(0,i+jxx-1)=_zk(0,i+jxx-1); _comvz(0,i+jxx-1) = _zk(1,i+jxx-1); _comaz(0,i+jxx-1)=_zk(2,i+jxx-1); 
-// 
-// 	      _thetax_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+3*_nh);
-// 	      _thetaxk.col(i+jxx-1) = _a * _thetaxk.col(i+jxx-2)  + _b* _thetax_vacc_k.col(i+jxx-2);
-// 	      _thetax(0,i+jxx-1) = _thetaxk(0,i+jxx-1); _thetavx(0,i+jxx-1) = _thetaxk(1,i+jxx-1); _thetaax(0,i+jxx-1)=_thetaxk(2,i+jxx-1); 	
-// 
-// 
-// 	      _thetay_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+4*_nh);
-// 	      _thetayk.col(i+jxx-1) = _a * _thetayk.col(i+jxx-2)  + _b* _thetay_vacc_k.col(i+jxx-2);
-// 	      _thetay(0,i+jxx-1) = _thetayk(0,i+jxx-1); _thetavy(0,i+jxx-1) = _thetayk(1,i+jxx-1); _thetaay(0,i+jxx-1)=_thetayk(2,i+jxx-1); 		      
-// 	    
-// 	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
-// 	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
-// 	      
-// 	      _zmpx_real(0,i+jxx-1) = _comx(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comax(0,i+jxx-1) - _j_ini * _thetaay(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
-// 	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
-// 	      
-// 	    }	    
-// 	    
+// 	    _a_hx = _ppu * _Sjthetax;
+// 	    _a_hy = _ppu * _Sjthetay;
+	   
+	    // SEQUENCE QUADARTIC PROGRAMMING: lOOP_until the maximal loops reaches		
+	  // calculated the control loop
+
+            _det_del_i_x = _del_i_x_low -  _del_i_x_up;
+	    _det_del_i_y = _del_i_y_low -  _del_i_y_up;
+	    
+	    for (int xxxx=1; xxxx <= _loop; xxxx++)
+	    {	
+              /// attention: V_ini would be updated in each loop.
+	      _q_goal1 = _Q_goal1 * _V_ini + _q_goal;	  
+		      
+	      
+	      /// time consuming process	    
+	      
+	      for(int jxx=1; jxx<=_nh; jxx++)
+	      {
+		// x-ZMP upper constraints
+		_phi_i_x_up = _V_ini.transpose() *_phi_i_x_up_est[jxx-1];
+		_H_q_upx.row(jxx-1) = 2*_phi_i_x_up + _p_i_x_t_up.row(jxx-1); 
+		_F_zmp_upx.row(jxx-1) = -((_phi_i_x_up + _p_i_x_t_up.row(jxx-1)) * _V_ini + _del_i_x_up.col(jxx-1)); 
+
+		// x-ZMP low boundary   	      
+		_H_q_lowx.row(jxx-1) = - _pauSjz2.row(jxx-1) - _H_q_upx.row(jxx-1);  
+		_F_zmp_lowx.row(jxx-1) = _pauSjz2.row(jxx-1) * _V_ini + _det_del_i_x.col(jxx-1)-_F_zmp_upx.row(jxx-1); 
+		
+		
+		// y-ZMP upper boundary	      
+		_phi_i_y_up = _V_ini.transpose()*_phi_i_y_up_est[jxx-1];	      
+		_H_q_upy.row(jxx-1) = 2*_phi_i_y_up + _p_i_y_t_up.row(jxx-1); 
+		_F_zmp_upy.row(jxx-1) = -((_phi_i_y_up + _p_i_y_t_up.row(jxx-1)) * _V_ini + _del_i_y_up.col(jxx-1)); 
+		
+		// y-ZMP low boundary	      	      
+		_H_q_lowy.row(jxx-1) = - _pauSjz21.row(jxx-1) - _H_q_upy.row(jxx-1); 
+		_F_zmp_lowy.row(jxx-1) = _pauSjz21.row(jxx-1) * _V_ini + _det_del_i_y.col(jxx-1)-_F_zmp_upy.row(jxx-1);      	      
+	    
+
+		
+		//angle range constraints
+		_qq_upx.row(jxx-1) = -(_q_upx.row(jxx-1)* _V_ini + _qq1_upx.row(jxx-1));	 
+		_qq_lowx(jxx-1,0) = _detthetax - _qq_upx(jxx-1,0);	 
+				
+		_qq_upy.row(jxx-1) = -(_q_upy.row(jxx-1)* _V_ini + _qq1_upy.row(jxx-1));
+		_qq_lowy(jxx-1,0) = _detthetay - _qq_upy(jxx-1,0);
+
+		//torque range constraints	      
+		_tt_upx.row(jxx-1) = -(_t_upx.row(jxx-1)* _V_ini +  _tt1_upx.row(jxx-1));
+		_tt_lowx(jxx-1,0) = _dettorquex - _tt_upx(jxx-1,0);	
+		
+		_tt_upy.row(jxx-1) = -(_t_upy.row(jxx-1)* _V_ini +  _tt1_upy.row(jxx-1));	      
+		_tt_lowy(jxx-1,0) = _dettorquey - _tt_upy(jxx-1,0);	
+		
+		// body height constraints	      
+		_F_h_upz.row(jxx-1) = -(_H_h_upz.row(jxx-1)*_V_ini + _delta_footz_up.row(jxx-1));      
+		_F_h_lowz(jxx-1,0) = _detzb - _F_h_upz(jxx-1,0);
+		
+		// body height acceleration constraints	      
+		_F_hacc_lowz.row(jxx-1) = (-_H_hacc_lowz.row(jxx-1)*_V_ini + _delta_footzacc_up.row(jxx-1));	      	      
+	      }
+	      
+	      // foot location constraints
+	      if (_n_vis == 1)  //one next steo
+	      {
+		_H_q_footx_up.row(0) = _Sfx.row(0);
+		_F_foot_upx.row(0) = -(_H_q_footx_up.row(0) * _V_ini); 
+		_F_foot_upx(0,0) = _F_foot_upx(0,0) +_fx + _footx_max; 
+		
+		_H_q_footx_low.row(0) = -_Sfx.row(0);
+// 		_F_foot_lowx.row(0) = (_H_q_footx_up.row(0) * _V_ini);
+		_F_foot_lowx(0,0) = -_F_foot_upx(0,0)+_detfootx;
+		
+		
+		// footy location constraints
+		if (_bjxx % 2 == 0) //odd
+		{
+		  _H_q_footy_up.row(0) = _Sfy.row(0);
+		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
+		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy - _footy_min; 
+		  
+		  _H_q_footy_low.row(0) = -_Sfy.row(0);	
+		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0) +_detfooty;	
+		}
+		else
+		{
+		  _H_q_footy_up.row(0) = _Sfy.row(0);
+		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
+		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy + _footy_max; 
+		  _H_q_footy_low.row(0) = -_Sfy.row(0);
+// 		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini );
+		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0)+ _detfooty;
+		}	 
+	      }
+	      else   //two next steps
+	      {
+		_H_q_footx_up.row(0) = _Sfx.row(0);
+		_F_foot_upx.row(0) = -(_H_q_footx_up.row(0) * _V_ini); 
+		_F_foot_upx(0,0) = _F_foot_upx(0,0) +_fx + _footx_max;
+		_H_q_footx_low.row(0) = -_Sfx.row(0);
+// 		_F_foot_lowx.row(0) = (_H_q_footx_up.row(0) * _V_ini);
+		_F_foot_lowx(0,0) = -_F_foot_upx(0,0)+ _detfootx;
+		
+		// footy location constraints
+		if (_bjxx % 2 == 0) //odd
+		{
+		  _H_q_footy_up.row(0) = _Sfy.row(0);
+		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
+		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy - _footy_min;
+		  _H_q_footy_low.row(0) = -_Sfy.row(0);
+// 		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini);
+		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0)+_detfooty;
+		}
+		else
+		{
+		  _H_q_footy_up.row(0) = _Sfy.row(0);
+		  _F_foot_upy.row(0) = -(_H_q_footy_up.row(0) * _V_ini); 
+		  _F_foot_upy(0,0) = _F_foot_upy(0,0)+_fy + _footy_max;
+		  _H_q_footy_low.row(0) = -_Sfy.row(0);
+// 		  _F_foot_lowy.row(0) = (_H_q_footy_up.row(0) * _V_ini);
+		  _F_foot_lowy(0,0) = -_F_foot_upy(0,0)+ _detfooty;
+		}
+		
+		// the next two steps 
+		_H_q_footx_up.row(1) = _Sfoot* _Sfx;
+		_F_foot_upx.row(1) = -(_H_q_footx_up.row(1) * _V_ini); 	 
+		_F_foot_upx(1,0) = _F_foot_upx(1,0) +_footx_max; 
+		
+		_H_q_footx_low.row(1) = -_Sfoot* _Sfx;
+		_F_foot_lowx(1,0) = -_F_foot_upx(1,0)+_detfootx;
+		
+		// footy location constraints
+		if (_bjxx % 2 == 0) //odd
+		{
+		  _H_q_footy_up.row(1) = _Sfoot* _Sfy;
+		  _F_foot_upy.row(1) = -(_H_q_footy_up.row(1) * _V_ini); 
+		  _F_foot_upy(1,0) = _F_foot_upy(1,0) + _footy_max; 
+		  
+		  _H_q_footy_low.row(1) = -_H_q_footy_up.row(1);
+// 		  _F_foot_lowy.row(1) = (_H_q_footy_up.row(1) * _V_ini);
+		  _F_foot_lowy(1,0) = -_F_foot_upy(1,0)+_detfooty;		  
+		}
+		else
+		{
+		  _H_q_footy_up.row(1) = _Sfoot* _Sfy;
+		  _F_foot_upy.row(1) = -(_H_q_footy_up.row(1) * _V_ini); 
+		  _F_foot_upy(1,0) = _F_foot_upy(1,0) - _footy_min; 
+		  
+		  _H_q_footy_low.row(1) = -_H_q_footy_up.row(1);
+// 		  _F_foot_lowy.row(1) = (_H_q_footy_up.row(1) * _V_ini);
+		  _F_foot_lowy(1,0) = -_F_foot_upy(1,0)+_detfooty;		  
+		}	      	     	      
+	      }	      
+	      
+	      //swing foot veloctiy boundary
+	      if (i ==1)
+	      {
+		_footubxv = -(_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
+		_footubxv(0,0) = _footubxv(0,0)  + _footx_max;
+		
+// 		_footlbxv = (_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
+		_footlbxv(0,0) = -_footubxv(0,0)+ _detfootx;		
+		
+		_footubyv = -(_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));
+		_footubyv(0,0) = _footubyv(0,0) +_footy_max;		
+		
+// 		_footlbyv = (_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));
+		_footlbyv(0,0) = -_footubyv(0,0)+_detfooty;		
+		
+	      }
+	      else
+	      {
+		if (fabs(i*_dt - _tx(_bjxx-1))<=0.01)
+		{		
+		  _Footvx_max.setZero();  _Footvx_min.setZero();  _Footvy_max.setZero();  _Footvy_min.setZero();		  
+		  _footubxv.setZero(); _footlbxv.setZero(); _footubyv.setZero(); _footlbyv.setZero();			
+		}
+		else
+		{
+		  _footubxv = -(_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
+		  _footubxv(0,0) = _footubxv(0,0) + _footx_vmax*_dt;
+// 		  _footlbxv = (_Sfx.row(0) * _V_ini - _footx_real_next.row(i+_nT-2));
+		  _footlbxv(0,0) = -_footubxv(0,0) +_detfootvx*_dt;		  
+		  _footubyv = -(_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));
+		  _footubyv(0,0) = _footubyv(0,0) + _footy_vmax*_dt;		  
+// 		  _footlbyv = (_Sfy.row(0) * _V_ini - _footy_real_next.row(i+_nT-2));	
+		  _footlbyv(0,0) = -_footubyv(0,0)+_detfootvy*_dt;		  
+		}
+	      }
+
+	    ///////////// equality equation	    
+	    //equality constraints
+	    _F_footz = _Sfz.row(0)*_V_ini - _Lz_ref.row(0);	    
+	    _hhhx = _h_h*_V_ini + _pps * _zk.col(i-1) - _Hcom;	
+
+	    _a_hxx = _a_hx * _V_ini + _pps * _thetaxk.col(i-1);
+	    _a_hyy = _a_hy * _V_ini + _pps * _thetayk.col(i-1);		    	      
+  //////////////////////////////===========////////////////////////////////////////////////////	    
+  	    // quadratic program GetSolution
+	      
+	      if (_method_flag ==0)
+	      {
+		solve_reactive_step(); ///merely the reactive steps
+	      }
+	      else
+	      {
+		if (_method_flag ==1)
+		{
+		  solve_reactive_step_body_inclination(); /// the reactive steps + body inclination
+		}
+		else
+		{
+		  solve_reactive_step_body_inclination_CoMz(); /// the reactive steps + body inclination + height variance
+		}
+	      }
+
+	    }
+
+	    
+	    
+
+	    
+	    
+	    
+	    
+	    
+	    
+  ////////////////////////////////results postprocessed////////////
+  /////////===================================================%%%%%	  
+	  // results postprocessed:	  
+	    if (_n_vis == 1)
+	    {
+	      _V_optimal.block< 5*_nh, 1>(0, i-1)  = _V_ini.topRows(5*_nh);
+	      _V_optimal.block< 2, 1>(5*_nh, i-1)  = _V_inix.setConstant(_V_ini(5*_nh,0));
+	      _V_optimal.block< 2, 1>(5*_nh+2, i-1)  = _V_inix.setConstant(_V_ini(5*_nh+1,0));
+	      _V_optimal.block< 2, 1>(5*_nh+4, i-1)  = _V_inix.setConstant(_V_ini(5*_nh+2,0));	      
+	    }
+	    else
+	    {
+	      _V_optimal.col(i-1) = _V_ini;
+	    }
+	    
+	    //next step location
+	    _x_vacc_k.col(i-1) = _V_ini.row(0);
+	    _footx_real.row(_bjxx) = _V_ini.row(5*_nh);
+	    _footx_real_next.row(i+_nT -1) = _V_ini.row(5*_nh);
+	    _xk.col(i) = _a * _xk.col(i-1)  + _b* _x_vacc_k.col(i-1);
+	    _comx(0,i)=_xk(0,i); _comvx(0,i) = _xk(1,i); _comax(0,i)=_xk(2,i); 	  
+	    
+	    _y_vacc_k.col(i-1) = _V_ini.row(0+_nh);
+	    _footy_real.row(_bjxx) = _V_ini.row(5*_nh + _nstep);
+	    _footy_real_next.row(i+_nT -1) = _V_ini.row(5*_nh + _nstep);
+	    _yk.col(i) = _a * _yk.col(i-1)  + _b* _y_vacc_k.col(i-1);
+	    _comy(0,i)=_yk(0,i); _comvy(0,i) = _yk(1,i); _comay(0,i)=_yk(2,i); 
+	    
+	    
+	    
+	    _comx(0,i) +=  _fxx_global;
+	    _comy(0,i) +=  _fyy_global;	  
+	    _footx_real(_bjxx) = _footx_real(_bjxx) + _fxx_global;
+	    _footy_real(_bjxx) = _footy_real(_bjxx) + _fyy_global;	  	  
+	    _footx_real_next1(i+_nT -1) = _footx_real_next(i+_nT -1) + _fxx_global;	  
+	    _footy_real_next1(i+_nT -1) = _footy_real_next(i+_nT -1) + _fyy_global;
+
+	    
+	    
+	    _z_vacc_k.col(i-1) = _V_ini.row(0+2*_nh);
+	    _footz_real.row(_bjxx) = _V_ini.row(5*_nh + 2*_nstep);
+	    _footz_real_next.row(i+_nT -1) = _V_ini.row(5*_nh + 2*_nstep);	  
+	    _zk.col(i) = _a * _zk.col(i-1)  + _b* _z_vacc_k.col(i-1);
+	    _comz(0,i)=_zk(0,i); _comvz(0,i) = _zk(1,i); _comaz(0,i)=_zk(2,i); 
+
+	    _thetax_vacc_k.col(i-1) = _V_ini.row(0+3*_nh);
+	    _thetaxk.col(i) = _a * _thetaxk.col(i-1)  + _b* _thetax_vacc_k.col(i-1);
+	    _thetax(0,i) = _thetaxk(0,i); _thetavx(0,i) = _thetaxk(1,i); _thetaax(0,i)=_thetaxk(2,i); 	
+
+
+	    _thetay_vacc_k.col(i-1) = _V_ini.row(0+4*_nh);
+	    _thetayk.col(i) = _a * _thetayk.col(i-1)  + _b* _thetay_vacc_k.col(i-1);
+	    _thetay(0,i) = _thetayk(0,i); _thetavy(0,i) = _thetayk(1,i); _thetaay(0,i)=_thetayk(2,i); 	
+	    
+	    
+	    // reference relative state    
+	    /// /// relative state to the actual foot lcoation: very good
+	    if (_bjxx % 2 == 0)  // odd : left support
+	    {
+	      estimated_state(0,0) =  estimated_state(0,0) - _Lfoot_location_feedback(0);
+	      estimated_state(3,0) =  estimated_state(3,0) - _Lfoot_location_feedback(1);	 	    
+	    }
+	    else
+	    {
+	      estimated_state(0,0) =  estimated_state(0,0) - _Rfoot_location_feedback(0);
+	      estimated_state(3,0) =  estimated_state(3,0) - _Rfoot_location_feedback(1);	  
+	    }
+  //////============================================================================================================================	      
+  ////////////////////////////// state modified:====================================================================================
+
+	    if (_method_flag <2)
+	    {
+	      estimated_state(6,0) =  _comz(0,i-1);  
+	      estimated_state(7,0) =  _comvz(0,i-1);  
+	      estimated_state(8,0) =  _comaz(0,i-1);
+	    }	  
+	  	    
+	    if (_method_flag <=0)
+	    {
+	      estimated_state(9,0) =  _thetax(0,i-1);  
+	      estimated_state(10,0) =  _thetavx(0,i-1);  
+	      estimated_state(11,0) =  _thetaax(0,i-1);	  
+	      estimated_state(12,0) =  _thetay(0,i-1);  
+	      estimated_state(13,0) =  _thetavy(0,i-1);  
+	      estimated_state(14,0) =  _thetaay(0,i-1);	    
+	    }
+	
+  /*	  ///////////////================state feedback: determined by ratio parameter: lamda==============================////
+	    /// model0================COMX+COMY feedback
+
+	    _xk(0,i) = (estimated_state(0,0)+2*_xk(0,i))/3;             
+	    _xk(1,i) = (estimated_state(1,0)+2*_xk(1,i))/3; 
+	    _xk(2,i) = (estimated_state(2,0)+2*_xk(2,i))/3;
+	    
+
+	    if (i<round(2*_ts(1)/_dt))
+	    {
+		
+	    _yk(0,i) = (estimated_state(3,0)+24*_yk(0,i))/25; _yk(1,i) = (estimated_state(4,0)+24*_yk(1,i))/25;
+	    _yk(2,i) = (estimated_state(5,0)+24*_yk(2,i))/25;		    
+	      
+	    }
+	    else
+	    {
+		
+	    _yk(0,i) = (estimated_state(3,0)+2*_yk(0,i))/3; _yk(1,i) = (estimated_state(4,0)+2*_yk(1,i))/3;
+	    _yk(2,i) = (estimated_state(5,0)+2*_yk(2,i))/3;		    
+	    }
+
+	    ///model1===================COMX+COMY + thetax+ thetay feedback
+	    _thetaxk(0,i) = (estimated_state(9,0)+1*_thetaxk(0,i))/2;
+	    _thetaxk(1,i) = (estimated_state(10,0)+1*_thetaxk(1,i))/2; 
+	    _thetaxk(2,i) = (estimated_state(11,0)+1*_thetaxk(2,i))/2;	  
+	    _thetayk(0,i) = (estimated_state(12,0)+1*_thetayk(0,i))/2; 
+	    _thetayk(1,i) = (estimated_state(13,0)+1*_thetayk(1,i))/2; 
+	    _thetayk(2,i) = (estimated_state(14,0)+1*_thetayk(2,i))/2;	
+	    
+	    //model2====================COMX+COMY + thetax+ thetay + CoMz feedback
+	    _zk(0,i) = (estimated_state(6,0)+2*_zk(0,i))/3; 
+	    _zk(1,i) = (estimated_state(7,0)+2*_zk(1,i))/3; 
+	    _zk(2,i) = (estimated_state(8,0)+2*_zk(2,i))/3;*/	
+	    
+	    
+  ////////////////===============================================================================================	  
+	  /// next two sample time:	actually the preictive value is not reliable  
 // 	    _comx(0,i+1) = _comx(0,i) + _dt * _comvx(0,i); 	  	  
 // 	    _comy(0,i+1) = _comy(0,i) + _dt * _comvy(0,i); 	 
 // 	    _comz(0,i+1) = _comz(0,i) + _dt * _comvz(0,i); 	 
 // 	    _thetax(0,i+1) = _thetax(0,i)+ _dt * _thetavx(0,i); 	
 // 	    _thetay(0,i+1) = _thetay(0,i)+ _dt * _thetavy(0,i); 	
-// 	
-// 	  
-// 	  if (i>=1)
-// 	  {	  
-// 	    _Rfootx(0) = _Rfootx(1);
-// 	    _Lfootx(0) = _Lfootx(1);
-// 	    _Rfooty(0) = _Rfooty(1);
-// 	    _Lfooty(0) = _Lfooty(1);
-// 	    _comx(0) = _comx(1);	
-// 	    _comy(0) = _comy(1);
-// 	    _comz(0) = _comz(1);	  
-// 	  }	 
-//  
-// 	    _tcpu(0,i-1) = 0; 
-//  
-//  
-//       }
-//        else
-//        {
-// 	 if(i <= _n_end_walking+round(_tstep/_dt/2)){
-// 	   
-// // 	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
-// // 	    _bjxx = _j_period+1;  //coincidence with matlab 
-// // 	    _j_period = 0;		   
-// // 	   
-// // 	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
-// // 	    
-// // 	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
-// // 	    _bjx1 = _j_period+1;
-// // 	    _j_period = 0;
-// // 	    
-// // 	   Eigen::Matrix<double, 4, 1> _comy_temp;
-// // 	   _comy_temp.setZero();
-// // 	   _comy_temp(0) = _comy(0,_n_end_walking-2);
-// // 	   _comy_temp(1) = _comy(0,_n_end_walking-1);
-// // 	   _comy_temp(2) = 0;
-// // 	   _comy_temp(3) = 0;
-// // 
-// // 	   
-// // 	   Eigen::Matrix<double, 4, 4> _comy_matrix;
-// // 	   
-// // 	   int ix_temp1 = -1;
-// // 	   int ix_temp2 = 0;	   
-// // 	   int ix_temp3 = round(_tstep/_dt)/2+1;
-// // 	   
-// // 	  
-// // 	  Eigen::Matrix4d AAA_inv;
-// // 	  
-// // 	  double abx1, abx2, abx3, abx4;
-// // 	  abx1 = ((ix_temp1 - ix_temp2)*pow(ix_temp1 - ix_temp3, 2));
-// // 	  abx2 = ((ix_temp1 - ix_temp2)*pow(ix_temp2 - ix_temp3, 2));
-// // 	  abx3 =(pow(ix_temp1 - ix_temp3, 2)*pow(ix_temp2 - ix_temp3, 2));
-// // 	  abx4 = ((ix_temp1 - ix_temp3)*(ix_temp2 - ix_temp3));
-// // 	  
-// // 
-// // 	  AAA_inv(0,0) = 1/ abx1;
-// // 	  AAA_inv(0,1) =  -1/ abx2;
-// // 	  AAA_inv(0,2) = (ix_temp1 + ix_temp2 - 2*ix_temp3)/ abx3;
-// // 	  AAA_inv(0,3) = 1/ abx4;
-// // 	  
-// // 	  AAA_inv(1,0) = -(ix_temp2 + 2*ix_temp3)/ abx1;
-// // 	  AAA_inv(1,1) = (ix_temp1 + 2*ix_temp3)/ abx2;
-// // 	  AAA_inv(1,2) = -(pow(ix_temp1, 2) + ix_temp1*ix_temp2 + pow(ix_temp2, 2) - 3*pow(ix_temp3, 2))/ abx3;
-// // 	  AAA_inv(1,3) = -(ix_temp1 + ix_temp2 + ix_temp3)/ abx4;
-// // 	  
-// // 	  AAA_inv(2,0) = (ix_temp3*(2*ix_temp2 + ix_temp3))/ abx1;
-// // 	  AAA_inv(2,1) = -(ix_temp3*(2*ix_temp1 + ix_temp3))/ abx2;
-// // 	  AAA_inv(2,2) = (ix_temp3*(2*pow(ix_temp1, 2) + 2*ix_temp1*ix_temp2 - 3*ix_temp3*ix_temp1 + 2*pow(ix_temp2, 2) - 3*ix_temp3*ix_temp2))/ abx3;
-// // 	  AAA_inv(2,3) = (ix_temp1*ix_temp2 + ix_temp1*ix_temp3 + ix_temp2*ix_temp3)/ abx4;
-// // 	  
-// // 	  AAA_inv(3,0) = -(ix_temp2*pow(ix_temp3, 2))/ abx1;
-// // 	  AAA_inv(3,1) = (ix_temp1*pow(ix_temp3, 2))/ abx2;
-// // 	  AAA_inv(3,2) = (ix_temp1*ix_temp2*(ix_temp1*ix_temp2 - 2*ix_temp1*ix_temp3 - 2*ix_temp2*ix_temp3 + 3*pow(ix_temp3, 2)))/ abx3;
-// // 	  AAA_inv(3,3) = -(ix_temp1*ix_temp2*ix_temp3)/ abx4;
-// // 	   
-// // 	   _comy_matrix_inv = AAA_inv * _comy_temp;
-// // 
-// // 
-// // 	    /////  generate the trajectory during the double support phase'
-// // 	    _nTdx = round(_ts(1)/_dt);
-// // // 	    cout <<"nTdx:"<<_nTdx<<endl;
-// // 	    for (int jxx=1; jxx <=_nTdx; jxx++)
-// // 	    {
-// // 	      
-// // 	      if (i+jxx-1 <= _n_end_walking+round(_tstep/_dt/2))
-// // 	      {
-// // 		Eigen::Matrix<double, 1, 4> _t_temp;
-// // 		
-// // 		_t_temp(0) = pow(i+jxx-1-_n_end_walking+1, 3);
-// // 		_t_temp(1) = pow(i+jxx-1-_n_end_walking+1, 2);
-// // 		_t_temp(2) = pow(i+jxx-1-_n_end_walking+1, 1);
-// // 		_t_temp(3) = pow(i+jxx-1-_n_end_walking+1, 0);	
-// // 		
-// // 		_comy.col(i+jxx-1) = _t_temp* _comy_matrix_inv;
-// // 		
-// // 		Eigen::Matrix<double, 1, 4> _t_tempv;
-// // 		
-// // 		_t_tempv(0) = 3*pow(i+jxx-1-_n_end_walking+1, 2);
-// // 		_t_tempv(1) = 2*pow(i+jxx-1-_n_end_walking+1, 1);
-// // 		_t_tempv(2) = 1;
-// // 		_t_tempv(3) = 0;	
-// // 		
-// // 		_comvy.col(i+jxx-1) = _t_tempv* _comy_matrix_inv;
-// // 
-// // 		Eigen::Matrix<double, 1, 4> _t_tempa;
-// // 		
-// // 		_t_tempa(0) = 6*pow(i+jxx-1-_n_end_walking+1, 1);
-// // 		_t_tempa(1) = 2;
-// // 		_t_tempa(2) = 0;
-// // 		_t_tempa(3) = 0;	
-// // 		
-// // 		_comay.col(i+jxx-1) = _t_tempa* _comy_matrix_inv;				
-// // 	      }
-// // 	      else
-// // 	      {
-// //                _comy(0,i+jxx-1)=_comy(0,i+jxx-2); _comvy(0,i+jxx-1) = 0; _comay(0,i+jxx-1)= 0;		
-// // 	      }
-// // 	      
-// // 	      _comx(0,i+jxx-1)=_comx(0,_n_end_walking-1); _comvx(0,i+jxx-1) = 0; _comax(0,i+jxx-1)= 0; 	  
-// // 	       	     	      
-// // 	      _comz(0,i+jxx-1)=_comz(0,_n_end_walking-1); _comvz(0,i+jxx-1) = 0; _comaz(0,i+jxx-1)= 0; 
-// // 
-// // 	      _thetax(0,i+jxx-1) = _thetax(0,_n_end_walking-1); _thetavx(0,i+jxx-1) = 0; _thetaax(0,i+jxx-1)= 0; 	
-// // 
-// // 	      _thetay(0,i+jxx-1) = _thetay(0,_n_end_walking-1); _thetavy(0,i+jxx-1) = 0; _thetaay(0,i+jxx-1)= 0; 		      
-// // 	   
-// // 	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
-// // 	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
-// // 	      
-// // 	      _zmpx_real(0,i+jxx-1) = _comx(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comax(0,i+jxx-1) - _j_ini * _thetaay(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
-// // 	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
-// // 	      
-// // 	    }	    
-// // 	   
-// // 	  _footx_real_next.row(i+_nT -1)=_footx_real_next.row(_n_end_walking-1+_nT -1)	;
-// // 	  _footy_real_next.row(i+_nT -1)=_footy_real_next.row(_n_end_walking-1-_nT -1)	;	   
-// // 	   
-// // 	   for (int jxxx = _bjxx+1; jxxx<_footstepsnumber; jxxx++){
-// // 	   	    _footx_real(jxxx) = _footx_real(_bjxx) ;
-// // 	   	    _footy_real(jxxx) = _footy_real(_bjxx-1);		     
-// // 	     
-// // 	  }
-// // 	    _footxyz_real.row(0) = _footx_real.transpose();
-// // 	    _footxyz_real.row(1) = _footy_real.transpose();	  
-// // 	    _footxyz_real.row(2) = _footz_real.transpose();
-// // // 	    cout<<"_footy_real:"<<_footy_real<<endl;
-//   
-// 	   
-// 	}
-// 	 else
-// 	 {
-// 	   
-// /*	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
-// 	    _bjxx = _j_period+1;  //coincidence with matlab 
-// 	    _j_period = 0;	
 // 	    
+	    
+	    _torquex_real.col(i) = _j_ini * _thetaax.col(i);
+	    _torquey_real.col(i) = _j_ini * _thetaay.col(i);
+	    
+	    _zmpx_real(0,i) = _comx(0,i) - (_comz(0,i) - _Zsc(i))/(_comaz(0,i)+_ggg(0))*_comax(0,i) - _j_ini * _thetavy(0,i)/(_mass * (_ggg(0) + _comaz(0,i)));
+	    _zmpy_real(0,i) = _comy(0,i) - (_comz(0,i) - _Zsc(i))/(_comaz(0,i)+_ggg(0))*_comay(0,i) + _j_ini * _thetavx(0,i)/(_mass * (_ggg(0) + _comaz(0,i)));
+	    
+
+	    
+	    _footxyz_real.row(0) = _footx_real.transpose();
+	    _footxyz_real.row(1) = _footy_real.transpose();	  
+	    _footxyz_real.row(2) = _footz_real.transpose();
+
+	    
+	    
+	    
+	    /////  generate the trajectory during the double support phase'
+	    _nTdx = round(_td(1)/_dt)+2;
+      // 	    cout <<"nTdx:"<<_nTdx<<endl;
+	    for (int jxx=2; jxx <=_nTdx; jxx++)
+	    {
+	      _x_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1);
+	      _xk.col(i+jxx-1) = _a * _xk.col(i+jxx-2)  + _b* _x_vacc_k.col(i+jxx-2);
+	      _comx(0,i+jxx-1)=_xk(0,i+jxx-1); _comvx(0,i+jxx-1) = _xk(1,i+jxx-1); _comax(0,i+jxx-1)=_xk(2,i+jxx-1); 	  
+	      
+	      _y_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+_nh);
+	      _yk.col(i+jxx-1) = _a * _yk.col(i+jxx-2)  + _b* _y_vacc_k.col(i+jxx-2);
+	      _comy(0,i+jxx-1)=_yk(0,i+jxx-1); _comvy(0,i+jxx-1) = _yk(1,i+jxx-1); _comay(0,i+jxx-1)=_yk(2,i+jxx-1); 	     	      
+	      
+	      _comx(0,i+jxx-1) +=  _fxx_global;
+	      _comy(0,i+jxx-1) +=  _fyy_global;	  	      
+	      
+	      _z_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+2*_nh);	  
+	      _zk.col(i+jxx-1) = _a * _zk.col(i+jxx-2)  + _b* _z_vacc_k.col(i+jxx-2);
+	      _comz(0,i+jxx-1)=_zk(0,i+jxx-1); _comvz(0,i+jxx-1) = _zk(1,i+jxx-1); _comaz(0,i+jxx-1)=_zk(2,i+jxx-1); 
+
+	      _thetax_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+3*_nh);
+	      _thetaxk.col(i+jxx-1) = _a * _thetaxk.col(i+jxx-2)  + _b* _thetax_vacc_k.col(i+jxx-2);
+	      _thetax(0,i+jxx-1) = _thetaxk(0,i+jxx-1); _thetavx(0,i+jxx-1) = _thetaxk(1,i+jxx-1); _thetaax(0,i+jxx-1)=_thetaxk(2,i+jxx-1); 	
+
+
+	      _thetay_vacc_k.col(i+jxx-2) = _V_ini.row(jxx-1+4*_nh);
+	      _thetayk.col(i+jxx-1) = _a * _thetayk.col(i+jxx-2)  + _b* _thetay_vacc_k.col(i+jxx-2);
+	      _thetay(0,i+jxx-1) = _thetayk(0,i+jxx-1); _thetavy(0,i+jxx-1) = _thetayk(1,i+jxx-1); _thetaay(0,i+jxx-1)=_thetayk(2,i+jxx-1); 		      
+	    
+	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
+	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
+	      
+	      _zmpx_real(0,i+jxx-1) = _comx(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comax(0,i+jxx-1) - _j_ini * _thetaay(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
+	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
+	      
+	    }	    
+	    
+	    _comx(0,i+1) = _comx(0,i) + _dt * _comvx(0,i); 	  	  
+	    _comy(0,i+1) = _comy(0,i) + _dt * _comvy(0,i); 	 
+	    _comz(0,i+1) = _comz(0,i) + _dt * _comvz(0,i); 	 
+	    _thetax(0,i+1) = _thetax(0,i)+ _dt * _thetavx(0,i); 	
+	    _thetay(0,i+1) = _thetay(0,i)+ _dt * _thetavy(0,i); 	
+	
+	  
+	  if (i>=1)
+	  {	  
+	    _Rfootx(0) = _Rfootx(1);
+	    _Lfootx(0) = _Lfootx(1);
+	    _Rfooty(0) = _Rfooty(1);
+	    _Lfooty(0) = _Lfooty(1);
+	    _comx(0) = _comx(1);	
+	    _comy(0) = _comy(1);
+	    _comz(0) = _comz(1);	  
+	  }	 
+ 
+	    _tcpu(0,i-1) = 0; 
+ 
+ 
+      }
+       else
+       {
+	 if(i <= _n_end_walking+round(_tstep/_dt/2)){
+	   
+// 	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
+// 	    _bjxx = _j_period+1;  //coincidence with matlab 
+// 	    _j_period = 0;		   
+// 	   
 // 	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
 // 	    
 // 	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
 // 	    _bjx1 = _j_period+1;
-// 	    _j_period = 0;	
-// 	    	      
-// 	   _comy(0,i) = _comy(0,i-1);
-// 	   _comy(0,i+1) = _comy(0,i);	    
+// 	    _j_period = 0;
+// 	    
+// 	   Eigen::Matrix<double, 4, 1> _comy_temp;
+// 	   _comy_temp.setZero();
+// 	   _comy_temp(0) = _comy(0,_n_end_walking-2);
+// 	   _comy_temp(1) = _comy(0,_n_end_walking-1);
+// 	   _comy_temp(2) = 0;
+// 	   _comy_temp(3) = 0;
+// 
 // 	   
-// 	   _comx(0,i) = _comx(0,_n_end_walking-1);
-// 	   _comx(0,i+1) = _comx(0,_n_end_walking-1);
-// 	   _comz(0,i) = _comz(0,_n_end_walking-1);
-// 	   _comz(0,i+1) = _comz(0,_n_end_walking-1);	   
-// 	   _thetax(0,i) = _thetax(0,_n_end_walking-1);
-// 	   _thetax(0,i+1) = _thetax(0,_n_end_walking-1);	   
-// 	   _thetay(0,i) = _thetay(0,_n_end_walking-1);
-// 	   _thetay(0,i+1) = _thetay(0,_n_end_walking-1);
-// 	   	   
+// 	   Eigen::Matrix<double, 4, 4> _comy_matrix;
+// 	   
+// 	   int ix_temp1 = -1;
+// 	   int ix_temp2 = 0;	   
+// 	   int ix_temp3 = round(_tstep/_dt)/2+1;
+// 	   
+// 	  
+// 	  Eigen::Matrix4d AAA_inv;
+// 	  
+// 	  double abx1, abx2, abx3, abx4;
+// 	  abx1 = ((ix_temp1 - ix_temp2)*pow(ix_temp1 - ix_temp3, 2));
+// 	  abx2 = ((ix_temp1 - ix_temp2)*pow(ix_temp2 - ix_temp3, 2));
+// 	  abx3 =(pow(ix_temp1 - ix_temp3, 2)*pow(ix_temp2 - ix_temp3, 2));
+// 	  abx4 = ((ix_temp1 - ix_temp3)*(ix_temp2 - ix_temp3));
+// 	  
+// 
+// 	  AAA_inv(0,0) = 1/ abx1;
+// 	  AAA_inv(0,1) =  -1/ abx2;
+// 	  AAA_inv(0,2) = (ix_temp1 + ix_temp2 - 2*ix_temp3)/ abx3;
+// 	  AAA_inv(0,3) = 1/ abx4;
+// 	  
+// 	  AAA_inv(1,0) = -(ix_temp2 + 2*ix_temp3)/ abx1;
+// 	  AAA_inv(1,1) = (ix_temp1 + 2*ix_temp3)/ abx2;
+// 	  AAA_inv(1,2) = -(pow(ix_temp1, 2) + ix_temp1*ix_temp2 + pow(ix_temp2, 2) - 3*pow(ix_temp3, 2))/ abx3;
+// 	  AAA_inv(1,3) = -(ix_temp1 + ix_temp2 + ix_temp3)/ abx4;
+// 	  
+// 	  AAA_inv(2,0) = (ix_temp3*(2*ix_temp2 + ix_temp3))/ abx1;
+// 	  AAA_inv(2,1) = -(ix_temp3*(2*ix_temp1 + ix_temp3))/ abx2;
+// 	  AAA_inv(2,2) = (ix_temp3*(2*pow(ix_temp1, 2) + 2*ix_temp1*ix_temp2 - 3*ix_temp3*ix_temp1 + 2*pow(ix_temp2, 2) - 3*ix_temp3*ix_temp2))/ abx3;
+// 	  AAA_inv(2,3) = (ix_temp1*ix_temp2 + ix_temp1*ix_temp3 + ix_temp2*ix_temp3)/ abx4;
+// 	  
+// 	  AAA_inv(3,0) = -(ix_temp2*pow(ix_temp3, 2))/ abx1;
+// 	  AAA_inv(3,1) = (ix_temp1*pow(ix_temp3, 2))/ abx2;
+// 	  AAA_inv(3,2) = (ix_temp1*ix_temp2*(ix_temp1*ix_temp2 - 2*ix_temp1*ix_temp3 - 2*ix_temp2*ix_temp3 + 3*pow(ix_temp3, 2)))/ abx3;
+// 	  AAA_inv(3,3) = -(ix_temp1*ix_temp2*ix_temp3)/ abx4;
+// 	   
+// 	   _comy_matrix_inv = AAA_inv * _comy_temp;
+// 
+// 
 // 	    /////  generate the trajectory during the double support phase'
-// 	    _nTdx = round(_ts(1)/_dt)+2;
-// 	    for (int jxx=2; jxx <=_nTdx; jxx++)
+// 	    _nTdx = round(_ts(1)/_dt);
+// // 	    cout <<"nTdx:"<<_nTdx<<endl;
+// 	    for (int jxx=1; jxx <=_nTdx; jxx++)
 // 	    {
-// 	      _comx(0,i+jxx-1)=_comx(0,i+jxx-2); _comvx(0,i+jxx-1) = 0; _comax(0,i+jxx-1)= 0; 	  
+// 	      
+// 	      if (i+jxx-1 <= _n_end_walking+round(_tstep/_dt/2))
+// 	      {
+// 		Eigen::Matrix<double, 1, 4> _t_temp;
+// 		
+// 		_t_temp(0) = pow(i+jxx-1-_n_end_walking+1, 3);
+// 		_t_temp(1) = pow(i+jxx-1-_n_end_walking+1, 2);
+// 		_t_temp(2) = pow(i+jxx-1-_n_end_walking+1, 1);
+// 		_t_temp(3) = pow(i+jxx-1-_n_end_walking+1, 0);	
+// 		
+// 		_comy.col(i+jxx-1) = _t_temp* _comy_matrix_inv;
+// 		
+// 		Eigen::Matrix<double, 1, 4> _t_tempv;
+// 		
+// 		_t_tempv(0) = 3*pow(i+jxx-1-_n_end_walking+1, 2);
+// 		_t_tempv(1) = 2*pow(i+jxx-1-_n_end_walking+1, 1);
+// 		_t_tempv(2) = 1;
+// 		_t_tempv(3) = 0;	
+// 		
+// 		_comvy.col(i+jxx-1) = _t_tempv* _comy_matrix_inv;
 // 
-// 	      _comy(0,i+jxx-1)=_comy(0,i+jxx-2); _comvy(0,i+jxx-1) = 0; _comay(0,i+jxx-1)= 0; 	     	      
+// 		Eigen::Matrix<double, 1, 4> _t_tempa;
+// 		
+// 		_t_tempa(0) = 6*pow(i+jxx-1-_n_end_walking+1, 1);
+// 		_t_tempa(1) = 2;
+// 		_t_tempa(2) = 0;
+// 		_t_tempa(3) = 0;	
+// 		
+// 		_comay.col(i+jxx-1) = _t_tempa* _comy_matrix_inv;				
+// 	      }
+// 	      else
+// 	      {
+//                _comy(0,i+jxx-1)=_comy(0,i+jxx-2); _comvy(0,i+jxx-1) = 0; _comay(0,i+jxx-1)= 0;		
+// 	      }
+// 	      
+// 	      _comx(0,i+jxx-1)=_comx(0,_n_end_walking-1); _comvx(0,i+jxx-1) = 0; _comax(0,i+jxx-1)= 0; 	  
+// 	       	     	      
+// 	      _comz(0,i+jxx-1)=_comz(0,_n_end_walking-1); _comvz(0,i+jxx-1) = 0; _comaz(0,i+jxx-1)= 0; 
 // 
-// 	      _comz(0,i+jxx-1)=_comz(0,i+jxx-2); _comvz(0,i+jxx-1) = 0; _comaz(0,i+jxx-1)= 0; 
+// 	      _thetax(0,i+jxx-1) = _thetax(0,_n_end_walking-1); _thetavx(0,i+jxx-1) = 0; _thetaax(0,i+jxx-1)= 0; 	
 // 
-// 	      _thetax(0,i+jxx-1) = _thetax(0,i+jxx-2); _thetavx(0,i+jxx-1) = 0; _thetaax(0,i+jxx-1)= 0; 	
-// 
-// 	      _thetay(0,i+jxx-1) = _thetay(0,i+jxx-2); _thetavy(0,i+jxx-1) = 0; _thetaay(0,i+jxx-1)= 0; 		      
+// 	      _thetay(0,i+jxx-1) = _thetay(0,_n_end_walking-1); _thetavy(0,i+jxx-1) = 0; _thetaay(0,i+jxx-1)= 0; 		      
 // 	   
 // 	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
 // 	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
@@ -2650,27 +2587,89 @@ void MPCClass::step_timing_opti_loop(int i,Eigen::Matrix<double,18,1> estimated_
 // 	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
 // 	      
 // 	    }	    
-// 	    	   	   
+// 	   
 // 	  _footx_real_next.row(i+_nT -1)=_footx_real_next.row(_n_end_walking-1+_nT -1)	;
 // 	  _footy_real_next.row(i+_nT -1)=_footy_real_next.row(_n_end_walking-1-_nT -1)	;	   
 // 	   
-// 	  for (int jxxx = _bjxx+1; jxxx<_footstepsnumber; jxxx++){
-// 		  _footx_real(jxxx) = _footx_real(_bjxx) ;
-// 		  _footy_real(jxxx) = _footy_real(_bjxx-1);		     
+// 	   for (int jxxx = _bjxx+1; jxxx<_footstepsnumber; jxxx++){
+// 	   	    _footx_real(jxxx) = _footx_real(_bjxx) ;
+// 	   	    _footy_real(jxxx) = _footy_real(_bjxx-1);		     
 // 	     
 // 	  }
 // 	    _footxyz_real.row(0) = _footx_real.transpose();
 // 	    _footxyz_real.row(1) = _footy_real.transpose();	  
-// 	    _footxyz_real.row(2) = _footz_real.transpose();*/  
-// 	}
-// 	 
-// 	 
-//        }
-//         
-//   
-// 
-// 
-// }
+// 	    _footxyz_real.row(2) = _footz_real.transpose();
+// // 	    cout<<"_footy_real:"<<_footy_real<<endl;
+  
+	   
+	}
+	 else
+	 {
+	   
+/*	    Indexfind(i*_dt,xyz1);                   //// step cycle number when (i)*dt fall into : current sampling time
+	    _bjxx = _j_period+1;  //coincidence with matlab 
+	    _j_period = 0;	
+	    
+	    _t_f.setLinSpaced(_nh,(i+1)*_dt, (i+_nh)*_dt);
+	    
+	    Indexfind(_t_f(0),xyz1);                /// step cycle number when (i+1)*dt fall into : current sampling time
+	    _bjx1 = _j_period+1;
+	    _j_period = 0;	
+	    	      
+	   _comy(0,i) = _comy(0,i-1);
+	   _comy(0,i+1) = _comy(0,i);	    
+	   
+	   _comx(0,i) = _comx(0,_n_end_walking-1);
+	   _comx(0,i+1) = _comx(0,_n_end_walking-1);
+	   _comz(0,i) = _comz(0,_n_end_walking-1);
+	   _comz(0,i+1) = _comz(0,_n_end_walking-1);	   
+	   _thetax(0,i) = _thetax(0,_n_end_walking-1);
+	   _thetax(0,i+1) = _thetax(0,_n_end_walking-1);	   
+	   _thetay(0,i) = _thetay(0,_n_end_walking-1);
+	   _thetay(0,i+1) = _thetay(0,_n_end_walking-1);
+	   	   
+	    /////  generate the trajectory during the double support phase'
+	    _nTdx = round(_ts(1)/_dt)+2;
+	    for (int jxx=2; jxx <=_nTdx; jxx++)
+	    {
+	      _comx(0,i+jxx-1)=_comx(0,i+jxx-2); _comvx(0,i+jxx-1) = 0; _comax(0,i+jxx-1)= 0; 	  
+
+	      _comy(0,i+jxx-1)=_comy(0,i+jxx-2); _comvy(0,i+jxx-1) = 0; _comay(0,i+jxx-1)= 0; 	     	      
+
+	      _comz(0,i+jxx-1)=_comz(0,i+jxx-2); _comvz(0,i+jxx-1) = 0; _comaz(0,i+jxx-1)= 0; 
+
+	      _thetax(0,i+jxx-1) = _thetax(0,i+jxx-2); _thetavx(0,i+jxx-1) = 0; _thetaax(0,i+jxx-1)= 0; 	
+
+	      _thetay(0,i+jxx-1) = _thetay(0,i+jxx-2); _thetavy(0,i+jxx-1) = 0; _thetaay(0,i+jxx-1)= 0; 		      
+	   
+	      _torquex_real.col(i+jxx-1) = _j_ini * _thetaax.col(i+jxx-1);
+	      _torquey_real.col(i+jxx-1) = _j_ini * _thetaay.col(i+jxx-1);
+	      
+	      _zmpx_real(0,i+jxx-1) = _comx(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comax(0,i+jxx-1) - _j_ini * _thetaay(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
+	      _zmpy_real(0,i+jxx-1) = _comy(0,i+jxx-1) - (_comz(0,i+jxx-1) - _Zsc(i+jxx-1))/(_comaz(0,i+jxx-1)+_ggg(0))*_comay(0,i+jxx-1) + _j_ini * _thetaax(0,i+jxx-1)/(_mass * (_ggg(0) + _comaz(0,i+jxx-1)));
+	      
+	    }	    
+	    	   	   
+	  _footx_real_next.row(i+_nT -1)=_footx_real_next.row(_n_end_walking-1+_nT -1)	;
+	  _footy_real_next.row(i+_nT -1)=_footy_real_next.row(_n_end_walking-1-_nT -1)	;	   
+	   
+	  for (int jxxx = _bjxx+1; jxxx<_footstepsnumber; jxxx++){
+		  _footx_real(jxxx) = _footx_real(_bjxx) ;
+		  _footy_real(jxxx) = _footy_real(_bjxx-1);		     
+	     
+	  }
+	    _footxyz_real.row(0) = _footx_real.transpose();
+	    _footxyz_real.row(1) = _footy_real.transpose();	  
+	    _footxyz_real.row(2) = _footz_real.transpose();*/  
+	}
+	 
+	 
+       }
+        
+  
+
+
+}
 
 
 
@@ -3189,7 +3188,7 @@ void MPCClass::Matrix_large(int i_f)
 
 
 
-
+////////////////////////////for NLP solution
 
 
 
@@ -3200,35 +3199,35 @@ void MPCClass::solve_stepping_timing_twosteps()
   int nIneqCon = 24 + 12;
   resizeQP(nVars, nEqCon, nIneqCon);*/	    
 
-  _G = _SQ_goal3;
-  _g0 = _Sq_goal3;
-  _X = _vari_ini;
+  QPsolver1_nlp._G = _SQ_goal3;
+  QPsolver1_nlp._g0 = _Sq_goal3;
+  QPsolver1_nlp._X = _vari_ini;
 
 // min 0.5 * x G x + g0 x
 // _s.t.
 // 		CE^T x + ce0 = 0   ///// equality constraints
 // 		CI^T x + ci0 >= 0  //// inequality constraints
-  _CI.block<8,8>(0,0) = _trx.transpose() * (-1);
-  _CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
-  _CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
-  _CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
-  _CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
-  _CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,0) = _trx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
   
-  _ci0.block<8,1>(0, 0) = _det_trx;
-  _ci0.block<8,1>(8, 0) = _det_h_lx_upx;
-  _ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
-  _ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
-  _ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
-  _ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
+  QPsolver1_nlp._ci0.block<8,1>(0, 0) = _det_trx;
+  QPsolver1_nlp._ci0.block<8,1>(8, 0) = _det_h_lx_upx;
+  QPsolver1_nlp._ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
+  QPsolver1_nlp._ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
+  QPsolver1_nlp._ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
+  QPsolver1_nlp._ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
 
   
-  _CE = _trxx.transpose()*(-1);
-  _ce0 = _det_trxx;
+  QPsolver1_nlp._CE = _trxx.transpose()*(-1);
+  QPsolver1_nlp._ce0 = _det_trxx;
   
   
   
-  Solve();  
+  QPsolver1_nlp.solveQP(); 
 
 }
 
@@ -3240,100 +3239,102 @@ void MPCClass::solve_stepping_timing_onestep()
   int nIneqCon = 24 + 12;
   resizeQP(nVars, nEqCon, nIneqCon);*/	    
 
-  _G = _SQ_goal3;
-  _g0 = _Sq_goal3;
-  _X = _vari_ini;
+  QPsolver1_nlp._G = _SQ_goal3;
+  QPsolver1_nlp._g0 = _Sq_goal3;
+  QPsolver1_nlp._X = _vari_ini;
 
 // min 0.5 * x G x + g0 x
 // _s.t.
 // 		CE^T x + ce0 = 0   ///// equality constraints
 // 		CI^T x + ci0 >= 0  //// inequality constraints
-  _CI.block<8,8>(0,0) = _trx.transpose() * (-1);
-  _CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
-  _CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
-  _CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
-  _CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
-  _CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,0) = _trx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
+  QPsolver1_nlp. _CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
   
-  _ci0.block<8,1>(0, 0) = _det_trx;
-  _ci0.block<8,1>(8, 0) = _det_h_lx_upx;
-  _ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
-  _ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
-  _ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
-  _ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
+  QPsolver1_nlp._ci0.block<8,1>(0, 0) = _det_trx;
+  QPsolver1_nlp._ci0.block<8,1>(8, 0) = _det_h_lx_upx;
+  QPsolver1_nlp._ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
+  QPsolver1_nlp._ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
+  QPsolver1_nlp._ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
+  QPsolver1_nlp._ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
 
   
-  _CE.block<8,2>(0, 0) = _trxx.transpose()*(-1);
-  _CE.block<8,1>(0, 2) = _Lxx_ref1_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 3) = _Lyy_ref1_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 4) = _tr1_ref1_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 5) = _tr2_ref1_e.transpose()*(-1);    
+  QPsolver1_nlp._CE.block<8,2>(0, 0) = _trxx.transpose()*(-1);
+  QPsolver1_nlp._CE.block<8,1>(0, 2) = _Lxx_ref1_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 3) = _Lyy_ref1_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 4) = _tr1_ref1_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 5) = _tr2_ref1_e.transpose()*(-1);    
   
   
-  _ce0.block<2,1>(0, 0) = _det_trxx;
-  _ce0.block<1,1>(2, 0) = _Lxx_ref1_eq; 
-  _ce0.block<1,1>(3, 0) = _Lyy_ref1_eq;
-  _ce0.block<1,1>(4, 0) = _tr1_ref1_eq;
-  _ce0.block<1,1>(5, 0) = _tr2_ref1_eq;  
+  QPsolver1_nlp._ce0.block<2,1>(0, 0) = _det_trxx;
+  QPsolver1_nlp._ce0.block<1,1>(2, 0) = _Lxx_ref1_eq; 
+  QPsolver1_nlp._ce0.block<1,1>(3, 0) = _Lyy_ref1_eq;
+  QPsolver1_nlp._ce0.block<1,1>(4, 0) = _tr1_ref1_eq;
+  QPsolver1_nlp._ce0.block<1,1>(5, 0) = _tr2_ref1_eq;  
 
  
-  Solve();  
-
+//   Solve();  
+  QPsolver1_nlp.solveQP(); 
+  
 }
 
 
 void MPCClass::solve_stepping_timing_non()
 {    
 
-  _G = _SQ_goal3;
-  _g0 = _Sq_goal3;
-  _X = _vari_ini;
+  QPsolver1_nlp._G = _SQ_goal3;
+  QPsolver1_nlp._g0 = _Sq_goal3;
+  QPsolver1_nlp._X = _vari_ini;
 
 // min 0.5 * x G x + g0 x
 // _s.t.
 // 		CE^T x + ce0 = 0   ///// equality constraints
 // 		CI^T x + ci0 >= 0  //// inequality constraints
-  _CI.block<8,8>(0,0) = _trx.transpose() * (-1);
-  _CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
-  _CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
-  _CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
-  _CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
-  _CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,0) = _trx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,8) = _h_lx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,8>(0,16) = _h_lvx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,24) = _CoM_lax_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,28) = _CoM_lvx_upx.transpose() * (-1);
+  QPsolver1_nlp._CI.block<8,4>(0,32) = _CoM_lvx_upx1.transpose() * (-1);
   
-  _ci0.block<8,1>(0, 0) = _det_trx;
-  _ci0.block<8,1>(8, 0) = _det_h_lx_upx;
-  _ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
-  _ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
-  _ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
-  _ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
+  QPsolver1_nlp._ci0.block<8,1>(0, 0) = _det_trx;
+  QPsolver1_nlp._ci0.block<8,1>(8, 0) = _det_h_lx_upx;
+  QPsolver1_nlp._ci0.block<8,1>(16, 0) = _det_h_lvx_upx;
+  QPsolver1_nlp._ci0.block<4,1>(24, 0) = _det_CoM_lax_upx;
+  QPsolver1_nlp._ci0.block<4,1>(28, 0) = _det_CoM_lvx_upx;
+  QPsolver1_nlp._ci0.block<4,1>(32, 0) = _det_CoM_lvx_upx1;
 
   
 //   _CE = _trxx.transpose()*(-1);
 //   _ce0 = _det_trxx;
  
-  _CE.block<8,2>(0, 0) = _trxx.transpose()*(-1);
-  _CE.block<8,1>(0, 2) = _Lxx_ref1_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 3) = _Lyy_ref1_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 4) = _tr1_ref1_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 5) = _tr2_ref1_e.transpose()*(-1);    
-  _CE.block<8,1>(0, 6) = _Lxx_ref_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 7) = _Lyy_ref_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 8) = _tr1_ref_e.transpose()*(-1);  
-  _CE.block<8,1>(0, 9) = _tr2_ref_e.transpose()*(-1);   
+  QPsolver1_nlp._CE.block<8,2>(0, 0) = _trxx.transpose()*(-1);
+  QPsolver1_nlp._CE.block<8,1>(0, 2) = _Lxx_ref1_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 3) = _Lyy_ref1_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 4) = _tr1_ref1_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 5) = _tr2_ref1_e.transpose()*(-1);    
+  QPsolver1_nlp._CE.block<8,1>(0, 6) = _Lxx_ref_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 7) = _Lyy_ref_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 8) = _tr1_ref_e.transpose()*(-1);  
+  QPsolver1_nlp._CE.block<8,1>(0, 9) = _tr2_ref_e.transpose()*(-1);   
   
-  _ce0.block<2,1>(0, 0) = _det_trxx;
-  _ce0.block<1,1>(2, 0) = _Lxx_ref1_eq; 
-  _ce0.block<1,1>(3, 0) = _Lyy_ref1_eq;
-  _ce0.block<1,1>(4, 0) = _tr1_ref1_eq;
-  _ce0.block<1,1>(5, 0) = _tr2_ref1_eq;  
-  _ce0.block<1,1>(6, 0) = _Lxx_ref_eq; 
-  _ce0.block<1,1>(7, 0) = _Lyy_ref_eq;
-  _ce0.block<1,1>(8, 0) = _tr1_ref_eq;
-  _ce0.block<1,1>(9, 0) = _tr2_ref_eq;  
+  QPsolver1_nlp._ce0.block<2,1>(0, 0) = _det_trxx;
+  QPsolver1_nlp._ce0.block<1,1>(2, 0) = _Lxx_ref1_eq; 
+  QPsolver1_nlp._ce0.block<1,1>(3, 0) = _Lyy_ref1_eq;
+  QPsolver1_nlp._ce0.block<1,1>(4, 0) = _tr1_ref1_eq;
+  QPsolver1_nlp._ce0.block<1,1>(5, 0) = _tr2_ref1_eq;  
+  QPsolver1_nlp._ce0.block<1,1>(6, 0) = _Lxx_ref_eq; 
+  QPsolver1_nlp._ce0.block<1,1>(7, 0) = _Lyy_ref_eq;
+  QPsolver1_nlp._ce0.block<1,1>(8, 0) = _tr1_ref_eq;
+  QPsolver1_nlp._ce0.block<1,1>(9, 0) = _tr2_ref_eq;  
   
   
   
-  Solve();  
+//   Solve();  
+  QPsolver1_nlp.solveQP(); 
 
 }
 
@@ -3341,223 +3342,224 @@ void MPCClass::solve_stepping_timing_non()
 
 
 ////////////////////////////////////For NMPC control::::
-// ///// three model MPC solution :modified================================================================
-// void MPCClass::solve_reactive_step()
-// { 
-// 
-//   _G = _Q_goal1;
-//   _g0 = _q_goal1;
-//   _X = _V_ini;
-// 	    
-//   
-// 
-//   _CI.block<_Nt,_nh>(0,0) = _H_q_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,_nh) = _H_q_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,2*_nh) = _H_q_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,3*_nh) = _H_q_lowy.transpose() * (-1); 
-//   _CI.block<_Nt,_nh>(0,4*_nh) = _H_hacc_lowz.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh) = _H_q_footx_up.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh+_nstep) = _H_q_footx_low.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh+2*_nstep) = _H_q_footy_up.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh+3*_nstep) = _H_q_footy_low.transpose() * (-1);  
-// 
-//   
-//   _CI.block<_Nt,1>(0,5*_nh+4*_nstep) = _Footvx_max.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,5*_nh+4*_nstep+1) = _Footvx_min.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,5*_nh+4*_nstep+2) = _Footvy_max.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,5*_nh+4*_nstep+3) = _Footvy_min.transpose() * (-1);
-// 
-//   
-// 
-//   
-//   _ci0.block(0, 0,_nh,1) = _F_zmp_upx;
-//   _ci0.block(_nh, 0,_nh,1) = _F_zmp_lowx;
-//   _ci0.block(2*_nh, 0,_nh,1) = _F_zmp_upy;
-//   _ci0.block(3*_nh, 0,_nh,1) = _F_zmp_lowy;
-//   _ci0.block(4*_nh, 0,_nh,1) = _F_hacc_lowz;
-//    
-//   _ci0.block(5*_nh, 0,_nstep,1) = _F_foot_upx;
-//   _ci0.block(5*_nh+_nstep, 0,_nstep,1) = _F_foot_lowx;
-//   _ci0.block(5*_nh+2*_nstep, 0,_nstep,1) = _F_foot_upy;
-//   _ci0.block(5*_nh+3*_nstep, 0,_nstep,1) = _F_foot_lowy;
-//    
-//   _ci0.block(5*_nh+4*_nstep, 0,1,1) = _footubxv;
-//   _ci0.block(5*_nh+4*_nstep+1, 0,1,1) = _footlbxv;
-//   _ci0.block(5*_nh+4*_nstep+2, 0,1,1) = _footubyv;
-//   _ci0.block(5*_nh+4*_nstep+3, 0,1,1) = _footlbyv;
-// 
-//   
-//   _CE.block(0,0, _Nt,1) = _H_q_footz.transpose();
-//   _CE.block(0,1, _Nt,_nh) = _h_h.transpose();
-//   _CE.block(0,_nh+1, _Nt,_nh) = _a_hx.transpose();
-//   _CE.block(0,2*_nh+1, _Nt,_nh) = _a_hy.transpose();
-//   
-//   _ce0.block(0,0, 1,1) = _F_footz;
-//   _ce0.block(1,0, _nh,1) = _hhhx;  
-//   _ce0.block(1+_nh,0, _nh,1) = _a_hxx;  
-//   _ce0.block(1+2*_nh,0, _nh,1) = _a_hyy;    
-//   
-//   
-//   Solve();  
-// 
-// }
-// 
-// void MPCClass::solve_reactive_step_body_inclination()
-// {    
-// 
-//   _G = _Q_goal1;
-//   _g0 = _q_goal1;
-//   _X = _V_ini;
-// 
-//   
-//   _CI.block<_Nt,_nh>(0,0) = _H_q_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,_nh) = _H_q_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,2*_nh) = _H_q_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,3*_nh) = _H_q_lowy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,4*_nh) = _H_hacc_lowz.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh) = _H_q_footx_up.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh+_nstep) = _H_q_footx_low.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh+2*_nstep) = _H_q_footy_up.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,5*_nh+3*_nstep) = _H_q_footy_low.transpose() * (-1);	    
-// 
-//   _CI.block<_Nt,_nh>(0,5*_nh+4*_nstep) = _q_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,6*_nh+4*_nstep) = _q_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,7*_nh+4*_nstep) = _q_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,8*_nh+4*_nstep) = _q_lowy.transpose() * (-1);
-//   
-//   _CI.block<_Nt,_nh>(0,9*_nh+4*_nstep) = _t_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,10*_nh+4*_nstep) = _t_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,11*_nh+4*_nstep) = _t_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,12*_nh+4*_nstep) = _t_lowy.transpose() * (-1);
-//   
-//   _CI.block<_Nt,1>(0,13*_nh+4*_nstep) = _Footvx_max.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,13*_nh+4*_nstep+1) = _Footvx_min.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,13*_nh+4*_nstep+2) = _Footvy_max.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,13*_nh+4*_nstep+3) = _Footvy_min.transpose() * (-1);
-// 
-//   
-// 
-//   
-//   _ci0.block(0, 0,_nh,1) = _F_zmp_upx;
-//   _ci0.block(_nh, 0,_nh,1) = _F_zmp_lowx;
-//   _ci0.block(2*_nh, 0,_nh,1) = _F_zmp_upy;
-//   _ci0.block(3*_nh, 0,_nh,1) = _F_zmp_lowy; 
-//   _ci0.block(4*_nh, 0,_nh,1) = _F_hacc_lowz;
-//   _ci0.block(5*_nh, 0,_nstep,1) = _F_foot_upx;
-//   _ci0.block(5*_nh+_nstep, 0,_nstep,1) = _F_foot_lowx;
-//   _ci0.block(5*_nh+2*_nstep, 0,_nstep,1) = _F_foot_upy;
-//   _ci0.block(5*_nh+3*_nstep, 0,_nstep,1) = _F_foot_lowy;	    
-//   _ci0.block(5*_nh+4*_nstep, 0,_nh,1) = _qq_upx;
-//   _ci0.block(6*_nh+4*_nstep, 0,_nh,1) = _qq_lowx;
-//   _ci0.block(7*_nh+4*_nstep, 0,_nh,1) = _qq_upy;
-//   _ci0.block(8*_nh+4*_nstep, 0,_nh,1) = _qq_lowy;
-//   
-//   _ci0.block(9*_nh+4*_nstep, 0,_nh,1) = _tt_upx;
-//   _ci0.block(10*_nh+4*_nstep, 0,_nh,1) = _tt_lowx;
-//   _ci0.block(11*_nh+4*_nstep, 0,_nh,1) = _tt_upy;
-//   _ci0.block(12*_nh+4*_nstep, 0,_nh,1) = _tt_lowy;
-//   
-//   _ci0.block(13*_nh+4*_nstep, 0,1,1) = _footubxv;
-//   _ci0.block(13*_nh+4*_nstep+1, 0,1,1) = _footlbxv;
-//   _ci0.block(13*_nh+4*_nstep+2, 0,1,1) = _footubyv;
-//   _ci0.block(13*_nh+4*_nstep+3, 0,1,1) = _footlbyv;
-// 
-//   
-//   _CE.block(0,0, _Nt,1) = _H_q_footz.transpose();
-//   _CE.block(0,1, _Nt,_nh) = _h_h.transpose();
-//   
-//   _ce0.block(0,0, 1,1) = _F_footz;
-//   _ce0.block(1,0, _nh,1) = _hhhx;  
-// 
-//   Solve();  
-// 
-// }
-// 
-// void MPCClass::solve_reactive_step_body_inclination_CoMz()
-// {  
-// 
-//   _G = _Q_goal1;
-//   _g0 = _q_goal1;
-//   _X = _V_ini;
-// 
-//   
-//   _CI.block<_Nt,_nh>(0,0) = _H_q_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,_nh) = _H_q_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,2*_nh) = _H_q_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,3*_nh) = _H_q_lowy.transpose() * (-1);
-//   
-//   _CI.block<_Nt,_nh>(0,4*_nh) = _H_h_upz.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,5*_nh) = _H_h_lowz.transpose() * (-1);
-//   
-//   _CI.block<_Nt,_nh>(0,6*_nh) = _H_hacc_lowz.transpose() * (-1);
-//   
-//   _CI.block<_Nt,_nstep>(0,7*_nh) = _H_q_footx_up.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,7*_nh+_nstep) = _H_q_footx_low.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,7*_nh+2*_nstep) = _H_q_footy_up.transpose() * (-1);
-//   _CI.block<_Nt,_nstep>(0,7*_nh+3*_nstep) = _H_q_footy_low.transpose() * (-1);	    
-// 
-//   _CI.block<_Nt,_nh>(0,7*_nh+4*_nstep) = _q_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,8*_nh+4*_nstep) = _q_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,9*_nh+4*_nstep) = _q_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,10*_nh+4*_nstep,_Nt,_nh) = _q_lowy.transpose() * (-1);
-//   
-//   _CI.block<_Nt,_nh>(0,11*_nh+4*_nstep) = _t_upx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,12*_nh+4*_nstep) = _t_lowx.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,13*_nh+4*_nstep) = _t_upy.transpose() * (-1);
-//   _CI.block<_Nt,_nh>(0,14*_nh+4*_nstep) = _t_lowy.transpose() * (-1);
-//   
-//   _CI.block<_Nt,1>(0,15*_nh+4*_nstep) = _Footvx_max.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,15*_nh+4*_nstep+1) = _Footvx_min.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,15*_nh+4*_nstep+2) = _Footvy_max.transpose() * (-1);
-//   _CI.block<_Nt,1>(0,15*_nh+4*_nstep+3) = _Footvy_min.transpose() * (-1);
-// 
-//   
-// 
-//   
-//   _ci0.block(0, 0,_nh,1) = _F_zmp_upx;
-//   _ci0.block(_nh, 0,_nh,1) = _F_zmp_lowx;
-//   _ci0.block(2*_nh, 0,_nh,1) = _F_zmp_upy;
-//   _ci0.block(3*_nh, 0,_nh,1) = _F_zmp_lowy;
-//   
-//   _ci0.block(4*_nh, 0,_nh,1) = _F_h_upz;
-//   _ci0.block(5*_nh, 0,_nh,1) = _F_h_lowz;
-//   
-//   _ci0.block(6*_nh, 0,_nh,1) = _F_hacc_lowz;
-//   
-//   _ci0.block(7*_nh, 0,_nstep,1) = _F_foot_upx;
-//   _ci0.block(7*_nh+_nstep, 0,_nstep,1) = _F_foot_lowx;
-//   _ci0.block(7*_nh+2*_nstep, 0,_nstep,1) = _F_foot_upy;
-//   _ci0.block(7*_nh+3*_nstep, 0,_nstep,1) = _F_foot_lowy;	    
-// 
-//   _ci0.block(7*_nh+4*_nstep, 0,_nh,1) = _qq_upx;
-//   _ci0.block(8*_nh+4*_nstep, 0,_nh,1) = _qq_lowx;
-//   _ci0.block(9*_nh+4*_nstep, 0,_nh,1) = _qq_upy;
-//   _ci0.block(10*_nh+4*_nstep, 0,_nh,1) = _qq_lowy;
-//   
-//   _ci0.block(11*_nh+4*_nstep, 0,_nh,1) = _tt_upx;
-//   _ci0.block(12*_nh+4*_nstep, 0,_nh,1) = _tt_lowx;
-//   _ci0.block(13*_nh+4*_nstep, 0,_nh,1) = _tt_upy;
-//   _ci0.block(14*_nh+4*_nstep, 0,_nh,1) = _tt_lowy;
-//   
-//   _ci0.block(15*_nh+4*_nstep, 0,1,1) = _footubxv;
-//   _ci0.block(15*_nh+4*_nstep+1, 0,1,1) = _footlbxv;
-//   _ci0.block(15*_nh+4*_nstep+2, 0,1,1) = _footubyv;
-//   _ci0.block(15*_nh+4*_nstep+3, 0,1,1) = _footlbyv;
-// 
-//   
-//   
-//   
-//   
-//   
-//   _CE = _H_q_footz.transpose();
-//   _ce0 = _F_footz;
-//   
-//   
-//   
-//    Solve();  
-// 
-// }
-// 
+///// three model MPC solution :modified================================================================
+void MPCClass::solve_reactive_step()
+{ 
+
+  QPsolver2_nmpc._G = _Q_goal1;
+  QPsolver2_nmpc._g0 = _q_goal1;
+  QPsolver2_nmpc._X = _V_ini;
+	    
+  
+
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,0) = _H_q_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,_nh) = _H_q_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,2*_nh) = _H_q_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,3*_nh) = _H_q_lowy.transpose() * (-1); 
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,4*_nh) = _H_hacc_lowz.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh) = _H_q_footx_up.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh+_nstep) = _H_q_footx_low.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh+2*_nstep) = _H_q_footy_up.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh+3*_nstep) = _H_q_footy_low.transpose() * (-1);  
+
+  
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,5*_nh+4*_nstep) = _Footvx_max.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,5*_nh+4*_nstep+1) = _Footvx_min.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,5*_nh+4*_nstep+2) = _Footvy_max.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,5*_nh+4*_nstep+3) = _Footvy_min.transpose() * (-1);
+
+  
+
+  
+   QPsolver2_nmpc._ci0.block(0, 0,_nh,1) = _F_zmp_upx;
+   QPsolver2_nmpc._ci0.block(_nh, 0,_nh,1) = _F_zmp_lowx;
+   QPsolver2_nmpc._ci0.block(2*_nh, 0,_nh,1) = _F_zmp_upy;
+   QPsolver2_nmpc._ci0.block(3*_nh, 0,_nh,1) = _F_zmp_lowy;
+   QPsolver2_nmpc._ci0.block(4*_nh, 0,_nh,1) = _F_hacc_lowz;
+   
+   QPsolver2_nmpc._ci0.block(5*_nh, 0,_nstep,1) = _F_foot_upx;
+   QPsolver2_nmpc._ci0.block(5*_nh+_nstep, 0,_nstep,1) = _F_foot_lowx;
+   QPsolver2_nmpc._ci0.block(5*_nh+2*_nstep, 0,_nstep,1) = _F_foot_upy;
+   QPsolver2_nmpc._ci0.block(5*_nh+3*_nstep, 0,_nstep,1) = _F_foot_lowy;
+   
+   QPsolver2_nmpc._ci0.block(5*_nh+4*_nstep, 0,1,1) = _footubxv;
+   QPsolver2_nmpc._ci0.block(5*_nh+4*_nstep+1, 0,1,1) = _footlbxv;
+   QPsolver2_nmpc._ci0.block(5*_nh+4*_nstep+2, 0,1,1) = _footubyv;
+   QPsolver2_nmpc._ci0.block(5*_nh+4*_nstep+3, 0,1,1) = _footlbyv;
+
+  
+   QPsolver2_nmpc._CE.block(0,0, _Nt,1) = _H_q_footz.transpose();
+   QPsolver2_nmpc._CE.block(0,1, _Nt,_nh) = _h_h.transpose();
+   QPsolver2_nmpc._CE.block(0,_nh+1, _Nt,_nh) = _a_hx.transpose();
+   QPsolver2_nmpc._CE.block(0,2*_nh+1, _Nt,_nh) = _a_hy.transpose();
+  
+   QPsolver2_nmpc._ce0.block(0,0, 1,1) = _F_footz;
+   QPsolver2_nmpc._ce0.block(1,0, _nh,1) = _hhhx;  
+   QPsolver2_nmpc._ce0.block(1+_nh,0, _nh,1) = _a_hxx;  
+   QPsolver2_nmpc._ce0.block(1+2*_nh,0, _nh,1) = _a_hyy;    
+  
+  
+//  Solve();  
+  QPsolver2_nmpc.solveQP(); 
+  
+}
+
+void MPCClass::solve_reactive_step_body_inclination()
+{    
+
+   QPsolver2_nmpc._G = _Q_goal1;
+   QPsolver2_nmpc._g0 = _q_goal1;
+   QPsolver2_nmpc._X = _V_ini;
+
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,0) = _H_q_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,_nh) = _H_q_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,2*_nh) = _H_q_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,3*_nh) = _H_q_lowy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,4*_nh) = _H_hacc_lowz.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh) = _H_q_footx_up.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh+_nstep) = _H_q_footx_low.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh+2*_nstep) = _H_q_footy_up.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,5*_nh+3*_nstep) = _H_q_footy_low.transpose() * (-1);	    
+
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,5*_nh+4*_nstep) = _q_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,6*_nh+4*_nstep) = _q_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,7*_nh+4*_nstep) = _q_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,8*_nh+4*_nstep) = _q_lowy.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,9*_nh+4*_nstep) = _t_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,10*_nh+4*_nstep) = _t_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,11*_nh+4*_nstep) = _t_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,12*_nh+4*_nstep) = _t_lowy.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,13*_nh+4*_nstep) = _Footvx_max.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,13*_nh+4*_nstep+1) = _Footvx_min.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,13*_nh+4*_nstep+2) = _Footvy_max.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,13*_nh+4*_nstep+3) = _Footvy_min.transpose() * (-1);
+
+  
+
+  
+   QPsolver2_nmpc._ci0.block(0, 0,_nh,1) = _F_zmp_upx;
+   QPsolver2_nmpc._ci0.block(_nh, 0,_nh,1) = _F_zmp_lowx;
+   QPsolver2_nmpc._ci0.block(2*_nh, 0,_nh,1) = _F_zmp_upy;
+   QPsolver2_nmpc._ci0.block(3*_nh, 0,_nh,1) = _F_zmp_lowy; 
+   QPsolver2_nmpc._ci0.block(4*_nh, 0,_nh,1) = _F_hacc_lowz;
+   QPsolver2_nmpc._ci0.block(5*_nh, 0,_nstep,1) = _F_foot_upx;
+   QPsolver2_nmpc._ci0.block(5*_nh+_nstep, 0,_nstep,1) = _F_foot_lowx;
+   QPsolver2_nmpc._ci0.block(5*_nh+2*_nstep, 0,_nstep,1) = _F_foot_upy;
+   QPsolver2_nmpc._ci0.block(5*_nh+3*_nstep, 0,_nstep,1) = _F_foot_lowy;	    
+   QPsolver2_nmpc._ci0.block(5*_nh+4*_nstep, 0,_nh,1) = _qq_upx;
+   QPsolver2_nmpc._ci0.block(6*_nh+4*_nstep, 0,_nh,1) = _qq_lowx;
+   QPsolver2_nmpc._ci0.block(7*_nh+4*_nstep, 0,_nh,1) = _qq_upy;
+   QPsolver2_nmpc._ci0.block(8*_nh+4*_nstep, 0,_nh,1) = _qq_lowy;
+  
+   QPsolver2_nmpc._ci0.block(9*_nh+4*_nstep, 0,_nh,1) = _tt_upx;
+   QPsolver2_nmpc._ci0.block(10*_nh+4*_nstep, 0,_nh,1) = _tt_lowx;
+   QPsolver2_nmpc._ci0.block(11*_nh+4*_nstep, 0,_nh,1) = _tt_upy;
+   QPsolver2_nmpc._ci0.block(12*_nh+4*_nstep, 0,_nh,1) = _tt_lowy;
+  
+   QPsolver2_nmpc._ci0.block(13*_nh+4*_nstep, 0,1,1) = _footubxv;
+   QPsolver2_nmpc._ci0.block(13*_nh+4*_nstep+1, 0,1,1) = _footlbxv;
+   QPsolver2_nmpc._ci0.block(13*_nh+4*_nstep+2, 0,1,1) = _footubyv;
+   QPsolver2_nmpc._ci0.block(13*_nh+4*_nstep+3, 0,1,1) = _footlbyv;
+
+  
+   QPsolver2_nmpc._CE.block(0,0, _Nt,1) = _H_q_footz.transpose();
+   QPsolver2_nmpc._CE.block(0,1, _Nt,_nh) = _h_h.transpose();
+  
+   QPsolver2_nmpc._ce0.block(0,0, 1,1) = _F_footz;
+   QPsolver2_nmpc._ce0.block(1,0, _nh,1) = _hhhx;  
+
+ // Solve();  
+   QPsolver2_nmpc.solveQP(); 
+}
+
+void MPCClass::solve_reactive_step_body_inclination_CoMz()
+{  
+
+   QPsolver2_nmpc._G = _Q_goal1;
+   QPsolver2_nmpc._g0 = _q_goal1;
+   QPsolver2_nmpc._X = _V_ini;
+
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,0) = _H_q_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,_nh) = _H_q_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,2*_nh) = _H_q_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,3*_nh) = _H_q_lowy.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,4*_nh) = _H_h_upz.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,5*_nh) = _H_h_lowz.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,6*_nh) = _H_hacc_lowz.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,7*_nh) = _H_q_footx_up.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,7*_nh+_nstep) = _H_q_footx_low.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,7*_nh+2*_nstep) = _H_q_footy_up.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nstep>(0,7*_nh+3*_nstep) = _H_q_footy_low.transpose() * (-1);	    
+
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,7*_nh+4*_nstep) = _q_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,8*_nh+4*_nstep) = _q_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,9*_nh+4*_nstep) = _q_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,10*_nh+4*_nstep,_Nt,_nh) = _q_lowy.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,11*_nh+4*_nstep) = _t_upx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,12*_nh+4*_nstep) = _t_lowx.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,13*_nh+4*_nstep) = _t_upy.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,_nh>(0,14*_nh+4*_nstep) = _t_lowy.transpose() * (-1);
+  
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,15*_nh+4*_nstep) = _Footvx_max.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,15*_nh+4*_nstep+1) = _Footvx_min.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,15*_nh+4*_nstep+2) = _Footvy_max.transpose() * (-1);
+   QPsolver2_nmpc._CI.block<_Nt,1>(0,15*_nh+4*_nstep+3) = _Footvy_min.transpose() * (-1);
+
+  
+
+  
+   QPsolver2_nmpc._ci0.block(0, 0,_nh,1) = _F_zmp_upx;
+   QPsolver2_nmpc._ci0.block(_nh, 0,_nh,1) = _F_zmp_lowx;
+   QPsolver2_nmpc._ci0.block(2*_nh, 0,_nh,1) = _F_zmp_upy;
+   QPsolver2_nmpc._ci0.block(3*_nh, 0,_nh,1) = _F_zmp_lowy;
+  
+   QPsolver2_nmpc._ci0.block(4*_nh, 0,_nh,1) = _F_h_upz;
+   QPsolver2_nmpc._ci0.block(5*_nh, 0,_nh,1) = _F_h_lowz;
+  
+   QPsolver2_nmpc._ci0.block(6*_nh, 0,_nh,1) = _F_hacc_lowz;
+  
+   QPsolver2_nmpc._ci0.block(7*_nh, 0,_nstep,1) = _F_foot_upx;
+   QPsolver2_nmpc._ci0.block(7*_nh+_nstep, 0,_nstep,1) = _F_foot_lowx;
+   QPsolver2_nmpc._ci0.block(7*_nh+2*_nstep, 0,_nstep,1) = _F_foot_upy;
+   QPsolver2_nmpc._ci0.block(7*_nh+3*_nstep, 0,_nstep,1) = _F_foot_lowy;	    
+
+   QPsolver2_nmpc._ci0.block(7*_nh+4*_nstep, 0,_nh,1) = _qq_upx;
+   QPsolver2_nmpc._ci0.block(8*_nh+4*_nstep, 0,_nh,1) = _qq_lowx;
+   QPsolver2_nmpc._ci0.block(9*_nh+4*_nstep, 0,_nh,1) = _qq_upy;
+   QPsolver2_nmpc._ci0.block(10*_nh+4*_nstep, 0,_nh,1) = _qq_lowy;
+  
+   QPsolver2_nmpc._ci0.block(11*_nh+4*_nstep, 0,_nh,1) = _tt_upx;
+   QPsolver2_nmpc._ci0.block(12*_nh+4*_nstep, 0,_nh,1) = _tt_lowx;
+   QPsolver2_nmpc._ci0.block(13*_nh+4*_nstep, 0,_nh,1) = _tt_upy;
+   QPsolver2_nmpc._ci0.block(14*_nh+4*_nstep, 0,_nh,1) = _tt_lowy;
+  
+   QPsolver2_nmpc._ci0.block(15*_nh+4*_nstep, 0,1,1) = _footubxv;
+   QPsolver2_nmpc._ci0.block(15*_nh+4*_nstep+1, 0,1,1) = _footlbxv;
+   QPsolver2_nmpc._ci0.block(15*_nh+4*_nstep+2, 0,1,1) = _footubyv;
+   QPsolver2_nmpc._ci0.block(15*_nh+4*_nstep+3, 0,1,1) = _footlbyv;
+
+  
+  
+  
+  
+  
+   QPsolver2_nmpc._CE = _H_q_footz.transpose();
+   QPsolver2_nmpc._ce0 = _F_footz;
+  
+   QPsolver2_nmpc.solveQP(); 
+  
+ //  Solve();  
+
+}
+
 
 
 
@@ -3567,11 +3569,7 @@ void MPCClass::solve_stepping_timing_non()
 
 void MPCClass::Solve()
 {
-// min 0.5 * x G x + g0 x
-// _s.t.
-// 		CE^T x + ce0 = 0
-// 		CI^T x + ci0 >= 0
-		solveQP();
+//		solveQP();
 
 }
 

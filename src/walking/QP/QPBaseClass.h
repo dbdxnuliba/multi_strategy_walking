@@ -37,19 +37,11 @@ public:
 
 	std::string _solver_name;
 	bool debug;
-
-protected:
-	static const int MAX_ROWS = 300;
-	static const int MAX_VARS = 60;
-	static const int MAX_N_INEQ = 300;
-
+	
+	/// public variables
 	int _nVars;
 	int _nEqCon;
-	int _nIneqCon;
-
-	int _costRowIdx;
-	int _ineqRowIdx;
-
+	int _nIneqCon;	
 	Eigen::MatrixXd _G;
 	Eigen::VectorXd _g0;
 	Eigen::VectorXd _X;
@@ -58,7 +50,29 @@ protected:
 	Eigen::MatrixXd _CE;
 	Eigen::VectorXd _ce0;
 	Eigen::MatrixXd _CI;
-	Eigen::VectorXd _ci0;
+	Eigen::VectorXd _ci0;	
+
+protected:
+	static const int MAX_ROWS = 300;
+	static const int MAX_VARS = 60;
+	static const int MAX_N_INEQ = 300;
+
+// 	int _nVars;
+// 	int _nEqCon;
+// 	int _nIneqCon;
+
+	int _costRowIdx;
+	int _ineqRowIdx;
+
+// 	Eigen::MatrixXd _G;
+// 	Eigen::VectorXd _g0;
+// 	Eigen::VectorXd _X;
+// 	Eigen::MatrixXd _A;
+// 	Eigen::VectorXd _b;
+// 	Eigen::MatrixXd _CE;
+// 	Eigen::VectorXd _ce0;
+// 	Eigen::MatrixXd _CI;
+// 	Eigen::VectorXd _ci0;
 
 private:
 	boost::shared_ptr<QPsolver> _qpsolver;

@@ -33,7 +33,8 @@ MpcRTControlClass::MpcRTControlClass()
 #endif
 	
   
-  mpc._method_flag_nlp = 2;//for non_optimizatio: 0: one step; 1: two steps; 2;	
+  mpc._method_flag_nlp = 1;//for non_optimizatio: 0: one step; 1: two steps; 2;	
+  mpc._method_flag = 2;//strategy: 0: reactive step; 1: reactive step+ body inclination; 2: reactive step+ body inclination+height variation;
 
 	
   mpc._robot_name = RobotPara().name;
@@ -145,7 +146,6 @@ void MpcRTControlClass::WalkingReactStepping()
   // this is the loop for normal walking
   _walkdtime1 = walkdtime - _t_walkdtime_restart_flag;
 
-  clock_t t_finish;
 	
   if(IsStartWalk)
   {
@@ -199,13 +199,20 @@ void MpcRTControlClass::WalkingReactStepping()
 	    if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
 	    {
  //             DPRINTF("=========Enter NLP optimization=============\n");   
-	      mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);
- //             DPRINTF("=========Finish NLP optimization=============\n"); 
+// 	      mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);
+//  //             DPRINTF("=========Finish NLP optimization=============\n"); 
+// // 		    /////////////////////  CoM height generation, when no mpc                                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// 	      ///////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// 	      mpc.CoM_height_solve(_t_int, _stop_walking);
+	      
+//	      DPRINTF("=========Enter NMPC optimization=============\n"); 
+	      mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);
+ //             DPRINTF("=========Finish NMPC optimization=============\n"); 
+
+	      
 	      mpc.Foot_trajectory_solve(_t_int, _stop_walking);
  //             DPRINTF("=========Finish Foot_trajectory trajectory=============\n"); 
-// 		    /////////////////////  CoM height generation, when no mpc                                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	      ///////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	      mpc.CoM_height_solve(_t_int, _stop_walking);
+
 	    }
 	  }
 // 	  // cout << "generation complete!!"<<endl;
@@ -256,9 +263,9 @@ void MpcRTControlClass::WalkingReactStepping()
  //         DPRINTF("=========Finish PelvisPos trajectory generation=============\n"); 
 	  body_thetax = mpc.XGetSolution_body_inclination(_walkdtime1, _dtx, body_in1,body_in2,body_in3);
  //         DPRINTF("=========Finish body inclination generation=============\n"); 
- 		LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
- 		RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
-                LeftFootPosx(2)-=0.003; RightFootPosx(2)-=0.003;
+	  LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
+	  RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
+//                 LeftFootPosx(2)-=0.003; RightFootPosx(2)-=0.003;
   
 	/// for hardware test: avoidance self_collision	
 	  if (LeftFootPosx(0)-PelvisPos(0)>0.4)
@@ -518,13 +525,16 @@ void MpcRTControlClass::WalkingReactStepping()
 		
 		if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
 		{		
-		  mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);	
-    /*		    mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);	*/	
-		  mpc.Foot_trajectory_solve(_t_int, _stop_walking);	
-    // 	      // cout << "walking ref generation"<<endl;	  
+		  mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);			  
     // 		    /////////////////////  CoM height generation, when no mpc                                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		  ///////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		  mpc.CoM_height_solve(_t_int, _stop_walking);		    
+		  mpc.CoM_height_solve(_t_int, _stop_walking);	
+
+		  
+// 		  mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);	
+		  mpc.Foot_trajectory_solve(_t_int, _stop_walking);	
+    // 	      // cout << "walking ref generation"<<endl;	  
+	    
 		}
 	      }
     // 	  // cout << "generation complete!!"<<endl;
@@ -573,10 +583,10 @@ void MpcRTControlClass::WalkingReactStepping()
 	      
 	      PelvisPos = mpc.XGetSolution_CoM_position(_walkdtime1, _dtx,COM_in1,COM_in2,COM_in3);     
 	      body_thetax = mpc.XGetSolution_body_inclination(_walkdtime1, _dtx, body_in1,body_in2,body_in3);	  
-    		LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
-    		RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
-	      
-	      
+	      LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
+	      RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
+	    
+	    
 	      
 	      /////*****************leg trajectory generated by KMP********************************/////
 // 	      _kmp_leg_traje = mpc.XGetSolution_Foot_position_KMP(_walkdtime1,_dtx,_t_int,_stop_walking);
@@ -716,11 +726,14 @@ void MpcRTControlClass::WalkingReactStepping()
 		
 		if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
 		{	
-		  mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);			    	
-		  mpc.Foot_trajectory_solve(_t_int, _stop_walking);
+		  mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);	
     // 		    /////////////////////  CoM height generation, when no mpc                                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		  ///////////////////////////!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		  mpc.CoM_height_solve(_t_int, _stop_walking);
+		  mpc.CoM_height_solve(_t_int, _stop_walking);	
+		  
+//		  mpc.CoM_foot_trajection_generation_local(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);		  
+		  mpc.Foot_trajectory_solve(_t_int, _stop_walking);
+
 		}
 	      }
     // 	  // cout << "generation complete!!"<<endl;
@@ -769,17 +782,15 @@ void MpcRTControlClass::WalkingReactStepping()
 	      
 	      PelvisPos = mpc.XGetSolution_CoM_position(_walkdtime1, _dtx,COM_in1,COM_in2,COM_in3);     	      	
 	      body_thetax = mpc.XGetSolution_body_inclination(_walkdtime1, _dtx, body_in1,body_in2,body_in3);	  
-/*    		LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
-    		RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
-   */   
-// 	      /////*****************leg trajectory generated by KMP********************************/////
-	      _kmp_leg_traje = mpc.XGetSolution_Foot_position_KMP(_walkdtime1,_dtx,_t_int,_stop_walking);
+	      LeftFootPosx = mpc.XGetSolution_Foot_positionL(_walkdtime1, _dtx, FootL_in1,FootL_in2,FootL_in3);
+	      RightFootPosx = mpc.XGetSolution_Foot_positionR(_walkdtime1, _dtx, FootR_in1,FootR_in2,FootR_in3);
+    
+////*****************leg trajectory generated by KMP********************************/////
+/*	      _kmp_leg_traje = mpc.XGetSolution_Foot_position_KMP(_walkdtime1,_dtx,_t_int,_stop_walking);
 	      
 	      RightFootPosx(0) = _kmp_leg_traje(0);  RightFootPosx(1) = _kmp_leg_traje(1); RightFootPosx(2) = _kmp_leg_traje(2);	
 	      LeftFootPosx(0) = _kmp_leg_traje(3);   LeftFootPosx(1) = _kmp_leg_traje(4);  LeftFootPosx(2) = _kmp_leg_traje(5);		
-	      
-    // 		// cout<<LeftFootPosx(1)<<endl;
-    // 		// cout<<RightFootPosx(1)<<endl;
+	*/  
 	      
 	      // store
 	      _COM_IN(0,_walkdtime1) = PelvisPos(0);

@@ -42,11 +42,17 @@ const double _height_offset = 0.05;
 const double _height_squat_time =2; 
 
 
-class MPCClass : public QPBaseClass
+// class MPCClass : public QPBaseClass
+class MPCClass
 {
 public:
 	MPCClass();
 	virtual ~MPCClass() {};
+	
+	
+	QPBaseClass QPsolver1_nlp,QPsolver2_nmpc;
+	
+	
 	
 	/******************* KMP class preparation **************/
         kmp kmp_leg_L;
@@ -74,10 +80,10 @@ public:
 	Eigen::Matrix<double,_Nt,_Nt> _matrix_large1,_matrix_large2;	
 	
 	///// For NMPC
-//	void CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,18,1> estimated_state, Eigen::Vector3d _Rfoot_location_feedback, Eigen::Vector3d _Lfoot_location_feedback,double lamda,bool _ISwalking);	
-/*	void solve_reactive_step_body_inclination_CoMz(); 
+	void CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,18,1> estimated_state, Eigen::Vector3d _Rfoot_location_feedback, Eigen::Vector3d _Lfoot_location_feedback,double lamda,bool _ISwalking);	
+	void solve_reactive_step_body_inclination_CoMz(); 
 	void solve_reactive_step_body_inclination(); 
-	void solve_reactive_step(); */		
+	void solve_reactive_step(); 		
 
 
         int Indexfind(double goalvari, int xyz);
