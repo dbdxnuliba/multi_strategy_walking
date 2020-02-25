@@ -175,8 +175,8 @@ void multi_strategy_walking::control_loop(double time, double period)
 // 	
 // 	// _q[_q.size()-1] = _q_home[_q.size()-1];
 // // 	cout<<"_q:"<< _q.transpose()<<endl; 
- // 	_robot->setPositionReference(_q);
- // 	_robot->move();    /// lead to real time unsafety;
+ 	_robot->setPositionReference(_q);
+ 	_robot->move();    /// lead to real time unsafety;
     
 }
 
