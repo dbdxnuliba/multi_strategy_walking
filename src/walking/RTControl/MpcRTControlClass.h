@@ -11,7 +11,7 @@ MpcRTControlClass.h
 #include <fstream>
 #include <time.h>
 
-const double dt_mpc = 0.01;   // definition of sampling time of MPC solover
+const double dt_mpc = 0.1;   // definition of sampling time of MPC solover
  const double _height_offsetx = 0.05;  
 const double _height_offset_time = 2; 
 
