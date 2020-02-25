@@ -2253,6 +2253,8 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 		  solve_reactive_step_body_inclination_CoMz(); /// the reactive steps + body inclination + height variance
 		}
 	      }
+	      
+	      _V_ini += QPsolver2_nmpc._X;   
 
 	    }
 
