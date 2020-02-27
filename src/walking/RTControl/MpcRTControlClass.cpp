@@ -198,7 +198,7 @@ void MpcRTControlClass::WalkingReactStepping()
 	    
 	    if (_flag_walkdtime(_walkdtime1 -1) < _t_int)
 	    {
- //             DPRINTF("=========Enter NLP optimization=============\n");   
+             DPRINTF("=========Enter NLP optimization=============\n");   
 // 	      mpc.step_timing_opti_loop(_t_int, _estimated_state,_Rfoot_location_feedback,_Lfoot_location_feedback,_feedback_lamda,_stop_walking);
 //  //             DPRINTF("=========Finish NLP optimization=============\n"); 
 // // 		    /////////////////////  CoM height generation, when no mpc                                  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -33,7 +33,7 @@ using namespace arma;
 const int _footstepsnumber = 15;       //  number of _footstepnumber
 const double _dt = 0.1;                //sampling time
 const int _nh = 10;                    /// =PreviewT/_dt: number of sampling time for predictive window: <= 2*_nT; (_dt defined in MpcRTControlClass.h: dt_mpc)  	
-const double _tstep = 0.6;              ///step period
+const double _tstep = 0.7;              ///step period
 const int _nT = round(_tstep/_dt);      /// _tstep/_dt)  the number of one step cycle
 const int _nstep = 2;                   /// maximal footstep locations where the predictive windwo covers
 const int _Nt = 5*_nh + 3*_nstep;       /// _Nt = 5*_nh + 3*_nstep;  the number of the variable of the optimization problem
@@ -89,8 +89,8 @@ public:
         int Indexfind(double goalvari, int xyz);
 	
 	/// for height +angular momentum + step optimization
-	Eigen::MatrixXd Matrix_ps(Eigen::MatrixXd a, int nh, Eigen::MatrixXd cxps);
-	Eigen::MatrixXd Matrix_pu(Eigen::MatrixXd a, Eigen::MatrixXd b, int nh, Eigen::MatrixXd cxpu);
+	Eigen::MatrixXd Matrix_ps(Eigen::Matrix<double,3,3> a, int nh, Eigen::RowVector3d cxps);
+	Eigen::MatrixXd Matrix_pu(Eigen::Matrix<double,3,3> a, Eigen::Matrix<double,3,1> b, int nh, Eigen::RowVector3d cxpu);
 	
 	///////////////=================================================/////////////////////////////
 	////////////////=================================================//////////////////
@@ -388,17 +388,19 @@ private:
 	Eigen::Matrix<double,1,_nsum> _thetaz, _thetavz, _thetaaz;	
 	
 	Eigen::Matrix<double,1,_nsum> _torquex_real, _torquey_real;	
-	
-	// CoM+angular momentum state and contro input
-	Eigen::Matrix<double,3,_nsum>  _xk,_yk,_zk,_thetaxk,_thetayk;
-	Eigen::Matrix<double,1,_nsum> _x_vacc_k,_y_vacc_k,_z_vacc_k,_thetax_vacc_k,_thetay_vacc_k;
+
 	
 	
 	// initial parameters for MPC
 
 	Eigen::Matrix<double,_nh, 1> _Hcom;
-
 	Eigen::Matrix<double,1,1> _ggg;	
+	
+	
+	// CoM+angular momentum state and contro input
+	Eigen::Matrix<double,3,_nsum>  _xk,_yk,_zk,_thetaxk,_thetayk;
+	Eigen::Matrix<double,1,_nsum> _x_vacc_k,_y_vacc_k,_z_vacc_k,_thetax_vacc_k,_thetay_vacc_k;	
+	
 	
 	Eigen::Matrix<double,3,3> _a;
 	Eigen::Matrix<double,3,1> _b;

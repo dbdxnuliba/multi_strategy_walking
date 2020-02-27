@@ -383,7 +383,8 @@ void XBotRTControlClass::Run()
 	MoveToInitialPosition();
         
         
-	if (IsInit && IsStartWalk && (realtime>10)) {
+// 	if (IsInit && IsStartWalk && (realtime>10)) {
+	if (IsInit && IsStartWalk) {
 		if (walkdtime == 0) {
 			walkstarttime = dt * dtime;
 		}

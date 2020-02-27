@@ -355,7 +355,7 @@ void MPCClass::Initialize()
 	
 	// swing foot velocity constraints	
 	_footx_vmax = 3;
-	_footx_vmin = -9.875;
+	_footx_vmin = -2;
 	_footy_vmax = 2;
 	_footy_vmin = -2;		
 	
@@ -611,10 +611,6 @@ void MPCClass::Initialize()
 	}
 
 
-	
-
-	cout << "finish!!!!!!!!!!! initial for nlp_KMP parameters"<<endl;
-
 
 
 	///////////////%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -678,6 +674,7 @@ void MPCClass::Initialize()
 	_pvu_2 = _pvu.transpose()*_pvu;
 	_ppu_2 = _ppu.transpose()*_ppu;		
 	
+	
         //footz refer: height of step
 	_Zsc.setZero();	
         _j_period = 0;	
@@ -685,13 +682,14 @@ void MPCClass::Initialize()
           Indexfind(_t(i),xyz1);	  
 	  _Zsc(i) = _footz_ref(_j_period);   
 	  _j_period = 0; 
-	}		
+	}
+	
+        _yk.topRows(1).setConstant(_footy_ref(0)); 
+	_zk.topRows(1).setConstant(_hcom);	
 
         _v_i.setZero();                    ///current step cycle
 	_VV_i.setZero();	      /// next step cycles: 2 cycles maximal
-//         _yk.topRows(1).setConstant(_footy_ref(0)); 
-// 	_zk.topRows(1).setConstant(_hcom);
-	
+
 
 
 	
@@ -706,6 +704,17 @@ void MPCClass::Initialize()
 	_footx_real_next1.setZero();  
 	_footy_real_next1.setZero(); 
 	_footz_real_next1.setZero();
+	
+        _Lfootx.setZero();
+        _Lfooty.setZero(); _Lfooty.setConstant(_stepwidth(0)); _Lfootz.setZero(); 
+	_Lfootvx.setZero(); _Lfootvy.setZero();_Lfootvz.setZero(); 
+	_Lfootax.setZero(); _Lfootay.setZero();_Lfootaz.setZero();
+	_Rfootx.setZero(); 
+        _Rfooty.setZero(); _Rfooty.setConstant(-_stepwidth(0));_Rfootz.setZero(); 
+	_Rfootvx.setZero(); _Rfootvy.setZero();_Rfootvz.setZero(); 
+	_Rfootax.setZero(); _Rfootay.setZero();_Rfootaz.setZero();	
+	_ry_left_right = 0;	
+	
 	
 	  //vertical height constraints	
 	_ZMP_ratio = 0.9;
@@ -740,7 +749,6 @@ void MPCClass::Initialize()
 	  DPRINTF("Errorrrrrrrr for IK\n");}		
 	
 	_mass = _robot_mass; 	
-
 	
 	// com-support range
 // 	_comx_max.setConstant(1,0.06);
@@ -759,6 +767,12 @@ void MPCClass::Initialize()
 	_torquex_min=-60/_j_ini;
 	_torquey_max=80/_j_ini;  
 	_torquey_min=-80/_j_ini;
+	
+/*	// swing foot velocity constraints	
+	_footx_vmax=3;
+	_footx_vmin=-2;
+	_footy_vmax=2; 
+ 	_footy_vmin=-2;	*/	
 	
 	
 	_fx= 0;    //current step location in local coordinate
@@ -1080,28 +1094,29 @@ void MPCClass::Initialize()
 	}	
 	ZMPx_constraints_half = x_offline2;	
 	ZMPy_constraints_half = x_offline2;
-	
-	
-        ZMPx_constraints_halfxxx1.setZero(); 
-        ZMPx_constraints_halfxxx2.setZero(); 	
-	
-        _x_offline4_vax.setZero();   	
-        _x_offline4_vay.setZero(); 	
+         
+        
 
+    
+        ZMPx_constraints_halfxxx1.setZero(); 
+        ZMPx_constraints_halfxxx2.setZero();  
+        
+        
+        _x_offline4_vax.setZero();   	
+        _x_offline4_vay.setZero();  
+
+       
         ZMPx_constraints_halfyyy1.setZero(); 
         ZMPx_constraints_halfyyy2.setZero();          
         ZMPx_constraints_halfyyy3.setZero(); 
-        ZMPx_constraints_halfyyy4.setZero();  	
-	
+        ZMPx_constraints_halfyyy4.setZero();         
+        
         _matrix_large1.setZero();
-        _matrix_large2.setZero();	
+        _matrix_large2.setZero();
         _ZMPx_constraints_half_va.setZero();
-        _ZMPy_constraints_half_va.setZero();	
+        _ZMPy_constraints_half_va.setZero();
 	
 	
-	
-	
-		
 	for(int jxx=1; jxx<=_nh; jxx++)
 	{
 	  _Si.setZero();
@@ -1142,9 +1157,7 @@ void MPCClass::Initialize()
 //	  ZMPx_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy1 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy2 * ZMPx_constraints_halfxxx2;                  
 // 	  ZMPy_constraints_offfline[jxx-1] = ZMPx_constraints_halfyyy3 * ZMPx_constraints_halfxxx1 - ZMPx_constraints_halfyyy4 * ZMPx_constraints_halfxxx2;
 
-	}
-
-	
+	}	
 
 
 	vector <Eigen::Matrix<double,3, _Nt>> xx_offline1(_nh);
@@ -2254,7 +2267,7 @@ void MPCClass::CoM_foot_trajection_generation_local(int i, Eigen::Matrix<double,
 		}
 	      }
 	      
-	      _V_ini += QPsolver2_nmpc._X;   
+/*	      _V_ini += QPsolver2_nmpc._X; */  
 
 	    }
 
@@ -3076,7 +3089,8 @@ void MPCClass::step_timing_constraints(int i)
 
 
 
-Eigen::MatrixXd  MPCClass::Matrix_ps(Eigen::MatrixXd a, int nh,Eigen::MatrixXd cxps)
+///// only walking once when initialize
+Eigen::MatrixXd  MPCClass::Matrix_ps(Eigen::Matrix<double,3,3> a, int nh,Eigen::RowVector3d cxps)
 {
 //   Eigen::MatrixXd matrixps(nh,3);
   Eigen::MatrixXd matrixps;
@@ -3101,7 +3115,7 @@ Eigen::MatrixXd  MPCClass::Matrix_ps(Eigen::MatrixXd a, int nh,Eigen::MatrixXd c
 }
 
 
-Eigen::MatrixXd MPCClass::Matrix_pu(Eigen::MatrixXd a, Eigen::MatrixXd b, int nh, Eigen::MatrixXd cxpu)
+Eigen::MatrixXd MPCClass::Matrix_pu(Eigen::Matrix<double,3,3> a, Eigen::Matrix<double,3,1> b, int nh, Eigen::RowVector3d cxpu)
 {
   Eigen::MatrixXd matrixpu;
   matrixpu.setZero(nh,nh);
@@ -3403,6 +3417,7 @@ void MPCClass::solve_reactive_step()
   
 //  Solve();  
   QPsolver2_nmpc.solveQP(); 
+  _V_ini +=  QPsolver2_nmpc._X;
   
 }
 
@@ -3475,6 +3490,7 @@ void MPCClass::solve_reactive_step_body_inclination()
 
  // Solve();  
    QPsolver2_nmpc.solveQP(); 
+   _V_ini +=  QPsolver2_nmpc._X;
 }
 
 void MPCClass::solve_reactive_step_body_inclination_CoMz()
@@ -3557,6 +3573,8 @@ void MPCClass::solve_reactive_step_body_inclination_CoMz()
    QPsolver2_nmpc._ce0 = _F_footz;
   
    QPsolver2_nmpc.solveQP(); 
+   
+   _V_ini +=  QPsolver2_nmpc._X;
   
  //  Solve();  
 
